@@ -1007,7 +1007,7 @@
             }
             
             /* RETRACTABLE CHAT */
-            .chat-container {
+            .chat-sidebar {
                 position: fixed;
                 bottom: 0;
                 left: 0;
@@ -1017,14 +1017,17 @@
                 transition: height 0.3s ease, max-height 0.3s ease;
                 z-index: 100;
                 border-radius: 12px 12px 0 0;
+                background: rgba(10, 10, 10, 0.5);
             }
             
-            .chat-container.expanded {
+            .chat-sidebar.expanded {
                 height: 400px;
                 max-height: 400px;
+                background: rgba(10, 10, 10, 0.95);
+                backdrop-filter: blur(10px);
             }
             
-            .chat-container::before {
+            .chat-sidebar::before {
                 content: '💬 Chat';
                 position: absolute;
                 top: 0;
@@ -1036,14 +1039,32 @@
                 justify-content: center;
                 font-family: 'VT323', monospace;
                 font-size: 1.2rem;
-                background: rgba(241, 250, 238, 0.03);
+                background: rgba(241, 250, 238, 0.05);
                 border-bottom: 1px solid rgba(241, 250, 238, 0.1);
                 cursor: pointer;
                 border-radius: 12px 12px 0 0;
+                z-index: 1;
+                pointer-events: none;
             }
             
-            .chat-container.expanded::before {
+            .chat-sidebar.expanded::before {
                 content: '✕ Close Chat';
+                background: rgba(241, 250, 238, 0.08);
+            }
+            
+            .chat-header,
+            .chat-messages,
+            .chat-input-container {
+                opacity: 0;
+                pointer-events: none;
+                transition: opacity 0.3s ease;
+            }
+            
+            .chat-sidebar.expanded .chat-header,
+            .chat-sidebar.expanded .chat-messages,
+            .chat-sidebar.expanded .chat-input-container {
+                opacity: 1;
+                pointer-events: auto;
             }
             
             .chat-messages {
@@ -1056,13 +1077,16 @@
                 font-size: 0.9rem;
             }
             
-            .message-input {
+            .chat-input-container {
                 padding: 12px;
+            }
+            
+            .chat-input {
                 font-size: 0.9rem;
             }
             
             /* RETRACTABLE MUSIC PLAYER */
-            .music-player {
+            .music-control {
                 position: fixed;
                 bottom: 60px;
                 left: 0;
@@ -1072,14 +1096,17 @@
                 transition: height 0.3s ease, max-height 0.3s ease;
                 z-index: 99;
                 border-radius: 12px 12px 0 0;
+                background: rgba(10, 10, 10, 0.5);
             }
             
-            .music-player.expanded {
+            .music-control.expanded {
                 height: 350px;
                 max-height: 350px;
+                background: rgba(10, 10, 10, 0.95);
+                backdrop-filter: blur(10px);
             }
             
-            .music-player::before {
+            .music-control::before {
                 content: '🎵 Music';
                 position: absolute;
                 top: 0;
@@ -1091,14 +1118,34 @@
                 justify-content: center;
                 font-family: 'VT323', monospace;
                 font-size: 1.2rem;
-                background: rgba(241, 250, 238, 0.03);
+                background: rgba(241, 250, 238, 0.05);
                 border-bottom: 1px solid rgba(241, 250, 238, 0.1);
                 cursor: pointer;
                 border-radius: 12px 12px 0 0;
+                z-index: 1;
+                pointer-events: none;
             }
             
-            .music-player.expanded::before {
+            .music-control.expanded::before {
                 content: '✕ Close Music';
+                background: rgba(241, 250, 238, 0.08);
+            }
+            
+            .now-playing,
+            .playback-controls,
+            .progress-bar,
+            .queue-preview {
+                opacity: 0;
+                pointer-events: none;
+                transition: opacity 0.3s ease;
+            }
+            
+            .music-control.expanded .now-playing,
+            .music-control.expanded .playback-controls,
+            .music-control.expanded .progress-bar,
+            .music-control.expanded .queue-preview {
+                opacity: 1;
+                pointer-events: auto;
             }
             
             .now-playing {
@@ -1659,27 +1706,35 @@
                 
                 // Mobile: Add toggle functionality for chat and music player
                 if (window.innerWidth <= 768) {
-                    const chatContainer = document.querySelector('.chat-container');
-                    const musicPlayer = document.querySelector('.music-player');
+                    const chatSidebar = document.querySelector('.chat-sidebar');
+                    const musicControl = document.querySelector('.music-control');
                     
-                    if (chatContainer) {
-                        chatContainer.addEventListener('click', function(e) {
+                    if (chatSidebar) {
+                        chatSidebar.addEventListener('click', function(e) {
                             // Only toggle if clicking the header area (top 50px)
-                            const rect = chatContainer.getBoundingClientRect();
+                            const rect = chatSidebar.getBoundingClientRect();
                             const clickY = e.clientY - rect.top;
                             if (clickY <= 50) {
-                                chatContainer.classList.toggle('expanded');
+                                chatSidebar.classList.toggle('expanded');
+                                // Auto-collapse music when chat opens
+                                if (chatSidebar.classList.contains('expanded') && musicControl) {
+                                    musicControl.classList.remove('expanded');
+                                }
                             }
                         });
                     }
                     
-                    if (musicPlayer) {
-                        musicPlayer.addEventListener('click', function(e) {
+                    if (musicControl) {
+                        musicControl.addEventListener('click', function(e) {
                             // Only toggle if clicking the header area (top 50px)
-                            const rect = musicPlayer.getBoundingClientRect();
+                            const rect = musicControl.getBoundingClientRect();
                             const clickY = e.clientY - rect.top;
                             if (clickY <= 50) {
-                                musicPlayer.classList.toggle('expanded');
+                                musicControl.classList.toggle('expanded');
+                                // Auto-collapse chat when music opens
+                                if (musicControl.classList.contains('expanded') && chatSidebar) {
+                                    chatSidebar.classList.remove('expanded');
+                                }
                             }
                         });
                     }
