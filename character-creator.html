@@ -560,6 +560,17 @@
 
         let currentUser = null;
 
+        // Smart back navigation - check auth directly
+        window.goBack = function(e) {
+            e.preventDefault();
+            // Check current auth state directly
+            if (auth.currentUser) {
+                window.location.href = 'hub.html';
+            } else {
+                window.location.href = 'index.html';
+            }
+        };
+
         // Check auth state
         onAuthStateChanged(auth, (user) => {
             const loginBtn = document.getElementById('loginBtn');
@@ -573,25 +584,17 @@
                 // Update back link for logged in users
                 if (backLink) {
                     backLink.textContent = '← back to hub';
+                    backLink.href = 'hub.html';
                 }
             } else {
                 loginBtn.style.display = 'inline-block';
                 updateBtn.style.display = 'none';
                 if (backLink) {
                     backLink.textContent = '← back';
+                    backLink.href = 'index.html';
                 }
             }
         });
-
-        // Smart back navigation
-        window.goBack = function(e) {
-            e.preventDefault();
-            if (currentUser) {
-                window.location.href = 'hub.html';
-            } else {
-                window.location.href = 'index.html';
-            }
-        };
 
         // Login button
         document.getElementById('loginBtn').addEventListener('click', () => {
