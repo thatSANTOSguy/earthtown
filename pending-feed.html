@@ -1,0 +1,261 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>earthtown - pending feed</title>
+    <style>
+        @import url('https://fonts.googleapis.com/css2?family=VT323&family=Inter:wght@300;400;500;600&display=swap');
+
+        * { margin: 0; padding: 0; box-sizing: border-box; }
+
+        body {
+            font-family: 'Inter', sans-serif;
+            background: #0a0a0a;
+            color: #f1faee;
+            min-height: 100vh;
+        }
+
+        .header {
+            padding: 20px 40px;
+            background: rgba(241, 250, 238, 0.02);
+            border-bottom: 1px solid rgba(241, 250, 238, 0.1);
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+
+        .page-title {
+            font-family: 'VT323', monospace;
+            font-size: 2.5rem;
+            letter-spacing: 2px;
+        }
+
+        .subtitle {
+            font-size: 0.9rem;
+            color: #888;
+            margin-top: 5px;
+        }
+
+        .back-btn {
+            font-family: 'VT323', monospace;
+            font-size: 1.3rem;
+            color: #f1faee;
+            text-decoration: none;
+            padding: 8px 20px;
+            border: 1px solid rgba(241, 250, 238, 0.2);
+            border-radius: 6px;
+            transition: all 0.3s;
+            letter-spacing: 1px;
+        }
+
+        .back-btn:hover { background: rgba(241, 250, 238, 0.05); }
+
+        .main-content {
+            max-width: 1400px;
+            margin: 0 auto;
+            padding: 40px;
+        }
+
+        .feed-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fill, minmax(300px, 1fr));
+            gap: 25px;
+        }
+
+        .feed-item {
+            background: rgba(247, 127, 0, 0.05);
+            border: 1px solid rgba(247, 127, 0, 0.2);
+            border-radius: 12px;
+            overflow: hidden;
+            transition: all 0.3s;
+        }
+
+        .feed-item:hover {
+            border-color: rgba(247, 127, 0, 0.5);
+            transform: translateY(-5px);
+        }
+
+        .item-preview {
+            width: 100%;
+            aspect-ratio: 1;
+            background: rgba(241, 250, 238, 0.05);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 4rem;
+        }
+
+        .item-preview img {
+            width: 100%;
+            height: 100%;
+            object-fit: cover;
+        }
+
+        .item-info {
+            padding: 20px;
+        }
+
+        .item-title {
+            font-size: 1.1rem;
+            font-weight: 600;
+            margin-bottom: 5px;
+        }
+
+        .item-meta {
+            font-size: 0.85rem;
+            color: #888;
+            margin-bottom: 10px;
+        }
+
+        .item-description {
+            font-size: 0.9rem;
+            color: #aaa;
+            line-height: 1.5;
+        }
+
+        .pending-badge {
+            display: inline-block;
+            padding: 4px 12px;
+            background: rgba(247, 127, 0, 0.2);
+            color: #f77f00;
+            border: 1px solid #f77f00;
+            border-radius: 4px;
+            font-size: 0.85rem;
+            font-family: 'VT323', monospace;
+            letter-spacing: 1px;
+            margin-top: 10px;
+        }
+
+        .empty-state {
+            text-align: center;
+            padding: 100px 20px;
+            color: #666;
+        }
+
+        .empty-icon {
+            font-size: 5rem;
+            margin-bottom: 20px;
+        }
+
+        .empty-text {
+            font-family: 'VT323', monospace;
+            font-size: 2rem;
+            letter-spacing: 2px;
+        }
+    </style>
+</head>
+<body>
+    <div class="header">
+        <div>
+            <h1 class="page-title">⏳ pending feed</h1>
+            <p class="subtitle">Community preview of works under review</p>
+        </div>
+        <a href="hub.html" class="back-btn">← back to hub</a>
+    </div>
+
+    <div class="main-content">
+        <div class="feed-grid" id="feedGrid">
+            <!-- Populated by JavaScript -->
+        </div>
+    </div>
+
+    <script type="module">
+        import { initializeApp } from 'https://www.gstatic.com/firebasejs/10.7.1/firebase-app.js';
+        import { getAuth, onAuthStateChanged } from 'https://www.gstatic.com/firebasejs/10.7.1/firebase-auth.js';
+        import { getFirestore, collection, query, where, getDocs, orderBy } from 'https://www.gstatic.com/firebasejs/10.7.1/firebase-firestore.js';
+
+        const firebaseConfig = {
+            apiKey: "AIzaSyCXFlGeJodOUVn-3bYocPhFRtzs9DBHEFA",
+            authDomain: "earthtown-92993.firebaseapp.com",
+            projectId: "earthtown-92993",
+            storageBucket: "earthtown-92993.firebasestorage.app",
+            messagingSenderId: "830730193161",
+            appId: "1:830730193161:web:af18953dd80872b1396bd8"
+        };
+
+        const app = initializeApp(firebaseConfig);
+        const auth = getAuth(app);
+        const db = getFirestore(app);
+
+        const typeIcons = {
+            music: '🎵',
+            video: '🎬',
+            art: '🖼️'
+        };
+
+        onAuthStateChanged(auth, async (user) => {
+            if (user) {
+                await loadPendingFeed();
+            } else {
+                window.location.href = 'index.html';
+            }
+        });
+
+        async function loadPendingFeed() {
+            const grid = document.getElementById('feedGrid');
+            grid.innerHTML = '<div style="text-align:center; padding:40px; color:#666;">Loading...</div>';
+
+            try {
+                const pendingQuery = query(
+                    collection(db, 'gallery'),
+                    where('status', '==', 'pending')
+                );
+
+                const snapshot = await getDocs(pendingQuery);
+                
+                if (snapshot.empty) {
+                    grid.innerHTML = `
+                        <div class="empty-state">
+                            <div class="empty-icon">✓</div>
+                            <div class="empty-text">no pending submissions</div>
+                        </div>
+                    `;
+                    return;
+                }
+
+                grid.innerHTML = '';
+                const items = [];
+                snapshot.forEach(doc => {
+                    items.push({ id: doc.id, ...doc.data() });
+                });
+
+                // Sort by upload time
+                items.sort((a, b) => {
+                    if (!a.uploadedAt || !b.uploadedAt) return 0;
+                    return b.uploadedAt.seconds - a.uploadedAt.seconds;
+                });
+
+                items.forEach(item => {
+                    grid.appendChild(createFeedItem(item));
+                });
+
+            } catch (error) {
+                console.error('Error loading feed:', error);
+                grid.innerHTML = '<div style="text-align:center; padding:40px; color:#e63946;">Error loading feed</div>';
+            }
+        }
+
+        function createFeedItem(data) {
+            const item = document.createElement('div');
+            item.className = 'feed-item';
+
+            const uploadDate = data.uploadedAt ? new Date(data.uploadedAt.seconds * 1000).toLocaleDateString() : 'Recently';
+
+            item.innerHTML = `
+                <div class="item-preview">
+                    ${data.thumbnailUrl ? `<img src="${data.thumbnailUrl}">` : typeIcons[data.type]}
+                </div>
+                <div class="item-info">
+                    <div class="item-title">${data.title || 'Untitled'}</div>
+                    <div class="item-meta">${typeIcons[data.type]} ${data.type} by ${data.username} • ${uploadDate}</div>
+                    ${data.description ? `<div class="item-description">${data.description}</div>` : ''}
+                    <div class="pending-badge">⏳ pending approval</div>
+                </div>
+            `;
+
+            return item;
+        }
+    </script>
+</body>
+</html>

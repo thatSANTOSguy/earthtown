@@ -1,0 +1,465 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>earthtown - edit profile</title>
+    <style>
+        @import url('https://fonts.googleapis.com/css2?family=VT323&family=Inter:wght@300;400;500;600&display=swap');
+
+        * { margin: 0; padding: 0; box-sizing: border-box; }
+
+        body {
+            font-family: 'Inter', sans-serif;
+            background: #0a0a0a;
+            color: #f1faee;
+            min-height: 100vh;
+        }
+
+        .header {
+            padding: 20px 40px;
+            background: rgba(241, 250, 238, 0.02);
+            border-bottom: 1px solid rgba(241, 250, 238, 0.1);
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+
+        .back-btn {
+            font-family: 'VT323', monospace;
+            font-size: 1.3rem;
+            color: #f1faee;
+            text-decoration: none;
+            padding: 8px 20px;
+            border: 1px solid rgba(241, 250, 238, 0.2);
+            border-radius: 6px;
+            transition: all 0.3s;
+            letter-spacing: 1px;
+        }
+
+        .back-btn:hover { background: rgba(241, 250, 238, 0.05); }
+
+        .page-title {
+            font-family: 'VT323', monospace;
+            font-size: 2.5rem;
+            letter-spacing: 2px;
+            position: relative;
+            padding-bottom: 10px;
+        }
+
+        .page-title::after {
+            content: '';
+            position: absolute;
+            bottom: 0; left: 0;
+            width: 80px; height: 2px;
+            background: linear-gradient(90deg, #f77f00, #d62828);
+            opacity: 0.6;
+        }
+
+        .main-content {
+            max-width: 800px;
+            margin: 0 auto;
+            padding: 40px;
+        }
+
+        .section {
+            background: rgba(241, 250, 238, 0.03);
+            border: 1px solid rgba(241, 250, 238, 0.15);
+            border-radius: 12px;
+            padding: 30px;
+            margin-bottom: 30px;
+        }
+
+        .section-title {
+            font-family: 'VT323', monospace;
+            font-size: 2rem;
+            color: #f1faee;
+            margin-bottom: 25px;
+            letter-spacing: 2px;
+        }
+
+        .profile-preview {
+            display: flex;
+            align-items: center;
+            gap: 30px;
+            margin-bottom: 30px;
+            padding: 20px;
+            background: rgba(241, 250, 238, 0.02);
+            border-radius: 12px;
+        }
+
+        .avatar-preview {
+            width: 150px;
+            height: 150px;
+            border-radius: 12px;
+            background: rgba(241, 250, 238, 0.05);
+            border: 2px dashed rgba(241, 250, 238, 0.2);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            overflow: hidden;
+            position: relative;
+        }
+
+        .avatar-preview img {
+            width: 100%;
+            height: 100%;
+            object-fit: contain;
+            image-rendering: pixelated;
+        }
+
+        .preview-placeholder {
+            font-size: 4rem;
+        }
+
+        .preview-info {
+            flex: 1;
+        }
+
+        .preview-username {
+            font-family: 'VT323', monospace;
+            font-size: 2rem;
+            margin-bottom: 10px;
+            letter-spacing: 1px;
+        }
+
+        .preview-archetype {
+            font-size: 1.1rem;
+            color: #888;
+            margin-bottom: 5px;
+        }
+
+        .upload-area {
+            border: 2px dashed rgba(241, 250, 238, 0.2);
+            border-radius: 12px;
+            padding: 40px;
+            text-align: center;
+            cursor: pointer;
+            transition: all 0.3s;
+            margin-bottom: 20px;
+        }
+
+        .upload-area:hover {
+            border-color: rgba(45, 106, 79, 0.4);
+            background: rgba(45, 106, 79, 0.05);
+        }
+
+        .upload-icon {
+            font-size: 3rem;
+            margin-bottom: 15px;
+        }
+
+        .upload-text {
+            font-size: 1.1rem;
+            color: #888;
+            margin-bottom: 8px;
+        }
+
+        .upload-subtext {
+            font-size: 0.9rem;
+            color: #666;
+        }
+
+        .archetypes-grid {
+            display: grid;
+            grid-template-columns: repeat(4, 1fr);
+            gap: 15px;
+            margin-top: 20px;
+        }
+
+        .archetype-card {
+            background: rgba(241, 250, 238, 0.03);
+            border: 1px solid rgba(241, 250, 238, 0.1);
+            border-radius: 10px;
+            padding: 20px 15px;
+            text-align: center;
+            cursor: pointer;
+            transition: all 0.3s;
+        }
+
+        .archetype-card:hover {
+            background: rgba(241, 250, 238, 0.06);
+            border-color: rgba(241, 250, 238, 0.25);
+            transform: translateY(-3px);
+        }
+
+        .archetype-card.selected {
+            background: rgba(241, 250, 238, 0.08);
+            border-width: 2px;
+            position: relative;
+        }
+
+        .archetype-card.selected::before {
+            content: '';
+            position: absolute;
+            top: 0;
+            left: 0;
+            right: 0;
+            height: 2px;
+            background: linear-gradient(90deg, #f77f00, #d62828, #6a4c93);
+            opacity: 0.7;
+        }
+
+        .archetype-icon {
+            font-size: 2.5rem;
+            margin-bottom: 10px;
+        }
+
+        .archetype-name {
+            font-family: 'VT323', monospace;
+            font-size: 1.2rem;
+            letter-spacing: 1px;
+            margin-bottom: 5px;
+        }
+
+        .archetype-description {
+            font-size: 0.8rem;
+            color: #888;
+            line-height: 1.3;
+        }
+
+        .save-btn {
+            width: 100%;
+            padding: 15px;
+            background: #f1faee;
+            color: #0a0a0a;
+            border: none;
+            border-radius: 8px;
+            font-family: 'VT323', monospace;
+            font-size: 1.5rem;
+            cursor: pointer;
+            letter-spacing: 2px;
+            position: relative;
+            overflow: hidden;
+        }
+
+        .save-btn::after {
+            content: '';
+            position: absolute;
+            bottom: 0;
+            left: 0;
+            width: 100%;
+            height: 3px;
+            background: linear-gradient(90deg, #f77f00, #d62828, #6a4c93);
+        }
+
+        .save-btn:hover {
+            background: #fff;
+        }
+
+        .save-btn:disabled {
+            opacity: 0.5;
+            cursor: not-allowed;
+        }
+
+        #status {
+            text-align: center;
+            padding: 15px;
+            border-radius: 8px;
+            margin-top: 20px;
+            display: none;
+        }
+
+        #status.success {
+            background: rgba(45, 106, 79, 0.2);
+            border: 1px solid #2d6a4f;
+            color: #2d6a4f;
+        }
+
+        #status.error {
+            background: rgba(230, 57, 70, 0.2);
+            border: 1px solid #e63946;
+            color: #e63946;
+        }
+    </style>
+</head>
+<body>
+    <div class="header">
+        <h1 class="page-title">character edit</h1>
+        <a href="hub.html" class="back-btn">← back to hub</a>
+    </div>
+
+    <div class="main-content">
+        <!-- Preview -->
+        <div class="section">
+            <h2 class="section-title">current profile</h2>
+            <div class="profile-preview">
+                <div class="avatar-preview" id="avatarPreview">
+                    <span class="preview-placeholder">👤</span>
+                </div>
+                <div class="preview-info">
+                    <div class="preview-username" id="previewUsername">loading...</div>
+                    <div class="preview-archetype" id="previewArchetype">archetype: loading...</div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Character Edit -->
+        <div class="section">
+            <h2 class="section-title">change avatar</h2>
+            <div class="upload-area" onclick="window.location.href='character-creator.html'">
+                <div class="upload-icon">✨</div>
+                <p class="upload-text">Open Character Creator</p>
+                <p class="upload-subtext">Upload a photo, we'll remove background & pixelate it</p>
+            </div>
+        </div>
+
+        <!-- Archetype Selection -->
+        <div class="section">
+            <h2 class="section-title">change archetype</h2>
+            <div class="archetypes-grid" id="archetypesGrid">
+                <!-- Populated by JavaScript -->
+            </div>
+        </div>
+
+        <!-- Save Button -->
+        <button class="save-btn" id="saveBtn" onclick="saveProfile()">save changes</button>
+        
+        <div id="status"></div>
+    </div>
+
+    <script type="module">
+        import { initializeApp } from 'https://www.gstatic.com/firebasejs/10.7.1/firebase-app.js';
+        import { getAuth, onAuthStateChanged } from 'https://www.gstatic.com/firebasejs/10.7.1/firebase-auth.js';
+        import { getFirestore, doc, getDoc, updateDoc } from 'https://www.gstatic.com/firebasejs/10.7.1/firebase-firestore.js';
+        import { getStorage, ref, uploadBytes, getDownloadURL } from 'https://www.gstatic.com/firebasejs/10.7.1/firebase-storage.js';
+
+        const firebaseConfig = {
+            apiKey: "AIzaSyCXFlGeJodOUVn-3bYocPhFRtzs9DBHEFA",
+            authDomain: "earthtown-92993.firebaseapp.com",
+            projectId: "earthtown-92993",
+            storageBucket: "earthtown-92993.firebasestorage.app",
+            messagingSenderId: "830730193161",
+            appId: "1:830730193161:web:af18953dd80872b1396bd8"
+        };
+
+        const app = initializeApp(firebaseConfig);
+        const auth = getAuth(app);
+        const db = getFirestore(app);
+        const storage = getStorage(app);
+
+        let currentUser = null;
+        let currentUserData = null;
+        let newImageBlob = null;
+        let selectedArchetype = null;
+
+        const archetypes = [
+            { id: 'innocent', icon: '☀️', name: 'Innocent', desc: 'optimism & faith' },
+            { id: 'sage', icon: '📚', name: 'Sage', desc: 'wisdom & truth' },
+            { id: 'explorer', icon: '🧭', name: 'Explorer', desc: 'freedom & discovery' },
+            { id: 'outlaw', icon: '⚡', name: 'Outlaw', desc: 'revolution & change' },
+            { id: 'magician', icon: '✨', name: 'Magician', desc: 'transformation & vision' },
+            { id: 'hero', icon: '🗡️', name: 'Hero', desc: 'courage & strength' },
+            { id: 'lover', icon: '💖', name: 'Lover', desc: 'passion & connection' },
+            { id: 'jester', icon: '🎭', name: 'Jester', desc: 'joy & playfulness' },
+            { id: 'everyman', icon: '👥', name: 'Everyman', desc: 'belonging & realism' },
+            { id: 'caregiver', icon: '🤲', name: 'Caregiver', desc: 'compassion & nurturing' },
+            { id: 'ruler', icon: '👑', name: 'Ruler', desc: 'leadership & control' },
+            { id: 'creator', icon: '🎨', name: 'Creator', desc: 'innovation & imagination' }
+        ];
+
+        // Auth check
+        onAuthStateChanged(auth, async (user) => {
+            if (user) {
+                currentUser = user;
+                await loadProfile();
+            } else {
+                window.location.href = 'index.html';
+            }
+        });
+
+        async function loadProfile() {
+            try {
+                const userDoc = await getDoc(doc(db, 'users', currentUser.uid));
+                if (userDoc.exists()) {
+                    currentUserData = userDoc.data();
+                    
+                    document.getElementById('previewUsername').textContent = currentUserData.username;
+                    document.getElementById('previewArchetype').textContent = `archetype: ${currentUserData.archetype}`;
+                    
+                    selectedArchetype = currentUserData.archetype;
+                    
+                    // Load character image
+                    if (currentUserData.characterImage) {
+                        const charRef = ref(storage, currentUserData.characterImage);
+                        const charURL = await getDownloadURL(charRef);
+                        document.getElementById('avatarPreview').innerHTML = `<img src="${charURL}">`;
+                    }
+                    
+                    renderArchetypes();
+                }
+            } catch (error) {
+                console.error('Error loading profile:', error);
+                showStatus('Error loading profile', 'error');
+            }
+        }
+
+        function renderArchetypes() {
+            const grid = document.getElementById('archetypesGrid');
+            grid.innerHTML = archetypes.map(arch => `
+                <div class="archetype-card ${arch.id === selectedArchetype ? 'selected' : ''}" 
+                     onclick="selectArchetype('${arch.id}')">
+                    <div class="archetype-icon">${arch.icon}</div>
+                    <div class="archetype-name">${arch.name}</div>
+                    <div class="archetype-description">${arch.desc}</div>
+                </div>
+            `).join('');
+        }
+
+        window.selectArchetype = function(archetypeId) {
+            selectedArchetype = archetypeId;
+            renderArchetypes();
+        };
+
+        window.saveProfile = async function() {
+            const btn = document.getElementById('saveBtn');
+            btn.disabled = true;
+            btn.textContent = 'saving...';
+
+            try {
+                const updates = {};
+                
+                // Update archetype if changed
+                if (selectedArchetype !== currentUserData.archetype) {
+                    updates.archetype = selectedArchetype;
+                }
+                
+                // Save to Firestore
+                if (Object.keys(updates).length > 0) {
+                    await updateDoc(doc(db, 'users', currentUser.uid), updates);
+                    console.log('✓ Profile updated');
+                    showStatus('✓ Profile updated successfully!', 'success');
+                    
+                    // Reload profile
+                    setTimeout(() => {
+                        window.location.reload();
+                    }, 1500);
+                } else {
+                    showStatus('No changes to save', 'error');
+                    btn.disabled = false;
+                    btn.textContent = 'save changes';
+                }
+                
+            } catch (error) {
+                console.error('Error saving profile:', error);
+                showStatus('Error saving profile: ' + error.message, 'error');
+                btn.disabled = false;
+                btn.textContent = 'save changes';
+            }
+        };
+
+        function showStatus(message, type) {
+            const status = document.getElementById('status');
+            status.textContent = message;
+            status.className = type;
+            status.style.display = 'block';
+            
+            if (type === 'success') {
+                setTimeout(() => {
+                    status.style.display = 'none';
+                }, 3000);
+            }
+        }
+    </script>
+</body>
+</html>

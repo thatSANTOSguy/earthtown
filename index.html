@@ -1,0 +1,174 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>earthtown</title>
+    <style>
+        @import url('https://fonts.googleapis.com/css2?family=VT323&family=Inter:wght@300;400;500;600&display=swap');
+
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: 'Inter', sans-serif;
+            background: #0a0a0a;
+            color: #f1faee;
+            min-height: 100vh;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            overflow: hidden;
+        }
+
+        .container {
+            text-align: center;
+            max-width: 800px;
+            padding: 40px 20px;
+        }
+
+        .logo-image {
+            width: 180px;
+            height: auto;
+            margin-bottom: 40px;
+            filter: sepia(0.2) saturate(1.2) hue-rotate(5deg) brightness(0.95) drop-shadow(0 0 20px rgba(45, 106, 79, 0.3));
+            animation: float-gentle 6s infinite ease-in-out;
+        }
+
+        @keyframes float-gentle {
+            0%, 100% { transform: translateY(0); }
+            50% { transform: translateY(-15px); }
+        }
+
+        .logo-text {
+            font-family: 'VT323', monospace;
+            font-size: 5rem;
+            color: #f1faee;
+            margin-bottom: 15px;
+            letter-spacing: 4px;
+            position: relative;
+        }
+
+        /* Subtle gradient accent line below logo */
+        .logo-text::after {
+            content: '';
+            position: absolute;
+            bottom: -10px;
+            left: 50%;
+            transform: translateX(-50%);
+            width: 60%;
+            height: 2px;
+            background: linear-gradient(90deg, transparent, #f77f00, #d62828, #6a4c93, transparent);
+            opacity: 0.6;
+        }
+
+        .tagline {
+            font-size: 1.1rem;
+            color: #999;
+            margin-bottom: 60px;
+            font-weight: 300;
+            letter-spacing: 0.5px;
+        }
+
+        .cta-buttons {
+            display: flex;
+            gap: 20px;
+            justify-content: center;
+            flex-wrap: wrap;
+        }
+
+        .btn {
+            font-family: 'VT323', monospace;
+            font-size: 1.8rem;
+            padding: 18px 50px;
+            border-radius: 8px;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            text-decoration: none;
+            display: inline-block;
+            letter-spacing: 2px;
+            position: relative;
+        }
+
+        .btn-primary {
+            background: #f1faee;
+            border: none;
+            color: #0a0a0a;
+            overflow: hidden;
+        }
+
+        /* Subtle gradient underline on primary button */
+        .btn-primary::after {
+            content: '';
+            position: absolute;
+            bottom: 0;
+            left: 0;
+            width: 100%;
+            height: 3px;
+            background: linear-gradient(90deg, #f77f00, #d62828, #6a4c93);
+        }
+
+        .btn-primary:hover {
+            transform: translateY(-3px);
+            box-shadow: 0 8px 24px rgba(241, 250, 238, 0.2);
+        }
+
+        .btn-secondary {
+            background: transparent;
+            border: 2px solid rgba(241, 250, 238, 0.3);
+            color: #f1faee;
+        }
+
+        .btn-secondary:hover {
+            background: rgba(241, 250, 238, 0.05);
+            border-color: #f1faee;
+        }
+
+        .preview-hint {
+            margin-top: 80px;
+            font-size: 0.85rem;
+            color: #555;
+            font-style: italic;
+        }
+
+        @media (max-width: 768px) {
+            .logo-text {
+                font-size: 3.5rem;
+            }
+
+            .btn {
+                font-size: 1.5rem;
+                padding: 15px 40px;
+            }
+
+            .cta-buttons {
+                flex-direction: column;
+                align-items: center;
+            }
+
+            .btn {
+                width: 100%;
+                max-width: 300px;
+            }
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <img src="earthtown-logo.png" alt="earthtown" class="logo-image">
+        <h1 class="logo-text">earthtown</h1>
+        <p class="tagline">a digital sanctuary for conscious creatives</p>
+        
+        <div class="cta-buttons">
+            <a href="signup.html" class="btn btn-primary">create character</a>
+            <a href="login.html" class="btn btn-secondary">enter</a>
+            <a href="character-creator.html" class="btn btn-secondary" style="border-color: rgba(247, 127, 0, 0.4); background: rgba(247, 127, 0, 0.05);">
+                ✨ character creator
+            </a>
+        </div>
+    </div>
+</body>
+</html>

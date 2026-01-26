@@ -1,0 +1,625 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>earthtown - my gallery</title>
+    <style>
+        @import url('https://fonts.googleapis.com/css2?family=VT323&family=Inter:wght@300;400;500;600&display=swap');
+
+        * { margin: 0; padding: 0; box-sizing: border-box; }
+
+        body {
+            font-family: 'Inter', sans-serif;
+            background: #0a0a0a;
+            color: #f1faee;
+            min-height: 100vh;
+        }
+
+        .header {
+            padding: 20px 40px;
+            background: rgba(241, 250, 238, 0.02);
+            border-bottom: 1px solid rgba(241, 250, 238, 0.1);
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+
+        .back-btn {
+            font-family: 'VT323', monospace;
+            font-size: 1.3rem;
+            color: #f1faee;
+            text-decoration: none;
+            padding: 8px 20px;
+            border: 1px solid rgba(241, 250, 238, 0.2);
+            border-radius: 6px;
+            transition: all 0.3s;
+            letter-spacing: 1px;
+        }
+
+        .back-btn:hover { background: rgba(241, 250, 238, 0.05); }
+
+        .page-title {
+            font-family: 'VT323', monospace;
+            font-size: 2.5rem;
+            letter-spacing: 2px;
+        }
+
+        .main-content {
+            max-width: 1400px;
+            margin: 0 auto;
+            padding: 40px;
+        }
+
+        .tabs {
+            display: flex;
+            gap: 15px;
+            margin-bottom: 30px;
+            border-bottom: 1px solid rgba(241, 250, 238, 0.1);
+        }
+
+        .tab {
+            font-family: 'VT323', monospace;
+            font-size: 1.5rem;
+            padding: 12px 24px;
+            background: none;
+            border: none;
+            color: #888;
+            cursor: pointer;
+            border-bottom: 2px solid transparent;
+            transition: all 0.3s;
+            letter-spacing: 1px;
+        }
+
+        .tab.active {
+            color: #f1faee;
+            border-bottom: 2px solid #f77f00;
+        }
+
+        .gallery-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fill, minmax(280px, 1fr));
+            gap: 25px;
+            margin-top: 30px;
+        }
+
+        .gallery-item {
+            background: rgba(241, 250, 238, 0.03);
+            border: 1px solid rgba(241, 250, 238, 0.1);
+            border-radius: 12px;
+            overflow: hidden;
+            transition: all 0.3s;
+            position: relative;
+        }
+
+        .gallery-item:hover {
+            border-color: rgba(241, 250, 238, 0.3);
+            transform: translateY(-5px);
+        }
+
+        .item-image {
+            width: 100%;
+            aspect-ratio: 1;
+            background: rgba(241, 250, 238, 0.05);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 3rem;
+            overflow: hidden;
+        }
+
+        .item-image img {
+            width: 100%;
+            height: 100%;
+            object-fit: cover;
+        }
+
+        .item-info {
+            padding: 15px;
+        }
+
+        .item-title {
+            font-weight: 600;
+            margin-bottom: 5px;
+            font-size: 1.1rem;
+        }
+
+        .item-description {
+            font-size: 0.9rem;
+            color: #888;
+            margin-bottom: 8px;
+        }
+
+        .item-status {
+            display: inline-block;
+            padding: 4px 12px;
+            border-radius: 4px;
+            font-size: 0.85rem;
+            font-family: 'VT323', monospace;
+            letter-spacing: 1px;
+            margin-top: 8px;
+        }
+
+        .status-approved {
+            background: rgba(45, 106, 79, 0.2);
+            color: #2d6a4f;
+            border: 1px solid #2d6a4f;
+        }
+
+        .status-pending {
+            background: rgba(247, 127, 0, 0.2);
+            color: #f77f00;
+            border: 1px solid #f77f00;
+        }
+
+        .status-rejected {
+            background: rgba(230, 57, 70, 0.2);
+            color: #e63946;
+            border: 1px solid #e63946;
+        }
+
+        .item-actions {
+            display: flex;
+            gap: 10px;
+            margin-top: 12px;
+        }
+
+        .item-btn {
+            flex: 1;
+            padding: 8px;
+            background: rgba(241, 250, 238, 0.05);
+            border: 1px solid rgba(241, 250, 238, 0.2);
+            border-radius: 6px;
+            color: #f1faee;
+            font-family: 'VT323', monospace;
+            font-size: 1.1rem;
+            cursor: pointer;
+            transition: all 0.3s;
+            letter-spacing: 1px;
+        }
+
+        .item-btn:hover {
+            background: rgba(241, 250, 238, 0.1);
+            border-color: rgba(241, 250, 238, 0.4);
+        }
+
+        .item-btn.delete {
+            background: rgba(230, 57, 70, 0.1);
+            border-color: rgba(230, 57, 70, 0.3);
+        }
+
+        .item-btn.delete:hover {
+            background: rgba(230, 57, 70, 0.2);
+            border-color: #e63946;
+        }
+
+        .upload-section {
+            background: rgba(241, 250, 238, 0.03);
+            border: 2px dashed rgba(241, 250, 238, 0.2);
+            border-radius: 12px;
+            padding: 40px;
+            text-align: center;
+            margin-bottom: 40px;
+            cursor: pointer;
+            transition: all 0.3s;
+        }
+
+        .upload-section:hover {
+            border-color: rgba(45, 106, 79, 0.4);
+            background: rgba(45, 106, 79, 0.05);
+        }
+
+        .upload-icon {
+            font-size: 4rem;
+            margin-bottom: 20px;
+        }
+
+        .upload-text {
+            font-size: 1.2rem;
+            margin-bottom: 10px;
+        }
+
+        .upload-subtext {
+            color: #888;
+            font-size: 0.9rem;
+        }
+
+        .empty-state {
+            text-align: center;
+            padding: 80px 20px;
+            color: #666;
+        }
+
+        .empty-icon {
+            font-size: 5rem;
+            margin-bottom: 20px;
+        }
+
+        .empty-text {
+            font-family: 'VT323', monospace;
+            font-size: 1.8rem;
+            letter-spacing: 1px;
+        }
+
+        /* Upload Modal */
+        .modal {
+            display: none;
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: rgba(0, 0, 0, 0.9);
+            z-index: 5000;
+            align-items: center;
+            justify-content: center;
+        }
+
+        .modal.show {
+            display: flex;
+        }
+
+        .modal-content {
+            background: #0a0a0a;
+            border: 2px solid rgba(241, 250, 238, 0.2);
+            border-radius: 12px;
+            padding: 40px;
+            max-width: 600px;
+            width: 90%;
+        }
+
+        .modal-title {
+            font-family: 'VT323', monospace;
+            font-size: 2rem;
+            margin-bottom: 25px;
+            letter-spacing: 2px;
+        }
+
+        .form-group {
+            margin-bottom: 20px;
+        }
+
+        .form-label {
+            display: block;
+            margin-bottom: 8px;
+            font-size: 0.9rem;
+            color: #888;
+        }
+
+        .form-input {
+            width: 100%;
+            padding: 12px;
+            background: rgba(241, 250, 238, 0.05);
+            border: 1px solid rgba(241, 250, 238, 0.2);
+            border-radius: 6px;
+            color: #f1faee;
+            font-family: inherit;
+            font-size: 1rem;
+        }
+
+        .form-input:focus {
+            outline: none;
+            border-color: rgba(247, 127, 0, 0.5);
+        }
+
+        textarea.form-input {
+            resize: vertical;
+            min-height: 100px;
+        }
+
+        .form-buttons {
+            display: flex;
+            gap: 15px;
+            margin-top: 30px;
+        }
+
+        .btn {
+            flex: 1;
+            padding: 12px;
+            border-radius: 8px;
+            font-family: 'VT323', monospace;
+            font-size: 1.3rem;
+            cursor: pointer;
+            border: none;
+            transition: all 0.3s;
+            letter-spacing: 1px;
+        }
+
+        .btn-primary {
+            background: #f1faee;
+            color: #0a0a0a;
+        }
+
+        .btn-primary:hover {
+            background: #fff;
+        }
+
+        .btn-secondary {
+            background: rgba(241, 250, 238, 0.1);
+            color: #f1faee;
+            border: 1px solid rgba(241, 250, 238, 0.2);
+        }
+
+        .btn-secondary:hover {
+            background: rgba(241, 250, 238, 0.15);
+        }
+
+        .file-preview {
+            margin-top: 15px;
+            padding: 15px;
+            background: rgba(241, 250, 238, 0.03);
+            border: 1px solid rgba(241, 250, 238, 0.1);
+            border-radius: 8px;
+            font-size: 0.9rem;
+        }
+    </style>
+</head>
+<body>
+    <div class="header">
+        <h1 class="page-title">my gallery</h1>
+        <a href="hub.html" class="back-btn">← back to hub</a>
+    </div>
+
+    <div class="main-content">
+        <div class="tabs">
+            <button class="tab active" data-type="music" onclick="switchTab('music')">🎵 music</button>
+            <button class="tab" data-type="video" onclick="switchTab('video')">🎬 video</button>
+            <button class="tab" data-type="art" onclick="switchTab('art')">🖼️ art</button>
+        </div>
+
+        <div class="upload-section" onclick="openUploadModal()">
+            <div class="upload-icon" id="uploadIcon">📤</div>
+            <div class="upload-text">Upload New Work</div>
+            <div class="upload-subtext">Your work will be submitted for approval before appearing in main galleries</div>
+        </div>
+
+        <div class="gallery-grid" id="galleryGrid">
+            <!-- Populated by JavaScript -->
+        </div>
+    </div>
+
+    <!-- Upload Modal -->
+    <div class="modal" id="uploadModal">
+        <div class="modal-content">
+            <h2 class="modal-title">Upload <span id="modalType">Music</span></h2>
+            
+            <div class="form-group">
+                <label class="form-label">File</label>
+                <input type="file" id="fileInput" class="form-input" accept="*/*" onchange="handleFileSelect(event)">
+                <div id="filePreview" class="file-preview" style="display:none;"></div>
+            </div>
+
+            <div class="form-group">
+                <label class="form-label">Title *</label>
+                <input type="text" id="titleInput" class="form-input" placeholder="Enter title" required>
+            </div>
+
+            <div class="form-group">
+                <label class="form-label">Description</label>
+                <textarea id="descriptionInput" class="form-input" placeholder="Optional description"></textarea>
+            </div>
+
+            <div class="form-buttons">
+                <button class="btn btn-secondary" onclick="closeUploadModal()">Cancel</button>
+                <button class="btn btn-primary" onclick="submitUpload()" id="submitBtn">Upload</button>
+            </div>
+        </div>
+    </div>
+
+    <script type="module">
+        import { initializeApp } from 'https://www.gstatic.com/firebasejs/10.7.1/firebase-app.js';
+        import { getAuth, onAuthStateChanged } from 'https://www.gstatic.com/firebasejs/10.7.1/firebase-auth.js';
+        import { getFirestore, collection, query, where, getDocs, doc, getDoc, addDoc, deleteDoc, updateDoc, serverTimestamp } from 'https://www.gstatic.com/firebasejs/10.7.1/firebase-firestore.js';
+        import { getStorage, ref, uploadBytes, getDownloadURL, deleteObject } from 'https://www.gstatic.com/firebasejs/10.7.1/firebase-storage.js';
+
+        const firebaseConfig = {
+            apiKey: "AIzaSyCXFlGeJodOUVn-3bYocPhFRtzs9DBHEFA",
+            authDomain: "earthtown-92993.firebaseapp.com",
+            projectId: "earthtown-92993",
+            storageBucket: "earthtown-92993.firebasestorage.app",
+            messagingSenderId: "830730193161",
+            appId: "1:830730193161:web:af18953dd80872b1396bd8"
+        };
+
+        const app = initializeApp(firebaseConfig);
+        const auth = getAuth(app);
+        const db = getFirestore(app);
+        const storage = getStorage(app);
+
+        let currentUser = null;
+        let currentUserData = null;
+        let currentType = 'music';
+        let selectedFile = null;
+
+        const typeIcons = {
+            music: '🎵',
+            video: '🎬',
+            art: '🖼️'
+        };
+
+        onAuthStateChanged(auth, async (user) => {
+            if (user) {
+                currentUser = user;
+                
+                // Load user data
+                const userDoc = await getDoc(doc(db, 'users', user.uid));
+                if (userDoc.exists()) {
+                    currentUserData = userDoc.data();
+                }
+                
+                await loadUserGallery(currentType);
+            } else {
+                window.location.href = 'index.html';
+            }
+        });
+
+        window.switchTab = function(type) {
+            currentType = type;
+            document.querySelectorAll('.tab').forEach(tab => {
+                tab.classList.toggle('active', tab.dataset.type === type);
+            });
+            document.getElementById('uploadIcon').textContent = typeIcons[type];
+            loadUserGallery(type);
+        };
+
+        async function loadUserGallery(type) {
+            const grid = document.getElementById('galleryGrid');
+            grid.innerHTML = '<div style="text-align:center; padding:40px; color:#666;">Loading...</div>';
+
+            try {
+                const galleryQuery = query(
+                    collection(db, 'gallery'),
+                    where('userId', '==', currentUser.uid),
+                    where('type', '==', type)
+                );
+
+                const snapshot = await getDocs(galleryQuery);
+                
+                if (snapshot.empty) {
+                    grid.innerHTML = `
+                        <div class="empty-state">
+                            <div class="empty-icon">${typeIcons[type]}</div>
+                            <div class="empty-text">no ${type} uploaded yet</div>
+                        </div>
+                    `;
+                    return;
+                }
+
+                grid.innerHTML = '';
+                snapshot.forEach(docSnap => {
+                    const data = docSnap.data();
+                    grid.appendChild(createGalleryItem(docSnap.id, data));
+                });
+
+            } catch (error) {
+                console.error('Error loading gallery:', error);
+                grid.innerHTML = '<div style="text-align:center; padding:40px; color:#e63946;">Error loading gallery</div>';
+            }
+        }
+
+        function createGalleryItem(id, data) {
+            const item = document.createElement('div');
+            item.className = 'gallery-item';
+
+            const statusClass = data.status === 'approved' ? 'status-approved' : 
+                              data.status === 'rejected' ? 'status-rejected' : 'status-pending';
+            const statusText = data.status || 'pending';
+
+            item.innerHTML = `
+                <div class="item-image">
+                    ${data.thumbnailUrl ? `<img src="${data.thumbnailUrl}">` : typeIcons[data.type]}
+                </div>
+                <div class="item-info">
+                    <div class="item-title">${data.title || 'Untitled'}</div>
+                    ${data.description ? `<div class="item-description">${data.description}</div>` : ''}
+                    <div class="item-status ${statusClass}">${statusText}</div>
+                    <div class="item-actions">
+                        <button class="item-btn delete" onclick="deleteItem('${id}')">delete</button>
+                    </div>
+                </div>
+            `;
+
+            return item;
+        }
+
+        window.deleteItem = async function(itemId) {
+            if (!confirm('Delete this item? This cannot be undone.')) return;
+
+            try {
+                // TODO: Also delete files from Storage
+                await deleteDoc(doc(db, 'gallery', itemId));
+                loadUserGallery(currentType);
+            } catch (error) {
+                console.error('Error deleting:', error);
+                alert('Error deleting item');
+            }
+        };
+
+        window.openUploadModal = function() {
+            document.getElementById('uploadModal').classList.add('show');
+            document.getElementById('modalType').textContent = currentType;
+            
+            // Set file accept based on type
+            const acceptMap = {
+                music: 'audio/*',
+                video: 'video/*',
+                art: 'image/*'
+            };
+            document.getElementById('fileInput').setAttribute('accept', acceptMap[currentType]);
+        };
+
+        window.closeUploadModal = function() {
+            document.getElementById('uploadModal').classList.remove('show');
+            document.getElementById('fileInput').value = '';
+            document.getElementById('titleInput').value = '';
+            document.getElementById('descriptionInput').value = '';
+            document.getElementById('filePreview').style.display = 'none';
+            selectedFile = null;
+        };
+
+        window.handleFileSelect = function(event) {
+            selectedFile = event.target.files[0];
+            if (selectedFile) {
+                const preview = document.getElementById('filePreview');
+                preview.style.display = 'block';
+                preview.textContent = `Selected: ${selectedFile.name} (${(selectedFile.size / 1024 / 1024).toFixed(2)} MB)`;
+            }
+        };
+
+        window.submitUpload = async function() {
+            const title = document.getElementById('titleInput').value.trim();
+            const description = document.getElementById('descriptionInput').value.trim();
+
+            if (!selectedFile) {
+                alert('Please select a file');
+                return;
+            }
+
+            if (!title) {
+                alert('Please enter a title');
+                return;
+            }
+
+            const submitBtn = document.getElementById('submitBtn');
+            submitBtn.disabled = true;
+            submitBtn.textContent = 'Uploading...';
+
+            try {
+                // Upload file to Storage
+                const fileExt = selectedFile.name.split('.').pop();
+                const fileName = `${currentUser.uid}_${Date.now()}.${fileExt}`;
+                const filePath = `gallery/${currentType}/${fileName}`;
+                const fileRef = ref(storage, filePath);
+                
+                await uploadBytes(fileRef, selectedFile);
+                const fileUrl = await getDownloadURL(fileRef);
+
+                // Create Firestore document
+                await addDoc(collection(db, 'gallery'), {
+                    userId: currentUser.uid,
+                    username: currentUserData.username,
+                    type: currentType,
+                    title: title,
+                    description: description || '',
+                    fileUrl: fileUrl,
+                    filePath: filePath,
+                    status: 'pending',
+                    uploadedAt: serverTimestamp(),
+                    thumbnailUrl: currentType === 'art' ? fileUrl : null
+                });
+
+                alert('✓ Upload successful! Your work is now pending approval.');
+                closeUploadModal();
+                loadUserGallery(currentType);
+
+            } catch (error) {
+                console.error('Upload error:', error);
+                alert('Upload failed: ' + error.message);
+            } finally {
+                submitBtn.disabled = false;
+                submitBtn.textContent = 'Upload';
+            }
+        };
+    </script>
+</body>
+</html>

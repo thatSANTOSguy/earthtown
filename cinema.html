@@ -1,0 +1,266 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>earthtown - cinema</title>
+    <style>
+        @import url('https://fonts.googleapis.com/css2?family=VT323&family=Inter:wght@300;400;500;600&display=swap');
+
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: 'Inter', sans-serif;
+            background: #0a0a0a;
+            color: #f1faee;
+            min-height: 100vh;
+            user-select: none;
+        }
+
+        .header {
+            padding: 20px 40px;
+            background: rgba(241, 250, 238, 0.02);
+            border-bottom: 1px solid rgba(241, 250, 238, 0.1);
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+
+        .back-btn {
+            font-family: 'VT323', monospace;
+            font-size: 1.3rem;
+            color: #f1faee;
+            text-decoration: none;
+            padding: 8px 20px;
+            border: 1px solid rgba(241, 250, 238, 0.2);
+            border-radius: 6px;
+            transition: all 0.3s;
+            letter-spacing: 1px;
+        }
+
+        .back-btn:hover {
+            background: rgba(241, 250, 238, 0.05);
+        }
+
+        .page-title {
+            font-family: 'VT323', monospace;
+            font-size: 2.5rem;
+            letter-spacing: 2px;
+            position: relative;
+            padding-bottom: 10px;
+        }
+
+        .page-title::after {
+            content: '';
+            position: absolute;
+            bottom: 0;
+            left: 0;
+            width: 80px;
+            height: 2px;
+            background: linear-gradient(90deg, #d62828, #6a4c93);
+            opacity: 0.6;
+        }
+
+        .main-content {
+            max-width: 1400px;
+            margin: 0 auto;
+            padding: 40px;
+        }
+
+        .featured-video {
+            background: rgba(241, 250, 238, 0.03);
+            border: 1px solid rgba(241, 250, 238, 0.15);
+            border-radius: 16px;
+            padding: 40px;
+            margin-bottom: 40px;
+        }
+
+        .video-player {
+            width: 100%;
+            aspect-ratio: 16/9;
+            background: rgba(0, 0, 0, 0.5);
+            border-radius: 12px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 4rem;
+            margin-bottom: 20px;
+        }
+
+        .video-info {
+            display: flex;
+            justify-content: space-between;
+            align-items: flex-start;
+        }
+
+        .video-title {
+            font-family: 'VT323', monospace;
+            font-size: 2rem;
+            color: #f1faee;
+            margin-bottom: 10px;
+            letter-spacing: 1px;
+        }
+
+        .video-creator {
+            color: #888;
+            font-size: 1.1rem;
+        }
+
+        .upload-btn {
+            padding: 12px 30px;
+            background: #f1faee;
+            color: #0a0a0a;
+            border: none;
+            border-radius: 8px;
+            font-family: 'VT323', monospace;
+            font-size: 1.3rem;
+            cursor: pointer;
+            letter-spacing: 1px;
+            position: relative;
+            overflow: hidden;
+        }
+
+        .upload-btn::after {
+            content: '';
+            position: absolute;
+            bottom: 0;
+            left: 0;
+            width: 100%;
+            height: 3px;
+            background: linear-gradient(90deg, #f77f00, #d62828, #6a4c93);
+        }
+
+        .section-title {
+            font-family: 'VT323', monospace;
+            font-size: 2rem;
+            color: #f1faee;
+            margin-bottom: 25px;
+            letter-spacing: 2px;
+        }
+
+        .videos-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fill, minmax(300px, 1fr));
+            gap: 25px;
+        }
+
+        .video-card {
+            background: rgba(241, 250, 238, 0.03);
+            border: 1px solid rgba(241, 250, 238, 0.1);
+            border-radius: 12px;
+            overflow: hidden;
+            transition: all 0.3s;
+            cursor: pointer;
+        }
+
+        .video-card:hover {
+            background: rgba(241, 250, 238, 0.06);
+            border-color: rgba(241, 250, 238, 0.25);
+            transform: translateY(-3px);
+        }
+
+        .video-thumbnail {
+            width: 100%;
+            aspect-ratio: 16/9;
+            background: rgba(241, 250, 238, 0.05);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 3rem;
+        }
+
+        .video-card-info {
+            padding: 20px;
+        }
+
+        .video-card-title {
+            font-family: 'VT323', monospace;
+            font-size: 1.3rem;
+            color: #f1faee;
+            margin-bottom: 8px;
+            letter-spacing: 1px;
+        }
+
+        .video-card-creator {
+            font-size: 0.9rem;
+            color: #888;
+            margin-bottom: 10px;
+        }
+
+        .video-card-meta {
+            display: flex;
+            justify-content: space-between;
+            font-size: 0.85rem;
+            color: #666;
+        }
+    </style>
+</head>
+<body>
+    <div class="header">
+        <h1 class="page-title">🎬 cinema</h1>
+        <a href="hub.html" class="back-btn">← back to hub</a>
+    </div>
+
+    <div class="main-content">
+        <div class="featured-video">
+            <div class="video-player">🎬</div>
+            <div class="video-info">
+                <div>
+                    <h2 class="video-title">featured: journey through sound</h2>
+                    <p class="video-creator">by creative_soul</p>
+                </div>
+                <button class="upload-btn" onclick="handleVideoUpload()">📹 upload</button>
+            </div>
+        </div>
+
+        <h2 class="section-title">Community Videos</h2>
+        <div class="videos-grid">
+            <div class="video-card">
+                <div class="video-thumbnail">🎬</div>
+                <div class="video-card-info">
+                    <div class="video-card-title">creative process</div>
+                    <div class="video-card-creator">by midnight_artist</div>
+                    <div class="video-card-meta">
+                        <span>12:30</span>
+                        <span>320 views</span>
+                    </div>
+                </div>
+            </div>
+
+            <div class="video-card">
+                <div class="video-thumbnail">🎬</div>
+                <div class="video-card-info">
+                    <div class="video-card-title">studio session</div>
+                    <div class="video-card-creator">by sonic_explorer</div>
+                    <div class="video-card-meta">
+                        <span>8:45</span>
+                        <span>180 views</span>
+                    </div>
+                </div>
+            </div>
+
+            <div class="video-card">
+                <div class="video-thumbnail">🎬</div>
+                <div class="video-card-info">
+                    <div class="video-card-title">visual experiments</div>
+                    <div class="video-card-creator">by pixel_dreamer</div>
+                    <div class="video-card-meta">
+                        <span>15:20</span>
+                        <span>450 views</span>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        function handleVideoUpload() {
+            alert('Video upload feature coming soon! Will support MP4, WebM, and embed links.');
+        }
+    </script>
+</body>
+</html>

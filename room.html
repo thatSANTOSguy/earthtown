@@ -1,0 +1,2478 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>earthtown - the sanctuary</title>
+    <style>
+        @import url('https://fonts.googleapis.com/css2?family=VT323&family=Inter:wght@300;400;500&display=swap');
+
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: 'Inter', sans-serif;
+            background: #0a0a0a;
+            color: #e8e8e8;
+            overflow: hidden;
+            height: 100vh;
+            user-select: none;
+            -webkit-user-select: none;
+            -moz-user-select: none;
+        }
+        
+        /* Dreamcore floating background */
+        body::before {
+            content: '';
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: 
+                radial-gradient(circle at 15% 20%, rgba(168, 212, 232, 0.04) 0%, transparent 40%),
+                radial-gradient(circle at 85% 75%, rgba(127, 194, 155, 0.04) 0%, transparent 40%),
+                radial-gradient(circle at 50% 50%, rgba(247, 127, 0, 0.02) 0%, transparent 50%);
+            pointer-events: none;
+            z-index: 0;
+            animation: dreamFloat 25s ease-in-out infinite alternate;
+        }
+        
+        @keyframes dreamFloat {
+            0% { opacity: 0.4; transform: scale(1); }
+            100% { opacity: 0.7; transform: scale(1.05); }
+        }
+
+        /* Room container */
+        .room-container {
+            display: grid;
+            grid-template-rows: auto 1fr auto;
+            height: 100vh;
+        }
+
+        /* Header */
+        .room-header {
+            background: rgba(0, 0, 0, 0.05);
+            border-bottom: 2px solid rgba(241, 250, 238, 0.2);
+            padding: 15px 30px;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            backdrop-filter: blur(10px);
+        }
+
+        .room-info {
+            display: flex;
+            align-items: center;
+            gap: 20px;
+        }
+
+        .back-button {
+            font-family: 'VT323', monospace;
+            font-size: 1.2rem;
+            color: #a8a8a8;
+            text-decoration: none;
+            padding: 8px 15px;
+            border: 2px solid rgba(255, 255, 255, 0.2);
+            border-radius: 6px;
+            transition: all 0.3s ease;
+        }
+
+        .back-button:hover {
+            color: #f1faee;
+            border-color: rgba(241, 250, 238, 0.4);
+        }
+
+        .room-title {
+            font-family: 'VT323', monospace;
+            font-size: 2rem;
+            color: #f1faee;
+            display: flex;
+            align-items: center;
+            gap: 10px;
+        }
+
+        .online-indicator {
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            font-size: 0.9rem;
+            color: #888;
+        }
+
+        .pulse-dot {
+            width: 10px;
+            height: 10px;
+            background: #6b8e6b;
+            border-radius: 50%;
+            animation: pulse-glow 2s infinite;
+            box-shadow: 0 0 8px rgba(107, 142, 107, 0.6);
+        }
+
+        @keyframes pulse-glow {
+            0%, 100% { 
+                opacity: 1; 
+                transform: scale(1);
+                box-shadow: 0 0 8px rgba(107, 142, 107, 0.6);
+            }
+            50% { 
+                opacity: 0.7; 
+                transform: scale(0.95);
+                box-shadow: 0 0 15px rgba(107, 142, 107, 0.8);
+            }
+        }
+
+        /* Main area */
+        .main-area {
+            display: grid;
+            grid-template-columns: 1fr 350px;
+            height: 100%;
+            overflow: hidden;
+        }
+
+        /* Room space */
+        .room-space {
+            position: relative;
+            background: #0a0a0a;
+            overflow: visible;
+        }
+
+        .room-ambient {
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            pointer-events: none;
+            opacity: 0.3;
+        }
+
+        .ambient-orb {
+            position: absolute;
+            border-radius: 50%;
+            filter: blur(80px);
+            animation: float-ambient 25s infinite ease-in-out;
+        }
+
+        .orb-1 {
+            width: 400px;
+            height: 400px;
+            background: rgba(139, 115, 139, 0.05);
+            top: -100px;
+            left: -100px;
+        }
+
+        .orb-2 {
+            width: 300px;
+            height: 300px;
+            background: rgba(107, 142, 107, 0.05);
+            bottom: -50px;
+            right: -50px;
+            animation-delay: 8s;
+        }
+
+        @keyframes float-ambient {
+            0%, 100% { transform: translate(0, 0); }
+            50% { transform: translate(50px, -50px); }
+        }
+
+        /* Avatars */
+        .avatars-layer {
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            overflow: visible;
+        }
+
+        .avatar {
+            position: absolute;
+            cursor: pointer;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            gap: 8px;
+            pointer-events: auto;
+            user-select: none;
+            -webkit-user-select: none;
+            transition: transform 0.3s cubic-bezier(0.68, -0.55, 0.265, 1.55);
+        }
+        
+        .avatar:hover {
+            transform: scale(1.05);
+            z-index: 10;
+        }
+
+        .avatar-image {
+            width: 150px;
+            height: 150px;
+            image-rendering: pixelated;
+            position: relative;
+            overflow: visible;
+        }
+
+        .avatar-image * {
+            overflow: visible;
+        }
+
+        .avatar-image img {
+            width: 100%;
+            height: 100%;
+            image-rendering: pixelated;
+            filter: drop-shadow(0 0 6px rgba(241, 250, 238, 0.3));
+            background: none;
+            pointer-events: none;
+            user-select: none;
+            -webkit-user-drag: none;
+        }
+
+        .avatar.current-user .avatar-image img {
+            filter: drop-shadow(0 0 10px rgba(241, 250, 238, 0.5));
+        }
+
+        .avatar-name {
+            font-family: 'VT323', monospace;
+            font-size: 1rem;
+            background: rgba(0, 0, 0, 0.05);
+            padding: 3px 10px;
+            border-radius: 4px;
+            text-shadow: 0 2px 4px rgba(0, 0, 0, 0.5);
+            white-space: nowrap;
+        }
+
+        /* Archetype colors */
+        .archetype-hero { color: #f1faee; }
+        .archetype-sage { color: #9b87c7; }
+        .archetype-explorer { color: #7fc29b; }
+        .archetype-rebel { color: #c77a7a; }
+        .archetype-magician { color: #c79bd9; }
+        .archetype-lover { color: #d99ba3; }
+        .archetype-jester { color: #f0c77a; }
+        .archetype-innocent { color: #b5d4e8; }
+        .archetype-caregiver { color: #a8d4a8; }
+        .archetype-ruler { color: #f1faee; }
+        .archetype-creator { color: #c7a77a; }
+        .archetype-everyman { color: #a8a8a8; }
+
+        /* Avatar detail popup */
+        .avatar-detail {
+            position: fixed;
+            background: rgba(0, 0, 0, 0.05);
+            border: 3px solid rgba(241, 250, 238, 0.4);
+            border-radius: 12px;
+            padding: 25px;
+            min-width: 250px;
+            z-index: 1000;
+            backdrop-filter: blur(10px);
+            animation: popIn 0.3s ease;
+        }
+
+        @keyframes popIn {
+            from {
+                opacity: 0;
+                transform: scale(0.8);
+            }
+            to {
+                opacity: 1;
+                transform: scale(1);
+            }
+        }
+
+        .detail-header {
+            display: flex;
+            align-items: center;
+            gap: 15px;
+            padding-bottom: 15px;
+            border-bottom: 2px solid rgba(241, 250, 238, 0.2);
+        }
+
+        .detail-avatar {
+            width: 70px;
+            height: 70px;
+            image-rendering: pixelated;
+        }
+
+        .detail-avatar img {
+            width: 100%;
+            height: 100%;
+            image-rendering: pixelated;
+        }
+
+        .detail-info {
+            flex: 1;
+        }
+
+        .detail-username {
+            font-family: 'VT323', monospace;
+            font-size: 1.5rem;
+            margin-bottom: 5px;
+        }
+
+        .detail-archetype {
+            font-family: 'VT323', monospace;
+            font-size: 1.1rem;
+            opacity: 0.8;
+        }
+
+        .detail-close {
+            position: absolute;
+            top: 10px;
+            right: 10px;
+            width: 30px;
+            height: 30px;
+            background: rgba(255, 255, 255, 0.1);
+            border: 2px solid rgba(255, 255, 255, 0.2);
+            border-radius: 6px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            font-size: 1.2rem;
+            color: #888;
+        }
+
+        .detail-close:hover {
+            background: rgba(255, 255, 255, 0.2);
+            border-color: rgba(241, 250, 238, 0.4);
+            color: #f1faee;
+        }
+
+        /* Chat sidebar */
+        .chat-sidebar {
+            background: rgba(0, 0, 0, 0.05);
+            border-left: 2px solid rgba(241, 250, 238, 0.2);
+            display: flex;
+            flex-direction: column;
+            backdrop-filter: blur(10px);
+        }
+
+        .chat-header {
+            padding: 20px;
+            border-bottom: 2px solid rgba(241, 250, 238, 0.2);
+        }
+
+        .chat-title {
+            font-family: 'VT323', monospace;
+            font-size: 1.5rem;
+            color: #f1faee;
+            margin-bottom: 10px;
+        }
+
+        .users-in-room {
+            font-size: 0.85rem;
+            color: #888;
+        }
+
+        .chat-messages {
+            flex: 1;
+            overflow-y: auto;
+            padding: 20px;
+            display: flex;
+            flex-direction: column;
+            gap: 15px;
+        }
+
+        .message {
+            display: flex;
+            gap: 10px;
+            animation: messageSlideIn 0.3s ease;
+        }
+
+        @keyframes messageSlideIn {
+            from {
+                opacity: 0;
+                transform: translateX(20px);
+            }
+            to {
+                opacity: 1;
+                transform: translateX(0);
+            }
+        }
+
+        .message-avatar {
+            width: 32px;
+            height: 32px;
+            border-radius: 6px;
+            flex-shrink: 0;
+            image-rendering: pixelated;
+        }
+
+        .message-content {
+            flex: 1;
+            min-width: 0;
+        }
+
+        .message-header {
+            display: flex;
+            align-items: baseline;
+            gap: 8px;
+            margin-bottom: 3px;
+        }
+
+        .message-author {
+            font-family: 'VT323', monospace;
+            font-size: 1rem;
+        }
+
+        .message-time {
+            font-size: 0.7rem;
+            color: #666;
+        }
+
+        .message-text {
+            font-size: 0.9rem;
+            color: #ccc;
+            line-height: 1.4;
+            word-wrap: break-word;
+        }
+
+        .chat-input-container {
+            padding: 20px;
+            border-top: 2px solid rgba(241, 250, 238, 0.2);
+        }
+
+        .chat-input {
+            width: 100%;
+            padding: 12px 15px;
+            background: rgba(0, 0, 0, 0.05);
+            border: 2px solid rgba(255, 255, 255, 0.2);
+            border-radius: 8px;
+            color: #e8e8e8;
+            font-family: 'Inter', sans-serif;
+            font-size: 0.95rem;
+            transition: all 0.3s ease;
+        }
+
+        .chat-input:focus {
+            outline: none;
+            border-color: rgba(241, 250, 238, 0.6);
+            background: rgba(0, 0, 0, 0.05);
+        }
+
+        .chat-input::placeholder {
+            color: #666;
+        }
+
+        /* Music control */
+        .music-control {
+            background: rgba(0, 0, 0, 0.05);
+            border-top: 2px solid rgba(241, 250, 238, 0.2);
+            padding: 20px 30px;
+            display: flex;
+            align-items: center;
+            gap: 20px;
+            backdrop-filter: blur(10px);
+        }
+
+        .now-playing {
+            flex: 1;
+            display: flex;
+            align-items: center;
+            gap: 15px;
+        }
+
+        .album-art {
+            width: 50px;
+            height: 50px;
+            background: rgba(241, 250, 238, 0.2);
+            border-radius: 6px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 1.5rem;
+        }
+
+        .track-info {
+            flex: 1;
+            min-width: 0;
+        }
+
+        .track-title {
+            font-family: 'VT323', monospace;
+            font-size: 1.2rem;
+            color: #f1faee;
+            white-space: nowrap;
+            overflow: hidden;
+            text-overflow: ellipsis;
+        }
+
+        .track-artist {
+            font-size: 0.85rem;
+            color: #888;
+        }
+
+        .playback-controls {
+            display: flex;
+            gap: 10px;
+        }
+
+        .control-btn {
+            width: 40px;
+            height: 40px;
+            background: rgba(241, 250, 238, 0.2);
+            border: 2px solid rgba(241, 250, 238, 0.4);
+            border-radius: 8px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            font-size: 1.2rem;
+        }
+
+        .control-btn:hover {
+            background: rgba(241, 250, 238, 0.05);
+            border-color: rgba(241, 250, 238, 0.6);
+            transform: scale(1.05);
+        }
+
+        .queue-btn {
+            font-family: 'VT323', monospace;
+            font-size: 1rem;
+            padding: 10px 20px;
+            background: transparent;
+            border: 2px solid rgba(241, 250, 238, 0.4);
+            border-radius: 6px;
+            color: #f1faee;
+            cursor: pointer;
+            transition: all 0.3s ease;
+        }
+
+        .queue-btn:hover {
+            background: rgba(241, 250, 238, 0.2);
+            border-color: rgba(241, 250, 238, 0.6);
+        }
+
+        /* Responsive */
+        @media (max-width: 1024px) {
+            .main-area {
+                grid-template-columns: 1fr;
+                grid-template-rows: 1fr auto;
+            }
+
+            .chat-sidebar {
+                border-left: none;
+                border-top: 2px solid rgba(241, 250, 238, 0.2);
+                max-height: 40vh;
+            }
+        }
+
+        /* Scrollbar */
+        ::-webkit-scrollbar {
+            width: 6px;
+        }
+
+        ::-webkit-scrollbar-track {
+            background: rgba(0, 0, 0, 0.05);
+        }
+
+        ::-webkit-scrollbar-thumb {
+            background: rgba(241, 250, 238, 0.05);
+            border-radius: 3px;
+        }
+
+        ::-webkit-scrollbar-thumb:hover {
+            background: rgba(241, 250, 238, 0.05);
+        }
+    
+    /* Music Modal */
+    .modal {
+        position: fixed;
+        top: 0;
+        left: 0;
+        width: 100%;
+        height: 100%;
+        z-index: 3000;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+    }
+
+    .modal-overlay {
+        position: absolute;
+        top: 0;
+        left: 0;
+        width: 100%;
+        height: 100%;
+        background: rgba(0, 0, 0, 0.9);
+        backdrop-filter: blur(10px);
+    }
+
+    .modal-content {
+        position: relative;
+        background: #0a0a0a;
+        border: 2px solid rgba(241, 250, 238, 0.2);
+        border-radius: 16px;
+        width: 90%;
+        max-width: 700px;
+        max-height: 85vh;
+        overflow: hidden;
+        display: flex;
+        flex-direction: column;
+    }
+
+    .modal-header {
+        padding: 25px 30px;
+        border-bottom: 1px solid rgba(241, 250, 238, 0.1);
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+    }
+
+    .modal-header h2 {
+        font-family: 'VT323', monospace;
+        font-size: 2.2rem;
+        color: #f1faee;
+        letter-spacing: 2px;
+    }
+
+    .modal-close {
+        background: none;
+        border: none;
+        color: #f1faee;
+        font-size: 2.5rem;
+        cursor: pointer;
+        line-height: 1;
+    }
+
+    .queue-tabs {
+        display: flex;
+        border-bottom: 1px solid rgba(241, 250, 238, 0.1);
+    }
+
+    .tab-btn {
+        flex: 1;
+        padding: 18px;
+        background: none;
+        border: none;
+        color: #888;
+        font-family: 'VT323', monospace;
+        font-size: 1.3rem;
+        cursor: pointer;
+        transition: all 0.3s;
+        letter-spacing: 1px;
+        position: relative;
+    }
+
+    .tab-btn.active {
+        color: #f1faee;
+    }
+
+    .tab-btn.active::after {
+        content: '';
+        position: absolute;
+        bottom: 0;
+        left: 0;
+        width: 100%;
+        height: 2px;
+        background: linear-gradient(90deg, #f77f00, #d62828, #6a4c93);
+    }
+
+    .queue-section {
+        padding: 25px 30px;
+        overflow-y: auto;
+        display: none;
+        flex: 1;
+    }
+
+    .queue-section.active {
+        display: block;
+    }
+
+    .upload-area {
+        margin-bottom: 25px;
+    }
+
+    .upload-box {
+        border: 2px dashed rgba(241, 250, 238, 0.2);
+        padding: 40px 30px;
+        text-align: center;
+        cursor: pointer;
+        border-radius: 12px;
+        transition: all 0.3s;
+        margin-bottom: 15px;
+    }
+
+    .upload-box:hover {
+        border-color: rgba(45, 106, 79, 0.4);
+        background: rgba(45, 106, 79, 0.05);
+    }
+
+    .upload-icon {
+        font-size: 3rem;
+        display: block;
+        margin-bottom: 10px;
+    }
+
+    .upload-box p {
+        color: #888;
+        font-size: 0.95rem;
+    }
+
+    .url-input-group {
+        display: flex;
+        gap: 12px;
+    }
+
+    .url-input-group input {
+        flex: 1;
+        padding: 12px 18px;
+        background: rgba(241, 250, 238, 0.03);
+        border: 1px solid rgba(241, 250, 238, 0.15);
+        border-radius: 8px;
+        color: #f1faee;
+        font-family: 'Inter', sans-serif;
+        font-size: 0.95rem;
+    }
+
+    .url-input-group input::placeholder {
+        color: #555;
+    }
+
+    .url-input-group button {
+        padding: 12px 30px;
+        background: #2d6a4f;
+        border: none;
+        border-radius: 8px;
+        color: #f1faee;
+        font-family: 'VT323', monospace;
+        font-size: 1.2rem;
+        cursor: pointer;
+        letter-spacing: 1px;
+    }
+
+    .queue-list {
+        display: flex;
+        flex-direction: column;
+        gap: 10px;
+    }
+
+    .queue-item {
+        padding: 15px 18px;
+        background: rgba(241, 250, 238, 0.03);
+        border: 1px solid rgba(241, 250, 238, 0.1);
+        border-radius: 8px;
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+    }
+
+    .queue-item-info {
+        flex: 1;
+    }
+
+    .queue-item-title {
+        font-family: 'VT323', monospace;
+        font-size: 1.2rem;
+        color: #f1faee;
+        margin-bottom: 5px;
+    }
+
+    .queue-item-artist {
+        font-size: 0.9rem;
+        color: #888;
+    }
+
+    .queue-item-time {
+        font-family: 'VT323', monospace;
+        font-size: 1.1rem;
+        color: #888;
+        margin-left: 20px;
+    }
+
+    .pod-info {
+        text-align: center;
+        padding: 50px 30px;
+    }
+
+    .pod-icon {
+        font-size: 4rem;
+        margin-bottom: 20px;
+    }
+
+    .pod-info h3 {
+        font-family: 'VT323', monospace;
+        font-size: 2rem;
+        color: #f1faee;
+        margin-bottom: 15px;
+        letter-spacing: 2px;
+    }
+
+    .pod-info p {
+        color: #888;
+        margin-bottom: 30px;
+        line-height: 1.6;
+    }
+
+    .pod-enter-btn {
+        padding: 14px 40px;
+        background: #f1faee;
+        border: none;
+        border-radius: 8px;
+        color: #0a0a0a;
+        font-family: 'VT323', monospace;
+        font-size: 1.5rem;
+        cursor: pointer;
+        letter-spacing: 2px;
+        position: relative;
+    }
+
+    .pod-enter-btn::after {
+        content: '';
+        position: absolute;
+        bottom: 0;
+        left: 0;
+        width: 100%;
+        height: 3px;
+        background: linear-gradient(90deg, #f77f00, #d62828, #6a4c93);
+    }
+
+    
+        /* Vote Notification */
+        .vote-notification {
+            position: fixed;
+            top: 80px;
+            left: 50%;
+            transform: translateX(-50%);
+            background: rgba(10, 10, 10, 0.95);
+            border: 2px solid rgba(241, 250, 238, 0.3);
+            border-radius: 12px;
+            padding: 25px 35px;
+            z-index: 2500;
+            display: none;
+            min-width: 400px;
+        }
+
+        .vote-notification.show {
+            display: block;
+            animation: slideDown 0.3s ease;
+        }
+
+        @keyframes slideDown {
+            from { transform: translateX(-50%) translateY(-20px); opacity: 0; }
+            to { transform: translateX(-50%) translateY(0); opacity: 1; }
+        }
+
+        .vote-title {
+            font-family: 'VT323', monospace;
+            font-size: 1.5rem;
+            color: #f1faee;
+            margin-bottom: 15px;
+            text-align: center;
+            letter-spacing: 1px;
+        }
+
+        .vote-options {
+            display: flex;
+            gap: 15px;
+            margin-bottom: 15px;
+        }
+
+        .vote-btn {
+            flex: 1;
+            padding: 12px;
+            border: 2px solid rgba(241, 250, 238, 0.2);
+            border-radius: 8px;
+            background: transparent;
+            color: #f1faee;
+            font-family: 'VT323', monospace;
+            font-size: 1.3rem;
+            cursor: pointer;
+            transition: all 0.3s;
+            letter-spacing: 1px;
+        }
+
+        .vote-btn:hover {
+            background: rgba(241, 250, 238, 0.1);
+            border-color: rgba(241, 250, 238, 0.4);
+        }
+
+        .vote-btn.yes {
+            border-color: rgba(45, 106, 79, 0.4);
+        }
+
+        .vote-btn.yes:hover {
+            background: rgba(45, 106, 79, 0.2);
+            border-color: #2d6a4f;
+        }
+
+        .vote-btn.no {
+            border-color: rgba(230, 57, 70, 0.4);
+        }
+
+        .vote-btn.no:hover {
+            background: rgba(230, 57, 70, 0.2);
+            border-color: #e63946;
+        }
+
+        .vote-progress {
+            text-align: center;
+            font-size: 0.9rem;
+            color: #888;
+            margin-top: 10px;
+        }
+
+        .vote-bar {
+            width: 100%;
+            height: 4px;
+            background: rgba(241, 250, 238, 0.1);
+            border-radius: 2px;
+            margin-top: 8px;
+            overflow: hidden;
+        }
+
+        .vote-bar-fill {
+            height: 100%;
+            background: linear-gradient(90deg, #f77f00, #d62828);
+            width: 0%;
+            transition: width 0.3s;
+        }
+
+        .mode-indicator {
+            font-family: 'VT323', monospace;
+            letter-spacing: 1px;
+        }
+
+    </style>
+</head>
+<body>
+    <div class="room-container">
+        <div class="room-header">
+            <div class="room-info">
+                <a href="#" class="back-button" onclick="goToHub()">← hub</a>
+                <h1 class="room-title" id="roomTitle">
+                    <span id="roomIcon">🌙</span>
+                    <span id="roomName">the sanctuary</span>
+                </h1>
+            </div>
+            <div class="online-indicator">
+                <span class="pulse-dot"></span>
+                <span id="onlineCount">7 present</span>
+            </div>
+        </div>
+
+        <div class="main-area">
+            <div class="room-space" id="roomSpace">
+                <div class="room-ambient">
+                    <div class="ambient-orb orb-1"></div>
+                    <div class="ambient-orb orb-2"></div>
+                </div>
+                <div class="avatars-layer" id="avatarsLayer"></div>
+            </div>
+
+            <div class="chat-sidebar">
+                <div class="chat-header">
+                    <div class="chat-title">room chat</div>
+                    <div class="users-in-room" id="usersInRoom">7 people here</div>
+                </div>
+                <div class="chat-messages" id="chatMessages"></div>
+                <div class="chat-input-container">
+                    <input type="text" class="chat-input" id="chatInput" placeholder="say something..." maxlength="500">
+                </div>
+            </div>
+        </div>
+
+        <div class="music-control">
+            <div class="now-playing">
+                <div class="album-art">🎵</div>
+                <div class="track-info">
+                    <div class="mode-indicator" id="modeIndicator" style="font-size: 0.85rem; color: #2d6a4f; margin-bottom: 5px;">
+                        🌍 listening with room
+                    </div>
+                    <div class="track-title" id="nowPlayingTitle">no track playing</div>
+                    <div class="track-artist" id="nowPlayingArtist">upload or add a track</div>
+                </div>
+            </div>
+            <div class="playback-controls">
+                <button class="control-btn" id="modeToggleBtn" onclick="toggleListeningMode()" style="background: rgba(45, 106, 79, 0.2); color: #f1faee; font-weight: 500;">
+                    🎧 solo
+                </button>
+                <button class="control-btn" onclick="previousTrack()">⏮</button>
+                <button class="control-btn" onclick="togglePlayback()" id="playBtn">▶</button>
+                <button class="control-btn" onclick="nextTrack()">⏭</button>
+            </div>
+            <button class="queue-btn" onclick="openQueue()">queue</button>
+        </div>
+    </div>
+
+    <!-- Firebase SDKs -->
+    <script>
+        // Expose critical UI functions IMMEDIATELY (before module loads)
+        // These need to be available for onclick handlers
+        
+        // Music queue state (available immediately)
+        let tempQueue = [];
+        let audioPlayer = null;
+        
+        window.openQueue = function() {
+            console.log('openQueue called');
+            const modal = document.getElementById('queueModal');
+            if (modal) {
+                modal.style.display = 'flex';
+                console.log('Modal opened');
+            } else {
+                console.error('Queue modal not found!');
+            }
+        };
+        
+        window.closeQueue = function() {
+            const modal = document.getElementById('queueModal');
+            if (modal) {
+                modal.style.display = 'none';
+            }
+        };
+        
+        window.enterPod = function() {
+            alert('Private pod: Your personal listening space (Firebase sync coming soon)');
+            window.closeQueue();
+        };
+        
+        // File upload handler
+        window.handleFileUpload = function(event) {
+            console.log('handleFileUpload called');
+            const file = event.target.files[0];
+            if (!file) {
+                console.log('No file selected');
+                return;
+            }
+            
+            console.log('File selected:', file.name, file.type);
+            
+            // Create object URL for immediate playback
+            const url = URL.createObjectURL(file);
+            
+            const track = {
+                type: 'file',
+                title: file.name.replace(/\.[^/.]+$/, ''),
+                artist: 'Local Upload',
+                url: url,
+                duration: '0:00'
+            };
+            
+            // Add to temp queue
+            tempQueue.push(track);
+            console.log('Track added to queue:', track.title);
+            
+            // Add to UI
+            addToQueueUI(track.title, track.artist, track.duration);
+            
+            // Try to play if audio element exists
+            if (!audioPlayer) {
+                audioPlayer = document.getElementById('audioPlayer');
+            }
+            
+            if (audioPlayer && !audioPlayer.src) {
+                audioPlayer.src = url;
+                console.log('Audio source set, ready to play');
+                
+                // Update now playing
+                const titleEl = document.getElementById('nowPlayingTitle');
+                const artistEl = document.getElementById('nowPlayingArtist');
+                if (titleEl) titleEl.textContent = track.title;
+                if (artistEl) artistEl.textContent = track.artist;
+            }
+            
+            // Show feedback
+            alert(`✓ Added: ${track.title}\nClick play button to hear it!`);
+        };
+        
+        // URL handler
+        window.addFromURL = function() {
+            const urlInput = document.getElementById('urlInput');
+            const url = urlInput ? urlInput.value.trim() : '';
+            
+            if (!url) {
+                alert('Please paste a URL first');
+                return;
+            }
+            
+            console.log('URL submitted:', url);
+            
+            let track = null;
+            
+            // YouTube
+            if (url.includes('youtube.com') || url.includes('youtu.be')) {
+                const videoId = extractYouTubeID(url);
+                if (!videoId) {
+                    alert('Could not extract YouTube video ID. Please check the URL.');
+                    return;
+                }
+                
+                track = {
+                    type: 'youtube',
+                    title: 'YouTube Video',
+                    artist: 'YouTube',
+                    url: url,
+                    videoId: videoId,
+                    embedUrl: `https://www.youtube.com/embed/${videoId}?enablejsapi=1`,
+                    duration: '0:00'
+                };
+                
+                console.log('YouTube track created:', track);
+            }
+            // SoundCloud
+            else if (url.includes('soundcloud.com')) {
+                track = {
+                    type: 'soundcloud',
+                    title: 'SoundCloud Track',
+                    artist: 'SoundCloud',
+                    url: url,
+                    embedUrl: `https://w.soundcloud.com/player/?url=${encodeURIComponent(url)}&auto_play=false&show_artwork=true`,
+                    duration: '0:00'
+                };
+                
+                console.log('SoundCloud track created:', track);
+            }
+            // Direct audio URL
+            else {
+                track = {
+                    type: 'url',
+                    title: 'External Track',
+                    artist: 'External Link',
+                    url: url,
+                    duration: '0:00'
+                };
+            }
+            
+            if (track) {
+                tempQueue.push(track);
+                addToQueueUI(track.title, track.artist, track.duration);
+                urlInput.value = '';
+                
+                // If no track playing, set this one
+                if (!audioPlayer) audioPlayer = document.getElementById('audioPlayer');
+                
+                if (track.type === 'youtube' || track.type === 'soundcloud') {
+                    // For embeds, we'll need a different player
+                    switchToEmbedPlayer(track);
+                    alert(`✓ Added: ${track.title}\n\nClick play button to start!`);
+                } else {
+                    // For direct URLs, use audio element
+                    if (audioPlayer && !audioPlayer.src) {
+                        audioPlayer.src = track.url;
+                    }
+                    alert('✓ Added to queue');
+                }
+            }
+        };
+        
+        // Extract YouTube video ID from various URL formats
+        function extractYouTubeID(url) {
+            const patterns = [
+                /(?:youtube\.com\/watch\?v=|youtu\.be\/|youtube\.com\/embed\/)([^&\?\/]+)/,
+                /youtube\.com\/watch\?.*v=([^&]+)/
+            ];
+            
+            for (let pattern of patterns) {
+                const match = url.match(pattern);
+                if (match && match[1]) {
+                    return match[1];
+                }
+            }
+            return null;
+        }
+        
+        // Switch to iframe-based player for YouTube/SoundCloud
+        function switchToEmbedPlayer(track) {
+            // Hide regular audio controls
+            const musicControl = document.querySelector('.music-control');
+            if (musicControl) {
+                // Store original HTML to restore later
+                if (!window.originalMusicControl) {
+                    window.originalMusicControl = musicControl.innerHTML;
+                }
+            }
+            
+            // Create or update embed container
+            let embedContainer = document.getElementById('embedPlayer');
+            if (!embedContainer) {
+                embedContainer = document.createElement('div');
+                embedContainer.id = 'embedPlayer';
+                embedContainer.style.cssText = `
+                    position: fixed;
+                    bottom: 0;
+                    left: 0;
+                    right: 0;
+                    height: 120px;
+                    background: rgba(10, 10, 10, 0.98);
+                    border-top: 1px solid rgba(241, 250, 238, 0.2);
+                    z-index: 2000;
+                    display: flex;
+                    align-items: center;
+                    justify-content: center;
+                    padding: 10px;
+                `;
+                document.body.appendChild(embedContainer);
+            }
+            
+            // Clear and add iframe
+            embedContainer.innerHTML = `
+                <div style="width: 100%; max-width: 1200px; display: flex; align-items: center; gap: 20px;">
+                    <div style="flex: 1;">
+                        <iframe 
+                            id="embedIframe"
+                            src="${track.embedUrl}"
+                            width="100%" 
+                            height="100"
+                            frameborder="0"
+                            allow="autoplay; encrypted-media"
+                            style="border-radius: 8px;"
+                        ></iframe>
+                    </div>
+                    <button onclick="closeEmbedPlayer()" style="
+                        padding: 10px 20px;
+                        background: rgba(230, 57, 70, 0.2);
+                        border: 1px solid #e63946;
+                        border-radius: 6px;
+                        color: #f1faee;
+                        cursor: pointer;
+                        font-family: 'VT323', monospace;
+                        font-size: 1.2rem;
+                    ">close player</button>
+                </div>
+            `;
+            
+            // Update now playing
+            const titleEl = document.getElementById('nowPlayingTitle');
+            const artistEl = document.getElementById('nowPlayingArtist');
+            if (titleEl) titleEl.textContent = track.title;
+            if (artistEl) artistEl.textContent = track.artist;
+            
+            console.log('Embed player created for:', track.type);
+        }
+        
+        // Close embed player
+        window.closeEmbedPlayer = function() {
+            const embedContainer = document.getElementById('embedPlayer');
+            if (embedContainer) {
+                embedContainer.remove();
+            }
+            
+            // Restore original controls
+            const musicControl = document.querySelector('.music-control');
+            if (musicControl && window.originalMusicControl) {
+                musicControl.innerHTML = window.originalMusicControl;
+            }
+            
+            console.log('Embed player closed');
+        };
+        
+        // Add to queue UI
+        function addToQueueUI(title, artist, time) {
+            const queueList = document.getElementById('queueList');
+            if (!queueList) {
+                console.error('Queue list not found');
+                return;
+            }
+            
+            // Remove example track if it exists
+            const exampleTrack = queueList.querySelector('.queue-item');
+            if (exampleTrack && exampleTrack.querySelector('.queue-item-title').textContent === 'ambient waves') {
+                exampleTrack.remove();
+            }
+            
+            const item = document.createElement('div');
+            item.className = 'queue-item';
+            item.innerHTML = `
+                <div class="queue-item-info">
+                    <div class="queue-item-title">${title}</div>
+                    <div class="queue-item-artist">${artist}</div>
+                </div>
+                <div class="queue-item-time">${time}</div>
+            `;
+            queueList.appendChild(item);
+            
+            console.log('Added to queue UI:', title);
+        }
+        
+        // Placeholder music functions - will be replaced by module when it loads
+        window.togglePlayback = function() {
+            if (!audioPlayer) {
+                audioPlayer = document.getElementById('audioPlayer');
+            }
+            
+            if (!audioPlayer) {
+                alert('Audio player not ready');
+                return;
+            }
+            
+            if (!audioPlayer.src) {
+                alert('No track loaded. Upload a file first!');
+                return;
+            }
+            
+            const btn = document.getElementById('playBtn');
+            
+            if (audioPlayer.paused) {
+                audioPlayer.play().then(() => {
+                    if (btn) btn.textContent = '⏸';
+                    console.log('Playing...');
+                }).catch(e => {
+                    console.error('Play error:', e);
+                    alert('Could not play audio: ' + e.message);
+                });
+            } else {
+                audioPlayer.pause();
+                if (btn) btn.textContent = '▶';
+                console.log('Paused');
+            }
+        };
+        
+        window.toggleListeningMode = function() {
+            alert('Mode toggle: Firebase needs to load first');
+        };
+        
+        window.previousTrack = function() {
+            alert('Previous track: Upload a track first');
+        };
+        
+        window.nextTrack = function() {
+            alert('Next track: Upload a track first');
+        };
+        
+        window.goToHub = function() {
+            window.location.href = 'hub.html';
+        };
+        
+        window.castVote = function() {
+            alert('Voting: Firebase needs to load first');
+        };
+        
+        console.log('✓ All UI functions exposed globally');
+    </script>
+    
+    <script type="module">
+        console.log('🚀 ROOM.HTML SCRIPT STARTING...');
+        
+        // Import Firebase
+        import { initializeApp } from 'https://www.gstatic.com/firebasejs/10.7.1/firebase-app.js';
+        import { getAuth, onAuthStateChanged } from 'https://www.gstatic.com/firebasejs/10.7.1/firebase-auth.js';
+        import { getFirestore, doc, getDoc, setDoc, updateDoc, collection, query, where, onSnapshot, addDoc, orderBy, limit, getDocs } from 'https://www.gstatic.com/firebasejs/10.7.1/firebase-firestore.js';
+        import { getStorage, ref, getDownloadURL } from 'https://www.gstatic.com/firebasejs/10.7.1/firebase-storage.js';
+
+        // Firebase configuration
+        const firebaseConfig = {
+            apiKey: "AIzaSyCXFlGeJodOUVn-3bYocPhFRtzs9DBHEFA",
+            authDomain: "earthtown-92993.firebaseapp.com",
+            projectId: "earthtown-92993",
+            storageBucket: "earthtown-92993.firebasestorage.app",
+            messagingSenderId: "830730193161",
+            appId: "1:830730193161:web:af18953dd80872b1396bd8",
+            measurementId: "G-KC30SQWHEC"
+        };
+
+        // Initialize Firebase
+        const app = initializeApp(firebaseConfig);
+        const auth = getAuth(app);
+        const db = getFirestore(app);
+        const storage = getStorage(app);
+        
+        console.log('✓ Firebase initialized');
+        console.log('Auth:', auth);
+        console.log('DB:', db);
+        console.log('Storage:', storage);
+
+        // Get room name from URL
+        const urlParams = new URLSearchParams(window.location.search);
+        const roomName = urlParams.get('room') || 'sanctuary';
+        
+        // Room configurations
+        const roomConfigs = {
+            sanctuary: { icon: '🌙', name: 'the sanctuary' },
+            grove: { icon: '🌿', name: 'the grove' },
+            gathering: { icon: '🔥', name: 'the gathering' },
+            studio: { icon: '🎨', name: 'the studio' },
+            garden: { icon: '🌸', name: 'the garden' },
+            lab: { icon: '⚡', name: 'the lab' }
+        };
+        
+        // Update room title and icon
+        const roomConfig = roomConfigs[roomName] || roomConfigs.sanctuary;
+        document.getElementById('roomIcon').textContent = roomConfig.icon;
+        document.getElementById('roomName').textContent = roomConfig.name;
+        
+        // Current user
+        let currentUser = null;
+        let currentUserData = null;
+        let usersInRoom = [];
+        let currentDetailPopup = null;
+        let presenceUnsubscribe = null;
+        let messagesUnsubscribe = null;
+
+        // Check authentication and initialize
+        onAuthStateChanged(auth, async (user) => {
+            console.log('🔐 Auth state changed, user:', user ? user.uid : 'NO USER');
+            if (user) {
+                currentUser = user;
+                console.log('Loading user data for:', user.uid);
+                await loadUserData(user.uid);
+                console.log('User data loaded:', currentUserData);
+                console.log('Joining room:', roomName);
+                await joinRoom();
+                console.log('Room joined, setting up listeners');
+                setupEventListeners();
+                console.log('✓ Setup complete');
+            } else {
+                console.log('No user, redirecting to index');
+                window.location.href = 'index.html';
+            }
+        });
+
+        async function loadUserData(uid) {
+            try {
+                const userDoc = await getDoc(doc(db, 'users', uid));
+                if (userDoc.exists()) {
+                    currentUserData = { id: uid, ...userDoc.data(), x: 300, y: 250 };
+                }
+            } catch (error) {
+                console.error('Error loading user data:', error);
+            }
+        }
+
+        async function joinRoom() {
+            try {
+                // Update user's current room
+                await updateDoc(doc(db, 'users', currentUser.uid), {
+                    currentRoom: roomName,
+                    lastSeen: new Date().toISOString()
+                });
+
+                // Create or update user's presence in room
+                await setDoc(
+                    doc(db, 'rooms', roomName, 'presence', currentUser.uid),
+                    {
+                        userId: currentUser.uid,
+                        username: currentUserData.username,
+                        archetype: currentUserData.archetype,
+                        characterImage: currentUserData.characterImage,
+                        x: currentUserData.x,
+                        y: currentUserData.y,
+                        joinedAt: new Date().toISOString()
+                    }
+                );
+
+                // Listen to room presence
+                listenToRoomPresence();
+                
+                // Listen to room messages
+                listenToRoomMessages();
+
+            } catch (error) {
+                console.error('Error joining room:', error);
+            }
+        }
+
+        function listenToRoomPresence() {
+            console.log('👥 Setting up room presence listener for room:', roomName);
+            const presenceRef = collection(db, 'rooms', roomName, 'presence');
+            
+            presenceUnsubscribe = onSnapshot(presenceRef, (snapshot) => {
+                console.log('📡 Presence snapshot received, size:', snapshot.size);
+                usersInRoom = [];
+                snapshot.forEach((docSnapshot) => {
+                    console.log('Processing user:', docSnapshot.id, docSnapshot.data());
+                    const userData = docSnapshot.data();
+                    if (docSnapshot.id !== currentUser.uid) {
+                        usersInRoom.push({
+                            id: docSnapshot.id,
+                            ...userData
+                        });
+                    } else {
+                        // Update currentUserData from Firebase but don't re-render (prevents flash)
+                        if (!isDraggingGlobal) {
+                            currentUserData.x = userData.x;
+                            currentUserData.y = userData.y;
+                        }
+                    }
+                });
+                
+                console.log('About to call renderAvatars, usersInRoom:', usersInRoom);
+                renderAvatars();
+                updateOnlineCount();
+            });
+            console.log('✓ Presence listener attached');
+        }
+
+        let isDraggingGlobal = false;
+
+        function listenToRoomMessages() {
+            const messagesRef = collection(db, 'rooms', roomName, 'messages');
+            const messagesQuery = query(messagesRef, orderBy('timestamp', 'desc'), limit(50));
+            
+            messagesUnsubscribe = onSnapshot(messagesQuery, (snapshot) => {
+                const container = document.getElementById('chatMessages');
+                container.innerHTML = '';
+                
+                const messages = [];
+                snapshot.forEach((doc) => {
+                    messages.push({ id: doc.id, ...doc.data() });
+                });
+                
+                // Reverse to show oldest first
+                messages.reverse().forEach(msg => {
+                    const messageEl = createMessageElement(msg);
+                    container.appendChild(messageEl);
+                });
+                
+                container.scrollTop = container.scrollHeight;
+            });
+        }
+
+        function updateOnlineCount() {
+            const total = usersInRoom.length + 1; // +1 for current user
+            document.getElementById('onlineCount').textContent = `${total} present`;
+            document.getElementById('usersInRoom').textContent = `${total} people here`;
+        }
+
+        function renderAvatars() {
+            console.log('=== renderAvatars called ===');
+            console.log('currentUserData:', currentUserData);
+            console.log('usersInRoom:', usersInRoom);
+            
+            if (!currentUserData) {
+                console.error('❌ currentUserData is null, cannot render avatars');
+                return;
+            }
+            
+            const container = document.getElementById('avatarsLayer');
+            console.log('avatarsLayer container:', container);
+            
+            if (!container) {
+                console.error('❌ avatarsLayer container not found!');
+                return;
+            }
+            
+            // Only create current user's avatar if it doesn't exist yet
+            const existingCurrentAvatar = document.getElementById('avatar-' + currentUser.uid);
+            console.log('Existing current user avatar:', existingCurrentAvatar);
+            
+            if (!existingCurrentAvatar) {
+                console.log('Creating current user avatar with data:', {
+                    id: currentUser.uid,
+                    username: currentUserData.username,
+                    x: currentUserData.x,
+                    y: currentUserData.y,
+                    archetype: currentUserData.archetype,
+                    characterImage: currentUserData.characterImage
+                });
+                
+                const currentAvatar = createAvatarElement(currentUserData, true);
+                console.log('Created avatar element:', currentAvatar);
+                container.appendChild(currentAvatar);
+                console.log('✓ Current user avatar appended to container');
+            } else {
+                console.log('Current user avatar already exists');
+            }
+
+            // Remove avatars that are no longer in the room
+            const existingAvatars = container.querySelectorAll('.avatar:not(.current-user)');
+            console.log('Existing other avatars:', existingAvatars.length);
+            existingAvatars.forEach(avatarEl => {
+                const userId = avatarEl.dataset.userId;
+                if (!usersInRoom.find(u => u.id === userId)) {
+                    console.log('Removing avatar for user who left:', userId);
+                    avatarEl.remove();
+                }
+            });
+
+            // Update or create other users' avatars
+            console.log('Processing', usersInRoom.length, 'other users');
+            usersInRoom.forEach(user => {
+                let avatar = document.getElementById('avatar-' + user.id);
+                if (avatar) {
+                    // Update position
+                    console.log('Updating position for', user.username, 'to', user.x, user.y);
+                    avatar.style.left = user.x + 'px';
+                    avatar.style.top = user.y + 'px';
+                } else {
+                    // Create new avatar
+                    console.log('Creating new avatar for', user.username);
+                    avatar = createAvatarElement(user, false);
+                    container.appendChild(avatar);
+                }
+            });
+            
+            console.log('=== renderAvatars complete ===');
+            console.log('Total avatars in container:', container.querySelectorAll('.avatar').length);
+        }
+
+        function createAvatarElement(user, isCurrentUser) {
+            console.log('createAvatarElement called:', {
+                userId: user.id || currentUser.uid,
+                username: user.username,
+                isCurrentUser: isCurrentUser,
+                x: user.x,
+                y: user.y,
+                characterImage: user.characterImage
+            });
+            
+            const avatar = document.createElement('div');
+            avatar.className = 'avatar' + (isCurrentUser ? ' current-user' : '');
+            avatar.style.left = user.x + 'px';
+            avatar.style.top = user.y + 'px';
+            avatar.id = 'avatar-' + (user.id || currentUser.uid);
+            avatar.dataset.userId = user.id || currentUser.uid;
+
+            console.log('Avatar element created with styles:', {
+                left: avatar.style.left,
+                top: avatar.style.top,
+                id: avatar.id
+            });
+
+            avatar.innerHTML = `
+                <div class="avatar-image" id="avatar-img-${user.id || currentUser.uid}"></div>
+                <div class="avatar-name archetype-${user.archetype}">${user.username}</div>
+            `;
+
+            console.log('Avatar HTML set, innerHTML length:', avatar.innerHTML.length);
+
+            // Load character image if available
+            if (user.characterImage) {
+                console.log('Character image path found:', user.characterImage);
+                loadCharacterImage(user.id || currentUser.uid, user.characterImage);
+            } else {
+                console.log('No character image for user');
+            }
+
+            if (!isCurrentUser) {
+                avatar.addEventListener('click', (e) => {
+                    e.stopPropagation();
+                    showAvatarDetail(user, e.clientX, e.clientY);
+                });
+            }
+
+            console.log('✓ Avatar element ready to return');
+            return avatar;
+        }
+
+        async function loadCharacterImage(userId, characterImagePath) {
+            console.log('loadCharacterImage called for:', userId, characterImagePath);
+            try {
+                if (!characterImagePath) {
+                    console.log('No character image path provided');
+                    return;
+                }
+                
+                const charRef = ref(storage, characterImagePath);
+                console.log('Getting download URL for:', characterImagePath);
+                const charURL = await getDownloadURL(charRef);
+                console.log('Got URL:', charURL);
+                
+                const avatarImgContainer = document.getElementById(`avatar-img-${userId}`);
+                console.log('Avatar container:', avatarImgContainer);
+                
+                if (avatarImgContainer) {
+                    avatarImgContainer.innerHTML = `<img src="${charURL}" draggable="false" style="width: 150px; height: 150px; object-fit: contain; image-rendering: pixelated; background: none; pointer-events: none; user-select: none; filter: drop-shadow(0 0 6px rgba(241, 250, 238, 0.3));">`;
+                    console.log('✓ Character image loaded for', userId);
+                } else {
+                    console.error('Avatar container not found for', userId);
+                }
+            } catch (error) {
+                console.error('Error loading character image for', userId, error);
+                // Fallback: show colored placeholder
+                const avatarImgContainer = document.getElementById(`avatar-img-${userId}`);
+                if (avatarImgContainer) {
+                    avatarImgContainer.innerHTML = `<div style="width: 150px; height: 150px; background: rgba(241, 250, 238, 0.1); border-radius: 8px; display: flex; align-items: center; justify-content: center; font-size: 3rem;">👤</div>`;
+                    console.log('✓ Fallback placeholder shown for', userId);
+                }
+            }
+        }
+
+        function getArchetypeColor(archetype) {
+            const colors = {
+                hero: 'linear-gradient(135deg, #f1faee, #c79564)',
+                sage: 'linear-gradient(135deg, #9b87c7, #8b77b7)',
+                explorer: 'linear-gradient(135deg, #7fc29b, #6fb28b)',
+                rebel: 'linear-gradient(135deg, #c77a7a, #b76a6a)',
+                magician: 'linear-gradient(135deg, #c79bd9, #b78bc9)',
+                lover: 'linear-gradient(135deg, #d99ba3, #c98b93)',
+                jester: 'linear-gradient(135deg, #f0c77a, #e0b76a)',
+                innocent: 'linear-gradient(135deg, #b5d4e8, #a5c4d8)',
+                caregiver: 'linear-gradient(135deg, #a8d4a8, #98c498)',
+                ruler: 'linear-gradient(135deg, #f1faee, #c49564)',
+                creator: 'linear-gradient(135deg, #c7a77a, #b7976a)',
+                everyman: 'linear-gradient(135deg, #a8a8a8, #989898)'
+            };
+            return colors[archetype] || colors.everyman;
+        }
+
+        function showAvatarDetail(user, x, y) {
+            if (currentDetailPopup) {
+                currentDetailPopup.remove();
+            }
+
+            const popup = document.createElement('div');
+            popup.className = 'avatar-detail';
+            
+            const popupWidth = 250;
+            const popupHeight = 150;
+            let left = x + 20;
+            let top = y - 75;
+
+            if (left + popupWidth > window.innerWidth) {
+                left = x - popupWidth - 20;
+            }
+            if (top + popupHeight > window.innerHeight) {
+                top = window.innerHeight - popupHeight - 20;
+            }
+            if (top < 0) top = 20;
+
+            popup.style.left = left + 'px';
+            popup.style.top = top + 'px';
+
+            const placeholderColor = getArchetypeColor(user.archetype);
+            
+            popup.innerHTML = `
+                <div class="detail-close">×</div>
+                <div class="detail-header">
+                    <div class="detail-avatar" id="detail-avatar-${user.id}">
+                        <div style="width: 70px; height: 70px; background: ${placeholderColor}; border-radius: 6px;"></div>
+                    </div>
+                    <div class="detail-info">
+                        <div class="detail-username archetype-${user.archetype}">${user.username}</div>
+                        <div class="detail-archetype archetype-${user.archetype}">${user.archetype}</div>
+                    </div>
+                </div>
+                <div class="detail-gallery-links" id="gallery-links-${user.id}" style="margin-top: 15px; padding-top: 15px; border-top: 1px solid rgba(241, 250, 238, 0.1);">
+                    <div style="font-size: 0.9rem; color: #888; margin-bottom: 8px;">loading gallery...</div>
+                </div>
+            `;
+
+            document.body.appendChild(popup);
+            currentDetailPopup = popup;
+
+            // Load gallery links
+            loadUserGalleryLinks(user.id || currentUser.uid);
+
+            // Load character image for detail view
+            if (user.characterImage) {
+                loadDetailCharacterImage(user.id, user.characterImage);
+            }
+
+            popup.querySelector('.detail-close').addEventListener('click', () => {
+                popup.remove();
+                currentDetailPopup = null;
+            });
+
+            setTimeout(() => {
+                document.addEventListener('click', closePopupOnOutsideClick);
+            }, 10);
+        }
+
+        async function loadDetailCharacterImage(userId, characterImagePath) {
+            try {
+                const charRef = ref(storage, characterImagePath);
+                const charURL = await getDownloadURL(charRef);
+                
+                const detailAvatarContainer = document.getElementById(`detail-avatar-${userId}`);
+                if (detailAvatarContainer) {
+                    detailAvatarContainer.innerHTML = `<img src="${charURL}" style="width: 70px; height: 70px; object-fit: contain; image-rendering: pixelated;">`;
+                }
+            } catch (error) {
+                console.log('Could not load detail character image');
+            }
+        }
+
+        async function loadUserGalleryLinks(userId) {
+            try {
+                // Count approved items by type
+                const galleryQuery = query(
+                    collection(db, 'gallery'),
+                    where('userId', '==', userId),
+                    where('status', '==', 'approved')
+                );
+
+                const snapshot = await getDocs(galleryQuery);
+                const counts = { music: 0, video: 0, art: 0 };
+                
+                snapshot.forEach(doc => {
+                    const type = doc.data().type;
+                    if (counts.hasOwnProperty(type)) {
+                        counts[type]++;
+                    }
+                });
+
+                const linksContainer = document.getElementById(`gallery-links-${userId}`);
+                if (!linksContainer) return;
+
+                const totalWorks = counts.music + counts.video + counts.art;
+
+                if (totalWorks === 0) {
+                    linksContainer.innerHTML = ''; // Empty, no message needed
+                    return;
+                }
+
+                let linksHTML = '<div style="font-size: 0.9rem; color: #888; margin-bottom: 8px;">gallery:</div>';
+                linksHTML += '<div style="display: flex; gap: 8px; flex-wrap: wrap;">';
+
+                if (counts.music > 0) {
+                    linksHTML += `<a href="user-gallery.html?user=${userId}&type=music" target="_blank" style="padding: 4px 10px; background: rgba(241, 250, 238, 0.05); border: 1px solid rgba(241, 250, 238, 0.2); border-radius: 4px; color: #f1faee; text-decoration: none; font-size: 0.85rem;">🎵 ${counts.music}</a>`;
+                }
+                if (counts.video > 0) {
+                    linksHTML += `<a href="user-gallery.html?user=${userId}&type=video" target="_blank" style="padding: 4px 10px; background: rgba(241, 250, 238, 0.05); border: 1px solid rgba(241, 250, 238, 0.2); border-radius: 4px; color: #f1faee; text-decoration: none; font-size: 0.85rem;">🎬 ${counts.video}</a>`;
+                }
+                if (counts.art > 0) {
+                    linksHTML += `<a href="user-gallery.html?user=${userId}&type=art" target="_blank" style="padding: 4px 10px; background: rgba(241, 250, 238, 0.05); border: 1px solid rgba(241, 250, 238, 0.2); border-radius: 4px; color: #f1faee; text-decoration: none; font-size: 0.85rem;">🖼️ ${counts.art}</a>`;
+                }
+
+                linksHTML += '</div>';
+                linksContainer.innerHTML = linksHTML;
+
+            } catch (error) {
+                console.error('Error loading gallery links:', error);
+                const linksContainer = document.getElementById(`gallery-links-${userId}`);
+                if (linksContainer) {
+                    linksContainer.innerHTML = '<div style="font-size: 0.85rem; color: #666;">gallery unavailable</div>';
+                }
+            }
+        }
+
+        function closePopupOnOutsideClick(e) {
+            if (currentDetailPopup && !currentDetailPopup.contains(e.target)) {
+                currentDetailPopup.remove();
+                currentDetailPopup = null;
+                document.removeEventListener('click', closePopupOnOutsideClick);
+            }
+        }
+
+        function renderMessages() {
+            const container = document.getElementById('chatMessages');
+            container.innerHTML = '';
+
+            messages.forEach(msg => {
+                const messageEl = createMessageElement(msg);
+                container.appendChild(messageEl);
+            });
+
+            container.scrollTop = container.scrollHeight;
+        }
+
+        function createMessageElement(msg) {
+            const placeholderColor = getArchetypeColor(msg.archetype);
+            
+            // Format timestamp
+            const time = msg.timestamp ? new Date(msg.timestamp).toLocaleTimeString('en-US', { 
+                hour: 'numeric', 
+                minute: '2-digit' 
+            }) : '';
+            
+            const msgId = `msg-${Date.now()}-${Math.random()}`;
+            
+            const div = document.createElement('div');
+            div.className = 'message';
+            div.innerHTML = `
+                <div class="message-avatar" id="${msgId}" style="background: ${placeholderColor};"></div>
+                <div class="message-content">
+                    <div class="message-header">
+                        <span class="message-author archetype-${msg.archetype}">${msg.username}</span>
+                        <span class="message-time">${time}</span>
+                    </div>
+                    <div class="message-text">${msg.text}</div>
+                </div>
+            `;
+            
+            // Load character image for message
+            if (msg.characterImage) {
+                loadMessageCharacterImage(msgId, msg.characterImage);
+            }
+            
+            return div;
+        }
+
+        async function loadMessageCharacterImage(msgId, characterImagePath) {
+            try {
+                const charRef = ref(storage, characterImagePath);
+                const charURL = await getDownloadURL(charRef);
+                
+                const msgAvatar = document.getElementById(msgId);
+                if (msgAvatar) {
+                    msgAvatar.style.background = 'none';
+                    msgAvatar.innerHTML = `<img src="${charURL}" style="width: 100%; height: 100%; object-fit: cover; border-radius: 6px; image-rendering: pixelated;">`;
+                }
+            } catch (error) {
+                console.log('Could not load message character image');
+            }
+        }
+
+        function setupEventListeners() {
+            // Drag to move avatar
+            let dragStartX, dragStartY, avatarStartX, avatarStartY;
+            let hasMoved = false;
+
+            const roomSpace = document.getElementById('roomSpace');
+
+            roomSpace.addEventListener('mousedown', (e) => {
+                const avatar = e.target.closest('.avatar.current-user');
+                if (avatar) {
+                    isDraggingGlobal = true;
+                    hasMoved = false;
+                    dragStartX = e.clientX;
+                    dragStartY = e.clientY;
+                    avatarStartX = currentUserData.x;
+                    avatarStartY = currentUserData.y;
+                }
+            });
+
+            document.addEventListener('mousemove', async (e) => {
+                if (isDraggingGlobal && currentUserData) {
+                    const deltaX = e.clientX - dragStartX;
+                    const deltaY = e.clientY - dragStartY;
+                    
+                    // Mark as moved if dragged more than 5px
+                    if (Math.abs(deltaX) > 5 || Math.abs(deltaY) > 5) {
+                        hasMoved = true;
+                    }
+
+                    const rect = roomSpace.getBoundingClientRect();
+                    currentUserData.x = Math.max(0, Math.min(avatarStartX + deltaX, rect.width - 150));
+                    currentUserData.y = Math.max(0, Math.min(avatarStartY + deltaY, rect.height - 190));
+
+                    const avatar = document.getElementById('avatar-' + currentUser.uid);
+                    if (avatar) {
+                        avatar.style.left = currentUserData.x + 'px';
+                        avatar.style.top = currentUserData.y + 'px';
+                    }
+                }
+            });
+
+            document.addEventListener('mouseup', async (e) => {
+                if (isDraggingGlobal) {
+                    isDraggingGlobal = false;
+
+                    // Only show popup if didn't move (was a click)
+                    if (!hasMoved) {
+                        const avatar = e.target.closest('.avatar.current-user');
+                        if (avatar) {
+                            showAvatarDetail(currentUserData, e.clientX, e.clientY);
+                        }
+                    }
+
+                    // Update position in Firebase when drag ends (if moved)
+                    if (hasMoved) {
+                        try {
+                            await updateDoc(
+                                doc(db, 'rooms', roomName, 'presence', currentUser.uid),
+                                {
+                                    x: currentUserData.x,
+                                    y: currentUserData.y
+                                }
+                            );
+                        } catch (error) {
+                            console.error('Error updating position:', error);
+                        }
+                    }
+                }
+            });
+
+            const chatInput = document.getElementById('chatInput');
+            chatInput.addEventListener('keypress', (e) => {
+                if (e.key === 'Enter' && chatInput.value.trim()) {
+                    sendMessage(chatInput.value.trim());
+                    chatInput.value = '';
+                }
+            });
+        }
+
+        async function sendMessage(text) {
+            if (!currentUserData) return;
+
+            try {
+                await addDoc(
+                    collection(db, 'rooms', roomName, 'messages'),
+                    {
+                        userId: currentUser.uid,
+                        username: currentUserData.username,
+                        archetype: currentUserData.archetype,
+                        characterImage: currentUserData.characterImage,
+                        text: text,
+                        timestamp: new Date().toISOString()
+                    }
+                );
+            } catch (error) {
+                console.error('Error sending message:', error);
+            }
+        }
+
+        function togglePlay() {
+            isPlaying = !isPlaying;
+            document.getElementById('playBtn').textContent = isPlaying ? '⏸' : '▶';
+        }
+
+        function previousTrack() {
+            console.log('Previous track');
+        }
+
+        function nextTrack() {
+            console.log('Next track');
+        }
+
+        function openQueue() {
+            document.getElementById('queueModal').style.display = 'flex';
+        }
+        
+        function closeQueue() {
+            document.getElementById('queueModal').style.display = 'none';
+        }
+        
+        function enterPod() {
+            alert('Private pod: Your personal listening space (Firebase sync coming soon)');
+            closeQueue();
+        }
+
+        async function goToHub() {
+            await leaveRoom();
+            window.location.href = 'hub.html';
+        }
+
+        async function leaveRoom() {
+            if (!currentUser) return;
+            
+            try {
+                // Remove presence from room
+                await updateDoc(doc(db, 'users', currentUser.uid), {
+                    currentRoom: null
+                });
+                
+                // Unsubscribe from listeners
+                if (presenceUnsubscribe) presenceUnsubscribe();
+                if (messagesUnsubscribe) messagesUnsubscribe();
+            } catch (error) {
+                console.error('Error leaving room:', error);
+            }
+        }
+
+        // Make functions available globally for onclick handlers
+        window.togglePlayback = togglePlayback;
+        window.previousTrack = previousTrack;
+        window.nextTrack = nextTrack;
+        window.openQueue = openQueue;
+        window.closeQueue = closeQueue;
+        window.enterPod = enterPod;
+        window.goToHub = goToHub;
+        
+        // Cleanup on page close
+        window.addEventListener('beforeunload', leaveRoom);
+    
+        
+        // ============================================
+        // MUSIC PLAYER WITH ROOM/SOLO MODES
+        // ============================================
+
+        // Player State
+        let listeningMode = 'room'; // 'room' or 'solo'
+        let roomQueue = []; // Shared room queue
+        let soloQueue = []; // Personal queue
+        let currentTrackIndex = 0;
+        let isPlaying = false;
+        // audioPlayer is already declared in the immediate script above
+        
+        // Vote State
+        let activeVote = null;
+        let userVote = null;
+
+        // Initialize audio events
+        if (audioPlayer) {
+            audioPlayer.addEventListener('ended', () => {
+                if (listeningMode === 'solo') {
+                    playNextInQueue();
+                } else {
+                    // In room mode, wait for Firebase sync
+                    console.log('Track ended in room mode');
+                }
+            });
+
+            audioPlayer.addEventListener('timeupdate', () => {
+                updateProgressBar();
+            });
+        }
+
+        // Toggle between room and solo mode
+        window.toggleListeningMode = function() {
+            if (listeningMode === 'room') {
+                // Switch to solo mode
+                listeningMode = 'solo';
+                document.getElementById('modeIndicator').innerHTML = '🎧 solo listening';
+                document.getElementById('modeIndicator').style.color = '#6a4c93';
+                document.getElementById('modeToggleBtn').innerHTML = '🌍 rejoin';
+                document.getElementById('modeToggleBtn').style.background = 'rgba(106, 76, 147, 0.2)';
+                
+                // If nothing in solo queue, copy current room track
+                if (soloQueue.length === 0 && roomQueue.length > 0) {
+                    soloQueue = [...roomQueue];
+                }
+                
+                console.log('Switched to SOLO mode');
+            } else {
+                // Switch back to room mode
+                listeningMode = 'room';
+                document.getElementById('modeIndicator').innerHTML = '🌍 listening with room';
+                document.getElementById('modeIndicator').style.color = '#2d6a4f';
+                document.getElementById('modeToggleBtn').innerHTML = '🎧 solo';
+                document.getElementById('modeToggleBtn').style.background = 'rgba(45, 106, 79, 0.2)';
+                
+                // TODO: Sync to current room track from Firebase
+                console.log('Switched to ROOM mode');
+            }
+        };
+
+        // Play/Pause
+        window.togglePlayback = function() {
+            const currentQueue = listeningMode === 'room' ? roomQueue : soloQueue;
+            
+            if (!audioPlayer || currentQueue.length === 0) {
+                alert('No tracks in queue. Upload or add a track first.');
+                return;
+            }
+
+            if (isPlaying) {
+                audioPlayer.pause();
+                isPlaying = false;
+                document.getElementById('playPauseBtn').textContent = '▶';
+            } else {
+                if (!audioPlayer.src && currentQueue.length > 0) {
+                    playTrack(0);
+                } else {
+                    audioPlayer.play();
+                    isPlaying = true;
+                    document.getElementById('playPauseBtn').textContent = '⏸';
+                }
+            }
+        };
+
+        // Play specific track
+        function playTrack(index) {
+            const currentQueue = listeningMode === 'room' ? roomQueue : soloQueue;
+            
+            if (index < 0 || index >= currentQueue.length) return;
+            
+            currentTrackIndex = index;
+            const track = currentQueue[index];
+            
+            if (track.type === 'file' || track.type === 'url') {
+                audioPlayer.src = track.url;
+                audioPlayer.play();
+                isPlaying = true;
+                document.getElementById('playPauseBtn').textContent = '⏸';
+                updateNowPlaying(track);
+            } else {
+                alert('This track type requires additional integration (YouTube/SoundCloud API)');
+            }
+        }
+
+        // Next track
+        window.nextTrack = function() {
+            if (listeningMode === 'room') {
+                // Initiate vote for room skip
+                initiateSkipVote();
+            } else {
+                // Solo mode: skip immediately
+                playNextInQueue();
+            }
+        };
+
+        // Previous track
+        window.previousTrack = function() {
+            if (listeningMode === 'room') {
+                alert('Previous track in room mode requires majority vote (coming soon)');
+                // TODO: Implement previous vote
+            } else {
+                playPreviousInQueue();
+            }
+        };
+
+        // Play next in queue
+        function playNextInQueue() {
+            const currentQueue = listeningMode === 'room' ? roomQueue : soloQueue;
+            
+            if (currentTrackIndex < currentQueue.length - 1) {
+                playTrack(currentTrackIndex + 1);
+            } else {
+                // Loop to start
+                playTrack(0);
+            }
+        }
+
+        // Play previous in queue
+        function playPreviousInQueue() {
+            if (currentTrackIndex > 0) {
+                playTrack(currentTrackIndex - 1);
+            } else {
+                const currentQueue = listeningMode === 'room' ? roomQueue : soloQueue;
+                playTrack(currentQueue.length - 1);
+            }
+        }
+
+        // Update now playing display
+        function updateNowPlaying(track) {
+            if (!track) {
+                const currentQueue = listeningMode === 'room' ? roomQueue : soloQueue;
+                if (currentQueue.length === 0) return;
+                track = currentQueue[currentTrackIndex];
+            }
+            
+            document.getElementById('nowPlayingTitle').textContent = track.title;
+            document.getElementById('nowPlayingArtist').textContent = track.artist;
+        }
+
+        // Progress bar update
+        function updateProgressBar() {
+            if (!audioPlayer || !audioPlayer.duration) return;
+            const progress = (audioPlayer.currentTime / audioPlayer.duration) * 100;
+            // TODO: Update visual progress bar if added to UI
+        }
+
+        // ============================================
+        // VOTING SYSTEM
+        // ============================================
+
+        function initiateSkipVote() {
+            // TODO: Get current room user count from Firebase presence
+            const roomUserCount = 5; // Placeholder
+            const requiredVotes = Math.ceil(roomUserCount * 0.7); // 70% threshold
+            
+            activeVote = {
+                type: 'skip',
+                yesVotes: 0,
+                noVotes: 0,
+                totalUsers: roomUserCount,
+                requiredVotes: requiredVotes,
+                voters: new Set()
+            };
+            
+            userVote = null;
+            showVoteNotification();
+            updateVoteDisplay();
+            
+            // TODO: Broadcast vote to Firebase
+            // TODO: Set timeout to close vote after 30 seconds
+        }
+
+        function showVoteNotification() {
+            document.getElementById('voteNotification').classList.add('show');
+        }
+
+        function hideVoteNotification() {
+            document.getElementById('voteNotification').classList.remove('show');
+        }
+
+        window.castVote = function(vote) {
+            if (!activeVote || userVote !== null) return;
+            
+            userVote = vote;
+            
+            if (vote) {
+                activeVote.yesVotes++;
+            } else {
+                activeVote.noVotes++;
+            }
+            
+            activeVote.voters.add(currentUser.uid);
+            updateVoteDisplay();
+            
+            // Check if vote passes
+            if (activeVote.yesVotes >= activeVote.requiredVotes) {
+                // Vote passed! Skip track
+                setTimeout(() => {
+                    hideVoteNotification();
+                    playNextInQueue();
+                    activeVote = null;
+                    userVote = null;
+                }, 1000);
+            } else if (activeVote.yesVotes + activeVote.noVotes >= activeVote.totalUsers) {
+                // All votes in, but didn't pass
+                setTimeout(() => {
+                    hideVoteNotification();
+                    activeVote = null;
+                    userVote = null;
+                }, 1500);
+            }
+            
+            // TODO: Broadcast vote to Firebase
+        };
+
+        function updateVoteDisplay() {
+            if (!activeVote) return;
+            
+            const totalVotes = activeVote.yesVotes + activeVote.noVotes;
+            const progress = (activeVote.yesVotes / activeVote.requiredVotes) * 100;
+            
+            document.getElementById('voteProgress').textContent = 
+                `${activeVote.yesVotes} / ${activeVote.requiredVotes} votes (need 70%)`;
+            document.getElementById('voteBarFill').style.width = `${Math.min(progress, 100)}%`;
+        }
+
+        // ============================================
+        // QUEUE MANAGEMENT
+        // ============================================
+
+        // Modified file upload
+        async function handleFileUpload(event) {
+            const file = event.target.files[0];
+            if (!file) return;
+            
+            const url = URL.createObjectURL(file);
+            
+            const track = {
+                type: 'file',
+                title: file.name.replace(/\.[^/.]+$/, ''),
+                artist: 'Local Upload',
+                url: url,
+                duration: '0:00',
+                uploadedBy: currentUser.uid
+            };
+            
+            // Add to appropriate queue
+            if (listeningMode === 'room') {
+                roomQueue.push(track);
+                // TODO: Sync to Firebase room queue
+            } else {
+                soloQueue.push(track);
+            }
+            
+            addToQueueUI(track.title, track.artist, track.duration);
+            
+            // Auto-play if nothing playing
+            if (!isPlaying) {
+                playTrack(0);
+            }
+        }
+
+        // Modified URL handler
+        function addFromURL() {
+            const url = document.getElementById('urlInput').value.trim();
+            if (!url) return;
+            
+            let track = {
+                type: 'url',
+                title: 'External Track',
+                artist: 'External Link',
+                url: url,
+                duration: '0:00',
+                uploadedBy: currentUser.uid
+            };
+            
+            if (url.includes('youtube') || url.includes('youtu.be')) {
+                alert('YouTube playback requires iframe API. Coming soon!');
+                document.getElementById('urlInput').value = '';
+                return;
+            } else if (url.includes('soundcloud')) {
+                alert('SoundCloud playback requires widget API. Coming soon!');
+                document.getElementById('urlInput').value = '';
+                return;
+            }
+            
+            // Add to appropriate queue
+            if (listeningMode === 'room') {
+                roomQueue.push(track);
+                // TODO: Sync to Firebase
+            } else {
+                soloQueue.push(track);
+            }
+            
+            addToQueueUI(track.title, track.artist, track.duration);
+            document.getElementById('urlInput').value = '';
+            
+            if (!isPlaying) {
+                playTrack(0);
+            }
+        }
+
+        // Enhanced queue UI
+        function addToQueueUI(title, artist, time) {
+            const queueList = document.getElementById('queueList');
+            const currentQueue = listeningMode === 'room' ? roomQueue : soloQueue;
+            const trackIndex = currentQueue.length - 1;
+            
+            const item = document.createElement('div');
+            item.className = 'queue-item';
+            item.onclick = () => {
+                if (listeningMode === 'solo') {
+                    playTrack(trackIndex);
+                } else {
+                    alert('In room mode, track selection requires majority vote (coming soon)');
+                }
+            };
+            item.style.cursor = 'pointer';
+            item.innerHTML = `
+                <div class="queue-item-info">
+                    <div class="queue-item-title">${title}</div>
+                    <div class="queue-item-artist">${artist}</div>
+                </div>
+                <div class="queue-item-time">${time}</div>
+            `;
+            queueList.appendChild(item);
+        }
+
+
+    </script>
+
+    <!-- Music Queue Modal -->
+    <div class="modal" id="queueModal" style="display: none;">
+        <div class="modal-overlay" onclick="closeQueue()"></div>
+        <div class="modal-content">
+            <div class="modal-header">
+                <h2>music queue</h2>
+                <button class="modal-close" onclick="closeQueue()">×</button>
+            </div>
+            
+            <div class="queue-tabs">
+                <button class="tab-btn active" data-tab="shared">shared queue</button>
+                <button class="tab-btn" data-tab="pod">private pod</button>
+            </div>
+
+            <div id="sharedQueue" class="queue-section active">
+                <div class="upload-area">
+                    <div class="upload-box" onclick="document.getElementById('fileUpload').click()">
+                        <input type="file" id="fileUpload" accept="audio/*" style="display:none" onchange="handleFileUpload(event)">
+                        <span class="upload-icon">📁</span>
+                        <p>drop audio or click to upload</p>
+                    </div>
+                </div>
+
+                <div class="queue-list" id="queueList">
+                    <div class="queue-item">
+                        <div class="queue-item-info">
+                            <div class="queue-item-title">ambient waves</div>
+                            <div class="queue-item-artist">example track</div>
+                        </div>
+                        <div class="queue-item-time">3:45</div>
+                    </div>
+                </div>
+            </div>
+
+            <div id="privatePod" class="queue-section">
+                <div class="pod-info">
+                    <div class="pod-icon">🎧</div>
+                    <h3>enter your pod</h3>
+                    <p>create a private listening space</p>
+                    <button class="pod-enter-btn" onclick="enterPod()">enter pod</button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+
+    <!-- Audio Player (Hidden) -->
+    <audio id="audioPlayer" style="display: none;"></audio>
+
+
+    <!-- Vote Notification -->
+    <div class="vote-notification" id="voteNotification">
+        <div class="vote-title">skip track?</div>
+        <div class="vote-options">
+            <button class="vote-btn yes" onclick="castVote(true)">✓ yes</button>
+            <button class="vote-btn no" onclick="castVote(false)">✗ no</button>
+        </div>
+        <div class="vote-progress" id="voteProgress">0 / 0 votes (need 70%)</div>
+        <div class="vote-bar">
+            <div class="vote-bar-fill" id="voteBarFill"></div>
+        </div>
+    </div>
+
+</body>
+</html>

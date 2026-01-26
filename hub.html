@@ -1,0 +1,608 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>earthtown - the hub</title>
+    <style>
+        @import url('https://fonts.googleapis.com/css2?family=VT323&family=Inter:wght@300;400;500;600&display=swap');
+
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: 'Inter', sans-serif;
+            background: #0a0a0a;
+            color: #f1faee;
+            min-height: 100vh;
+            overflow-x: hidden;
+            user-select: none;
+            position: relative;
+        }
+        
+        /* Old school desktop background - zen nature with scanlines */
+        body::after {
+            content: '';
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background-image: 
+                linear-gradient(0deg, rgba(10, 10, 10, 0.85) 0%, rgba(10, 10, 10, 0.7) 100%),
+                repeating-linear-gradient(
+                    0deg,
+                    rgba(45, 106, 79, 0.04) 0px,
+                    rgba(45, 106, 79, 0.04) 2px,
+                    transparent 2px,
+                    transparent 4px
+                ),
+                radial-gradient(ellipse at 30% 40%, rgba(127, 194, 155, 0.1), transparent 60%),
+                radial-gradient(ellipse at 70% 60%, rgba(168, 212, 232, 0.08), transparent 50%),
+                radial-gradient(ellipse at 50% 80%, rgba(212, 165, 165, 0.06), transparent 40%);
+            pointer-events: none;
+            z-index: 0;
+        }
+        
+        /* Floating particles */
+        .particles {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            pointer-events: none;
+            z-index: 1;
+            overflow: hidden;
+        }
+        
+        .particle {
+            position: absolute;
+            width: 2px;
+            height: 2px;
+            background: rgba(241, 250, 238, 0.4);
+            border-radius: 50%;
+        }
+
+        /* Header - ORIGINAL STYLING */
+        .header {
+            position: relative;
+            z-index: 10;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            padding: 20px 40px;
+            background: rgba(241, 250, 238, 0.02);
+            border-bottom: 1px solid rgba(241, 250, 238, 0.1);
+        }
+
+        .logo {
+            font-family: 'VT323', monospace;
+            font-size: 2rem;
+            color: #f1faee;
+            letter-spacing: 2px;
+        }
+
+        .user-info {
+            display: flex;
+            align-items: center;
+            gap: 15px;
+        }
+
+        .user-avatar {
+            width: 40px;
+            height: 80px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            overflow: hidden;
+        }
+
+        .user-avatar img {
+            width: 100%;
+            height: 100%;
+            object-fit: contain;
+            image-rendering: pixelated;
+        }
+
+        .user-name {
+            font-family: 'VT323', monospace;
+            font-size: 1.3rem;
+            color: #f1faee;
+            letter-spacing: 1px;
+        }
+
+        .logout-btn {
+            padding: 8px 20px;
+            background: transparent;
+            border: 1px solid rgba(241, 250, 238, 0.2);
+            border-radius: 6px;
+            color: #f1faee;
+            font-family: 'VT323', monospace;
+            font-size: 1.1rem;
+            cursor: pointer;
+            transition: none;
+            letter-spacing: 1px;
+        }
+
+        .logout-btn:hover {
+            background: rgba(241, 250, 238, 0.1);
+            border-color: rgba(241, 250, 238, 0.4);
+        }
+
+        /* Main content */
+        .main-content {
+            max-width: 900px;
+            margin: 0 auto;
+            padding: 80px 40px 100px;
+            position: relative;
+            z-index: 2;
+        }
+
+        /* Section */
+        .section {
+            margin-bottom: 80px;
+        }
+
+        .section-label {
+            font-size: 0.65rem;
+            text-transform: uppercase;
+            letter-spacing: 3px;
+            color: rgba(241, 250, 238, 0.3);
+            margin-bottom: 24px;
+            font-weight: 400;
+        }
+
+        /* Vertical list */
+        .items-list {
+            display: flex;
+            flex-direction: column;
+            gap: 0;
+        }
+
+        /* List item - satisfying to navigate */
+        .list-item {
+            padding: 28px 20px;
+            border: 1px solid rgba(241, 250, 238, 0.08);
+            border-bottom: none;
+            cursor: pointer;
+            display: flex;
+            align-items: flex-start;
+            gap: 20px;
+            position: relative;
+            background: rgba(241, 250, 238, 0.02);
+            transition: none; /* Instant state change */
+        }
+
+        .list-item:first-child {
+            border-top-left-radius: 8px;
+            border-top-right-radius: 8px;
+        }
+
+        .list-item:last-child {
+            border-bottom: 1px solid rgba(241, 250, 238, 0.08);
+            border-bottom-left-radius: 8px;
+            border-bottom-right-radius: 8px;
+        }
+
+        /* Instant hover state */
+        .list-item:hover {
+            background: rgba(241, 250, 238, 0.08);
+            border-color: rgba(241, 250, 238, 0.2);
+            padding-left: 30px;
+        }
+
+        .list-item:hover + .list-item {
+            border-top-color: rgba(241, 250, 238, 0.2);
+        }
+
+        /* PC Icon - old school 16x16 style, 25% bigger */
+        .item-icon {
+            width: 22.5px;
+            height: 22.5px;
+            flex-shrink: 0;
+            margin-top: 2px;
+            opacity: 0.7;
+            image-rendering: pixelated;
+            transition: none;
+        }
+
+        .list-item:hover .item-icon {
+            opacity: 1;
+        }
+
+        /* Content */
+        .item-content {
+            flex: 1;
+        }
+
+        .item-name {
+            font-family: 'VT323', monospace;
+            font-size: 1.6rem;
+            letter-spacing: 1.5px;
+            margin-bottom: 4px;
+            color: #f1faee;
+            line-height: 1.2;
+        }
+
+        .item-description {
+            font-size: 0.85rem;
+            color: rgba(241, 250, 238, 0.5);
+            font-weight: 300;
+            line-height: 1.4;
+        }
+
+        /* Arrow */
+        .item-arrow {
+            font-size: 1.2rem;
+            color: rgba(241, 250, 238, 0.2);
+            margin-top: 3px;
+            transition: none;
+        }
+
+        .list-item:hover .item-arrow {
+            color: rgba(241, 250, 238, 0.7);
+        }
+
+        /* Archives items - MORE PROMINENT */
+        .list-item.archives {
+            padding: 28px 20px;
+            background: rgba(241, 250, 238, 0.04);
+            border-color: rgba(241, 250, 238, 0.15);
+        }
+
+        .list-item.archives:hover {
+            padding-left: 30px;
+            background: rgba(241, 250, 238, 0.1);
+            border-color: rgba(241, 250, 238, 0.3);
+        }
+
+        .list-item.archives .item-icon {
+            width: 24px;
+            height: 24px;
+        }
+
+        .list-item.archives .item-name {
+            font-size: 1.6rem;
+        }
+
+        .list-item.archives .item-description {
+            font-size: 0.85rem;
+        }
+
+        /* Gallery/personal items - compact */
+        .list-item.gallery {
+            padding: 20px 20px;
+        }
+
+        .list-item.gallery:hover {
+            padding-left: 30px;
+        }
+
+        .list-item.gallery .item-name {
+            font-size: 1.3rem;
+        }
+
+        .list-item.gallery .item-description {
+            font-size: 0.75rem;
+        }
+
+        /* Highlight for my works */
+        .list-item.highlight {
+            background: rgba(247, 127, 0, 0.05);
+            border-color: rgba(247, 127, 0, 0.2);
+        }
+
+        .list-item.highlight:hover {
+            background: rgba(247, 127, 0, 0.1);
+            border-color: rgba(247, 127, 0, 0.4);
+        }
+
+        /* Responsive */
+        @media (max-width: 768px) {
+            .header {
+                padding: 12px 20px;
+            }
+            
+            .main-content {
+                padding-left: 20px;
+                padding-right: 20px;
+            }
+
+            .user-avatar {
+                width: 35px;
+                height: 70px;
+            }
+        }
+    </style>
+</head>
+<body>
+    <!-- Floating particles -->
+    <div class="particles" id="particles"></div>
+
+    <div class="header">
+        <div class="logo">earthtown</div>
+        <div class="user-info">
+            <div class="user-avatar" onclick="window.location.href='profile.html'" style="cursor: pointer;"></div>
+            <span class="user-name" onclick="window.location.href='profile.html'" style="cursor: pointer;">loading...</span>
+            <button class="logout-btn" id="adminBtn" onclick="window.location.href='admin.html'" style="display: none; margin-right: 10px; font-size: 1.5rem;">🛡️</button>
+            <button class="logout-btn" onclick="logout()">logout</button>
+        </div>
+    </div>
+
+    <div class="main-content">
+        <!-- Spaces -->
+        <div class="section">
+            <div class="section-label">Spaces</div>
+            <div class="items-list">
+                <div class="list-item" onclick="enterRoom('sanctuary')">
+                    <svg class="item-icon" viewBox="0 0 16 16" fill="none" xmlns="http://www.w3.org/2000/svg">
+                        <path d="M8 3 L8 1 M8 3 C10 3 11 5 11 7 M8 3 C6 3 5 5 5 7" stroke="#a8d4e8" stroke-width="1.5"/>
+                        <ellipse cx="8" cy="7" rx="3" ry="2" fill="#a8d4e8" opacity="0.3"/>
+                        <path d="M5 7 C5 9 6 11 8 13 C10 11 11 9 11 7" stroke="#a8d4e8" stroke-width="1.2"/>
+                    </svg>
+                    <div class="item-content">
+                        <div class="item-name">the sanctuary</div>
+                        <div class="item-description">ambient contemplation and quiet listening</div>
+                    </div>
+                    <span class="item-arrow">→</span>
+                </div>
+
+                <div class="list-item" onclick="enterRoom('grove')">
+                    <svg class="item-icon" viewBox="0 0 16 16" fill="none" xmlns="http://www.w3.org/2000/svg">
+                        <path d="M8 2 L8 14 M5 4 L8 2 L11 4 M4 7 L8 5 L12 7 M3 10 L8 8 L13 10" stroke="#7fc29b" stroke-width="1.5"/>
+                    </svg>
+                    <div class="item-content">
+                        <div class="item-name">the grove</div>
+                        <div class="item-description">organic sounds and natural vibes</div>
+                    </div>
+                    <span class="item-arrow">→</span>
+                </div>
+
+                <div class="list-item" onclick="enterRoom('gathering')">
+                    <svg class="item-icon" viewBox="0 0 16 16" fill="none" xmlns="http://www.w3.org/2000/svg">
+                        <path d="M8 3 L11 8 L8 13 L5 8 Z" fill="#d62828" opacity="0.6"/>
+                        <path d="M8 5 L10 8 L8 11 L6 8 Z" fill="#d62828"/>
+                    </svg>
+                    <div class="item-content">
+                        <div class="item-name">the gathering</div>
+                        <div class="item-description">energy, movement, and connection</div>
+                    </div>
+                    <span class="item-arrow">→</span>
+                </div>
+
+                <div class="list-item" onclick="enterRoom('studio')">
+                    <svg class="item-icon" viewBox="0 0 16 16" fill="none" xmlns="http://www.w3.org/2000/svg">
+                        <rect x="3" y="2" width="10" height="12" rx="0.5" stroke="#f77f00" stroke-width="1.2" fill="#0a0a0a"/>
+                        <circle cx="8" cy="6" r="2" stroke="#f77f00" stroke-width="1.2" fill="none"/>
+                        <circle cx="8" cy="6" r="0.8" fill="#f77f00" opacity="0.6"/>
+                        <circle cx="8" cy="11" r="2.5" stroke="#f77f00" stroke-width="1.2" fill="none"/>
+                        <circle cx="8" cy="11" r="1.2" fill="#f77f00" opacity="0.6"/>
+                    </svg>
+                    <div class="item-content">
+                        <div class="item-name">the studio</div>
+                        <div class="item-description">showcase work and get feedback</div>
+                    </div>
+                    <span class="item-arrow">→</span>
+                </div>
+
+                <div class="list-item" onclick="enterRoom('garden')">
+                    <svg class="item-icon" viewBox="0 0 16 16" fill="none" xmlns="http://www.w3.org/2000/svg">
+                        <circle cx="8" cy="6" r="2" fill="#d4a5a5" opacity="0.6"/>
+                        <circle cx="6" cy="8" r="1.5" fill="#d4a5a5" opacity="0.8"/>
+                        <circle cx="10" cy="8" r="1.5" fill="#d4a5a5" opacity="0.8"/>
+                        <path d="M8 8 L8 14" stroke="#7fc29b" stroke-width="1.5"/>
+                    </svg>
+                    <div class="item-content">
+                        <div class="item-name">the garden</div>
+                        <div class="item-description">spiritual exploration and mindfulness</div>
+                    </div>
+                    <span class="item-arrow">→</span>
+                </div>
+
+                <div class="list-item" onclick="enterRoom('lab')">
+                    <svg class="item-icon" viewBox="0 0 16 16" fill="none" xmlns="http://www.w3.org/2000/svg">
+                        <path d="M6 2 L6 7 L4 12 L12 12 L10 7 L10 2 Z" stroke="#6a4c93" stroke-width="1.5" fill="none"/>
+                        <circle cx="8" cy="9" r="1" fill="#6a4c93"/>
+                    </svg>
+                    <div class="item-content">
+                        <div class="item-name">the lab</div>
+                        <div class="item-description">experimentation and innovation</div>
+                    </div>
+                    <span class="item-arrow">→</span>
+                </div>
+            </div>
+        </div>
+
+        <!-- Archives -->
+        <div class="section">
+            <div class="section-label">Archives</div>
+            <div class="items-list">
+                <div class="list-item archives" onclick="window.location.href='library.html'">
+                    <svg class="item-icon" viewBox="0 0 16 16" fill="none" xmlns="http://www.w3.org/2000/svg">
+                        <circle cx="8" cy="8" r="6" stroke="#f1faee" stroke-width="1.2" fill="none"/>
+                        <circle cx="8" cy="8" r="2" fill="#f1faee"/>
+                        <circle cx="8" cy="8" r="4" stroke="#f1faee" stroke-width="0.8" fill="none" opacity="0.4"/>
+                    </svg>
+                    <div class="item-content">
+                        <div class="item-name">music library</div>
+                        <div class="item-description">community collection</div>
+                    </div>
+                    <span class="item-arrow">→</span>
+                </div>
+
+                <div class="list-item archives" onclick="window.location.href='cinema.html'">
+                    <svg class="item-icon" viewBox="0 0 16 16" fill="none" xmlns="http://www.w3.org/2000/svg">
+                        <rect x="2" y="4" width="12" height="8" stroke="#f1faee" stroke-width="1.2" fill="none"/>
+                        <path d="M6 7 L10 9 L6 11 Z" fill="#f1faee"/>
+                    </svg>
+                    <div class="item-content">
+                        <div class="item-name">cinema</div>
+                        <div class="item-description">video archive</div>
+                    </div>
+                    <span class="item-arrow">→</span>
+                </div>
+
+                <div class="list-item gallery" onclick="window.location.href='gallery.html'">
+                    <svg class="item-icon" viewBox="0 0 16 16" fill="none" xmlns="http://www.w3.org/2000/svg">
+                        <rect x="2" y="3" width="12" height="10" stroke="#f1faee" stroke-width="1.2" fill="none"/>
+                        <circle cx="6" cy="7" r="1.5" fill="#f1faee" opacity="0.6"/>
+                        <path d="M2 11 L6 8 L9 10 L14 6" stroke="#f1faee" stroke-width="1.2"/>
+                    </svg>
+                    <div class="item-content">
+                        <div class="item-name">art gallery</div>
+                        <div class="item-description">visual works</div>
+                    </div>
+                    <span class="item-arrow">→</span>
+                </div>
+            </div>
+        </div>
+
+        <!-- Personal -->
+        <div class="section">
+            <div class="section-label">Personal</div>
+            <div class="items-list">
+                <div class="list-item gallery highlight" onclick="window.location.href='my-gallery.html'">
+                    <svg class="item-icon" viewBox="0 0 16 16" fill="none" xmlns="http://www.w3.org/2000/svg">
+                        <path d="M8 2 L10 6 L14 6 L11 9 L12 13 L8 10 L4 13 L5 9 L2 6 L6 6 Z" fill="#f77f00" opacity="0.8"/>
+                    </svg>
+                    <div class="item-content">
+                        <div class="item-name">my works</div>
+                        <div class="item-description">your submissions</div>
+                    </div>
+                    <span class="item-arrow">→</span>
+                </div>
+
+                <div class="list-item gallery" onclick="window.location.href='pending-feed.html'">
+                    <svg class="item-icon" viewBox="0 0 16 16" fill="none" xmlns="http://www.w3.org/2000/svg">
+                        <circle cx="8" cy="8" r="6" stroke="#f1faee" stroke-width="1.2" fill="none"/>
+                        <path d="M8 8 L8 4 M8 8 L11 8" stroke="#f1faee" stroke-width="1.5"/>
+                    </svg>
+                    <div class="item-content">
+                        <div class="item-name">pending feed</div>
+                        <div class="item-description">under review</div>
+                    </div>
+                    <span class="item-arrow">→</span>
+                </div>
+
+                <div class="list-item gallery" onclick="window.location.href='character-creator.html'">
+                    <svg class="item-icon" viewBox="0 0 16 16" fill="none" xmlns="http://www.w3.org/2000/svg">
+                        <circle cx="8" cy="5" r="2" fill="#f1faee"/>
+                        <path d="M4 12 C4 9, 6 8, 8 8 C10 8, 12 9, 12 12" stroke="#f1faee" stroke-width="1.5" fill="none"/>
+                        <circle cx="8" cy="8" r="6" stroke="#f1faee" stroke-width="1" fill="none" opacity="0.3"/>
+                    </svg>
+                    <div class="item-content">
+                        <div class="item-name">character creator</div>
+                        <div class="item-description">avatar tool</div>
+                    </div>
+                    <span class="item-arrow">→</span>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script type="module">
+        import { initializeApp } from 'https://www.gstatic.com/firebasejs/10.7.1/firebase-app.js';
+        import { getAuth, onAuthStateChanged, signOut } from 'https://www.gstatic.com/firebasejs/10.7.1/firebase-auth.js';
+        import { getFirestore, doc, getDoc, updateDoc } from 'https://www.gstatic.com/firebasejs/10.7.1/firebase-firestore.js';
+        import { getStorage, ref, getDownloadURL } from 'https://www.gstatic.com/firebasejs/10.7.1/firebase-storage.js';
+
+        const firebaseConfig = {
+            apiKey: "AIzaSyCXFlGeJodOUVn-3bYocPhFRtzs9DBHEFA",
+            authDomain: "earthtown-92993.firebaseapp.com",
+            projectId: "earthtown-92993",
+            storageBucket: "earthtown-92993.firebasestorage.app",
+            messagingSenderId: "830730193161",
+            appId: "1:830730193161:web:af18953dd80872b1396bd8"
+        };
+
+        const app = initializeApp(firebaseConfig);
+        const auth = getAuth(app);
+        const db = getFirestore(app);
+        const storage = getStorage(app);
+
+        // Create floating particles
+        function createParticles() {
+            const container = document.getElementById('particles');
+            for (let i = 0; i < 30; i++) {
+                const particle = document.createElement('div');
+                particle.className = 'particle';
+                particle.style.left = Math.random() * 100 + '%';
+                particle.style.top = Math.random() * 100 + '%';
+                particle.style.animation = `float ${Math.random() * 10 + 15}s linear infinite`;
+                particle.style.animationDelay = Math.random() * 5 + 's';
+                container.appendChild(particle);
+            }
+        }
+
+        // CSS animation for particles
+        const style = document.createElement('style');
+        style.textContent = `
+            @keyframes float {
+                0% { transform: translateY(0) translateX(0); opacity: 0; }
+                10% { opacity: 0.4; }
+                90% { opacity: 0.4; }
+                100% { transform: translateY(-100vh) translateX(20px); opacity: 0; }
+            }
+        `;
+        document.head.appendChild(style);
+
+        createParticles();
+
+        onAuthStateChanged(auth, async (user) => {
+            if (user) {
+                await loadUserData(user.uid);
+            } else {
+                window.location.href = 'index.html';
+            }
+        });
+
+        async function loadUserData(uid) {
+            try {
+                const userDoc = await getDoc(doc(db, 'users', uid));
+                if (userDoc.exists()) {
+                    const userData = userDoc.data();
+                    
+                    document.querySelector('.user-name').textContent = userData.username || 'anonymous';
+                    
+                    if (userData.isAdmin === true) {
+                        document.getElementById('adminBtn').style.display = 'inline-block';
+                    }
+                    
+                    try {
+                        const charRef = ref(storage, userData.characterImage);
+                        const charURL = await getDownloadURL(charRef);
+                        document.querySelector('.user-avatar').innerHTML = `<img src="${charURL}">`;
+                    } catch (e) {
+                        console.log('Character image not found');
+                    }
+
+                    await updateDoc(doc(db, 'users', uid), {
+                        online: true,
+                        lastSeen: new Date().toISOString(),
+                        currentRoom: null
+                    });
+                }
+            } catch (error) {
+                console.error('Error loading user data:', error);
+            }
+        }
+
+        window.enterRoom = function(room) {
+            window.location.href = `room.html?room=${room}`;
+        };
+
+        window.logout = async function() {
+            try {
+                await signOut(auth);
+                window.location.href = 'index.html';
+            } catch (error) {
+                console.error('Logout error:', error);
+            }
+        };
+    </script>
+</body>
+</html>

@@ -1,0 +1,345 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>earthtown - art gallery</title>
+    <style>
+        @import url('https://fonts.googleapis.com/css2?family=VT323&family=Inter:wght@300;400;500;600&display=swap');
+
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: 'Inter', sans-serif;
+            background: #0a0a0a;
+            color: #f1faee;
+            min-height: 100vh;
+            user-select: none;
+        }
+
+        .header {
+            padding: 20px 40px;
+            background: rgba(241, 250, 238, 0.02);
+            border-bottom: 1px solid rgba(241, 250, 238, 0.1);
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+
+        .back-btn {
+            font-family: 'VT323', monospace;
+            font-size: 1.3rem;
+            color: #f1faee;
+            text-decoration: none;
+            padding: 8px 20px;
+            border: 1px solid rgba(241, 250, 238, 0.2);
+            border-radius: 6px;
+            transition: all 0.3s;
+            letter-spacing: 1px;
+        }
+
+        .back-btn:hover {
+            background: rgba(241, 250, 238, 0.05);
+        }
+
+        .page-title {
+            font-family: 'VT323', monospace;
+            font-size: 2.5rem;
+            letter-spacing: 2px;
+            position: relative;
+            padding-bottom: 10px;
+        }
+
+        .page-title::after {
+            content: '';
+            position: absolute;
+            bottom: 0;
+            left: 0;
+            width: 80px;
+            height: 2px;
+            background: linear-gradient(90deg, #f77f00, #6a4c93);
+            opacity: 0.6;
+        }
+
+        .main-content {
+            max-width: 1600px;
+            margin: 0 auto;
+            padding: 40px;
+        }
+
+        .upload-section {
+            background: rgba(241, 250, 238, 0.03);
+            border: 1px solid rgba(241, 250, 238, 0.15);
+            border-radius: 12px;
+            padding: 40px;
+            margin-bottom: 40px;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+
+        .upload-info h2 {
+            font-family: 'VT323', monospace;
+            font-size: 2rem;
+            color: #f1faee;
+            margin-bottom: 10px;
+            letter-spacing: 2px;
+        }
+
+        .upload-info p {
+            color: #888;
+            font-size: 1rem;
+        }
+
+        .upload-btn {
+            padding: 15px 40px;
+            background: #f1faee;
+            color: #0a0a0a;
+            border: none;
+            border-radius: 8px;
+            font-family: 'VT323', monospace;
+            font-size: 1.5rem;
+            cursor: pointer;
+            letter-spacing: 2px;
+            position: relative;
+            overflow: hidden;
+        }
+
+        .upload-btn::after {
+            content: '';
+            position: absolute;
+            bottom: 0;
+            left: 0;
+            width: 100%;
+            height: 3px;
+            background: linear-gradient(90deg, #f77f00, #d62828, #6a4c93);
+        }
+
+        .section-title {
+            font-family: 'VT323', monospace;
+            font-size: 2rem;
+            color: #f1faee;
+            margin-bottom: 25px;
+            letter-spacing: 2px;
+        }
+
+        .art-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fill, minmax(280px, 1fr));
+            gap: 25px;
+            margin-bottom: 40px;
+        }
+
+        .art-card {
+            background: rgba(241, 250, 238, 0.03);
+            border: 1px solid rgba(241, 250, 238, 0.1);
+            border-radius: 12px;
+            overflow: hidden;
+            transition: all 0.3s;
+            cursor: pointer;
+        }
+
+        .art-card:hover {
+            background: rgba(241, 250, 238, 0.06);
+            border-color: rgba(241, 250, 238, 0.25);
+            transform: translateY(-5px);
+        }
+
+        .art-image {
+            width: 100%;
+            aspect-ratio: 1;
+            background: rgba(241, 250, 238, 0.05);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 4rem;
+        }
+
+        .art-info {
+            padding: 20px;
+        }
+
+        .art-title {
+            font-family: 'VT323', monospace;
+            font-size: 1.4rem;
+            color: #f1faee;
+            margin-bottom: 8px;
+            letter-spacing: 1px;
+        }
+
+        .art-artist {
+            font-size: 0.95rem;
+            color: #888;
+            margin-bottom: 12px;
+        }
+
+        .art-meta {
+            display: flex;
+            justify-content: space-between;
+            font-size: 0.85rem;
+            color: #666;
+            padding-top: 12px;
+            border-top: 1px solid rgba(241, 250, 238, 0.1);
+        }
+
+        .filter-tabs {
+            display: flex;
+            gap: 15px;
+            margin-bottom: 30px;
+            padding-bottom: 20px;
+            border-bottom: 1px solid rgba(241, 250, 238, 0.1);
+        }
+
+        .filter-tab {
+            padding: 10px 25px;
+            background: transparent;
+            border: 1px solid rgba(241, 250, 238, 0.2);
+            border-radius: 6px;
+            color: #888;
+            font-family: 'VT323', monospace;
+            font-size: 1.2rem;
+            cursor: pointer;
+            transition: all 0.3s;
+            letter-spacing: 1px;
+        }
+
+        .filter-tab.active {
+            background: rgba(241, 250, 238, 0.08);
+            border-color: #f1faee;
+            color: #f1faee;
+        }
+
+        .filter-tab:hover {
+            background: rgba(241, 250, 238, 0.05);
+        }
+    </style>
+</head>
+<body>
+    <div class="header">
+        <h1 class="page-title">🖼️ art gallery</h1>
+        <a href="hub.html" class="back-btn">← back to hub</a>
+    </div>
+
+    <div class="main-content">
+        <div class="upload-section">
+            <div class="upload-info">
+                <h2>share your work</h2>
+                <p>Upload your art, illustrations, photography, and digital creations</p>
+            </div>
+            <button class="upload-btn" onclick="document.getElementById('artUpload').click()">
+                <input type="file" id="artUpload" accept="image/*" multiple style="display:none" onchange="handleUpload(event)">
+                🎨 upload art
+            </button>
+        </div>
+
+        <div class="filter-tabs">
+            <button class="filter-tab active">all</button>
+            <button class="filter-tab">digital</button>
+            <button class="filter-tab">traditional</button>
+            <button class="filter-tab">photography</button>
+            <button class="filter-tab">3d</button>
+        </div>
+
+        <h2 class="section-title">Community Gallery</h2>
+        <div class="art-grid">
+            <div class="art-card">
+                <div class="art-image">🎨</div>
+                <div class="art-info">
+                    <div class="art-title">digital dreamscape</div>
+                    <div class="art-artist">by neon_artist</div>
+                    <div class="art-meta">
+                        <span>2 days ago</span>
+                        <span>❤️ 24</span>
+                    </div>
+                </div>
+            </div>
+
+            <div class="art-card">
+                <div class="art-image">🎨</div>
+                <div class="art-info">
+                    <div class="art-title">urban exploration</div>
+                    <div class="art-artist">by street_photographer</div>
+                    <div class="art-meta">
+                        <span>5 days ago</span>
+                        <span>❤️ 18</span>
+                    </div>
+                </div>
+            </div>
+
+            <div class="art-card">
+                <div class="art-image">🎨</div>
+                <div class="art-info">
+                    <div class="art-title">abstract feelings</div>
+                    <div class="art-artist">by color_explorer</div>
+                    <div class="art-meta">
+                        <span>1 week ago</span>
+                        <span>❤️ 32</span>
+                    </div>
+                </div>
+            </div>
+
+            <div class="art-card">
+                <div class="art-image">🎨</div>
+                <div class="art-info">
+                    <div class="art-title">midnight studies</div>
+                    <div class="art-artist">by sketch_master</div>
+                    <div class="art-meta">
+                        <span>3 days ago</span>
+                        <span>❤️ 41</span>
+                    </div>
+                </div>
+            </div>
+
+            <div class="art-card">
+                <div class="art-image">🎨</div>
+                <div class="art-info">
+                    <div class="art-title">3d experiments</div>
+                    <div class="art-artist">by virtual_sculptor</div>
+                    <div class="art-meta">
+                        <span>1 day ago</span>
+                        <span>❤️ 15</span>
+                    </div>
+                </div>
+            </div>
+
+            <div class="art-card">
+                <div class="art-image">🎨</div>
+                <div class="art-info">
+                    <div class="art-title">nature's palette</div>
+                    <div class="art-artist">by botanical_lens</div>
+                    <div class="art-meta">
+                        <span>4 days ago</span>
+                        <span>❤️ 27</span>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        function handleUpload(event) {
+            const files = event.target.files;
+            if (!files || files.length === 0) return;
+
+            alert(`Would upload ${files.length} artwork(s) to Firebase Storage. Coming soon!`);
+            
+            // TODO: Upload to Firebase Storage
+            // TODO: Save metadata to Firestore
+            // TODO: Refresh grid with new art
+        }
+
+        // Filter tabs
+        document.querySelectorAll('.filter-tab').forEach(tab => {
+            tab.addEventListener('click', function() {
+                document.querySelectorAll('.filter-tab').forEach(t => t.classList.remove('active'));
+                this.classList.add('active');
+                // TODO: Filter gallery based on category
+            });
+        });
+    </script>
+</body>
+</html>

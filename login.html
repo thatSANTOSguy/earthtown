@@ -1,0 +1,357 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>earthtown - login</title>
+    <style>
+        @import url('https://fonts.googleapis.com/css2?family=VT323&family=Inter:wght@300;400;500;600&display=swap');
+
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: 'Inter', sans-serif;
+            background: #0a0a0a;
+            color: #f1faee;
+            min-height: 100vh;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            padding: 20px;
+        }
+
+        .container {
+            width: 100%;
+            max-width: 450px;
+        }
+
+        .logo-image {
+            width: 120px;
+            height: auto;
+            margin: 0 auto 30px;
+            display: block;
+            filter: sepia(0.2) saturate(1.2) hue-rotate(5deg) brightness(0.95) drop-shadow(0 0 15px rgba(45, 106, 79, 0.3));
+        }
+
+        .logo-text {
+            font-family: 'VT323', monospace;
+            font-size: 3rem;
+            color: #f1faee;
+            text-align: center;
+            margin-bottom: 10px;
+            letter-spacing: 3px;
+            position: relative;
+            padding-bottom: 15px;
+        }
+
+        .logo-text::after {
+            content: '';
+            position: absolute;
+            bottom: 0;
+            left: 50%;
+            transform: translateX(-50%);
+            width: 80px;
+            height: 2px;
+            background: linear-gradient(90deg, transparent, #f77f00, #d62828, transparent);
+            opacity: 0.5;
+        }
+
+        .subtitle {
+            text-align: center;
+            color: #888;
+            margin-bottom: 40px;
+            font-size: 1rem;
+        }
+
+        .login-card {
+            background: rgba(241, 250, 238, 0.03);
+            border: 1px solid rgba(241, 250, 238, 0.15);
+            border-radius: 12px;
+            padding: 40px 35px;
+        }
+
+        .form-group {
+            margin-bottom: 25px;
+        }
+
+        .form-label {
+            display: block;
+            font-family: 'VT323', monospace;
+            font-size: 1.3rem;
+            color: #f1faee;
+            margin-bottom: 10px;
+            letter-spacing: 1px;
+        }
+
+        .form-input {
+            width: 100%;
+            padding: 15px 20px;
+            background: rgba(241, 250, 238, 0.03);
+            border: 1px solid rgba(241, 250, 238, 0.15);
+            border-radius: 8px;
+            color: #f1faee;
+            font-family: 'Inter', sans-serif;
+            font-size: 1rem;
+            transition: all 0.3s;
+        }
+
+        .form-input:focus {
+            outline: none;
+            border-color: rgba(241, 250, 238, 0.4);
+            background: rgba(241, 250, 238, 0.06);
+        }
+
+        .form-input::placeholder {
+            color: #555;
+        }
+
+        .forgot-password {
+            text-align: right;
+            margin-top: 10px;
+        }
+
+        .forgot-password a {
+            color: #888;
+            text-decoration: none;
+            font-size: 0.9rem;
+            transition: color 0.3s;
+        }
+
+        .forgot-password a:hover {
+            color: #f1faee;
+        }
+
+        .btn {
+            width: 100%;
+            font-family: 'VT323', monospace;
+            font-size: 1.6rem;
+            padding: 15px;
+            border-radius: 8px;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            letter-spacing: 2px;
+            margin-top: 30px;
+            position: relative;
+        }
+
+        .btn-primary {
+            background: #f1faee;
+            border: none;
+            color: #0a0a0a;
+            overflow: hidden;
+        }
+
+        .btn-primary::after {
+            content: '';
+            position: absolute;
+            bottom: 0;
+            left: 0;
+            width: 100%;
+            height: 3px;
+            background: linear-gradient(90deg, #f77f00, #d62828, #6a4c93);
+        }
+
+        .btn-primary:hover {
+            transform: translateY(-3px);
+            box-shadow: 0 8px 24px rgba(241, 250, 238, 0.2);
+        }
+
+        .divider {
+            text-align: center;
+            margin: 30px 0;
+            color: #666;
+            position: relative;
+        }
+
+        .divider::before,
+        .divider::after {
+            content: '';
+            position: absolute;
+            top: 50%;
+            width: 40%;
+            height: 1px;
+            background: rgba(241, 250, 238, 0.1);
+        }
+
+        .divider::before {
+            left: 0;
+        }
+
+        .divider::after {
+            right: 0;
+        }
+
+        .signup-link {
+            text-align: center;
+            margin-top: 20px;
+            color: #888;
+        }
+
+        .signup-link a {
+            color: #f1faee;
+            text-decoration: none;
+            font-family: 'VT323', monospace;
+            font-size: 1.2rem;
+            letter-spacing: 1px;
+            transition: color 0.3s;
+        }
+
+        .signup-link a:hover {
+            color: #2d6a4f;
+        }
+
+        .error-message {
+            background: rgba(230, 57, 70, 0.1);
+            border: 1px solid rgba(230, 57, 70, 0.3);
+            border-radius: 8px;
+            padding: 15px;
+            color: #e63946;
+            margin-bottom: 20px;
+            display: none;
+        }
+
+        .error-message.show {
+            display: block;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <img src="earthtown-logo.png" alt="earthtown" class="logo-image">
+        <h1 class="logo-text">earthtown</h1>
+        <p class="subtitle">welcome back</p>
+
+        <div class="login-card">
+            <div class="error-message" id="errorMessage"></div>
+
+            <div class="form-group">
+                <label class="form-label">email</label>
+                <input type="email" class="form-input" id="email" placeholder="your@email.com">
+            </div>
+
+            <div class="form-group">
+                <label class="form-label">password</label>
+                <input type="password" class="form-input" id="password" placeholder="your password...">
+                <div class="forgot-password">
+                    <a href="#" onclick="forgotPassword(); return false;">forgot password?</a>
+                </div>
+            </div>
+
+            <button class="btn btn-primary" onclick="login()">enter earthtown</button>
+
+            <div class="divider">or</div>
+
+            <div class="signup-link">
+                don't have an account? <a href="signup.html">create character</a>
+            </div>
+        </div>
+    </div>
+
+    <!-- Firebase SDKs -->
+    <script type="module">
+        import { initializeApp } from 'https://www.gstatic.com/firebasejs/10.7.1/firebase-app.js';
+        import { getAuth, signInWithEmailAndPassword, sendPasswordResetEmail } from 'https://www.gstatic.com/firebasejs/10.7.1/firebase-auth.js';
+        import { getFirestore, doc, updateDoc } from 'https://www.gstatic.com/firebasejs/10.7.1/firebase-firestore.js';
+
+        const firebaseConfig = {
+            apiKey: "AIzaSyCXFlGeJodOUVn-3bYocPhFRtzs9DBHEFA",
+            authDomain: "earthtown-92993.firebaseapp.com",
+            projectId: "earthtown-92993",
+            storageBucket: "earthtown-92993.firebasestorage.app",
+            messagingSenderId: "830730193161",
+            appId: "1:830730193161:web:af18953dd80872b1396bd8",
+            measurementId: "G-KC30SQWHEC"
+        };
+
+        const app = initializeApp(firebaseConfig);
+        window.firebaseAuth = getAuth(app);
+        window.firebaseDB = getFirestore(app);
+        window.signInWithEmailAndPassword = signInWithEmailAndPassword;
+        window.sendPasswordResetEmail = sendPasswordResetEmail;
+        window.updateDoc = updateDoc;
+        window.doc = doc;
+    </script>
+
+    <script>
+        function showError(message) {
+            const errorEl = document.getElementById('errorMessage');
+            errorEl.textContent = message;
+            errorEl.classList.add('show');
+            setTimeout(() => {
+                errorEl.classList.remove('show');
+            }, 5000);
+        }
+
+        async function login() {
+            const email = document.getElementById('email').value.trim();
+            const password = document.getElementById('password').value.trim();
+
+            if (!email || !password) {
+                showError('Please enter both email and password');
+                return;
+            }
+
+            try {
+                const userCredential = await window.signInWithEmailAndPassword(
+                    window.firebaseAuth,
+                    email,
+                    password
+                );
+                const user = userCredential.user;
+
+                await window.updateDoc(window.doc(window.firebaseDB, 'users', user.uid), {
+                    online: true,
+                    lastSeen: new Date().toISOString()
+                });
+
+                window.location.href = 'hub.html';
+
+            } catch (error) {
+                console.error('Login error:', error);
+                if (error.code === 'auth/invalid-credential') {
+                    showError('Invalid email or password');
+                } else if (error.code === 'auth/user-not-found') {
+                    showError('No account found with this email');
+                } else if (error.code === 'auth/wrong-password') {
+                    showError('Incorrect password');
+                } else {
+                    showError('Error logging in: ' + error.message);
+                }
+            }
+        }
+
+        async function forgotPassword() {
+            const email = document.getElementById('email').value.trim();
+            
+            if (!email || !email.includes('@')) {
+                showError('Please enter your email address first');
+                return;
+            }
+            
+            try {
+                await window.sendPasswordResetEmail(window.firebaseAuth, email);
+                showError('Password reset email sent! Check your inbox.');
+            } catch (error) {
+                console.error('Password reset error:', error);
+                if (error.code === 'auth/user-not-found') {
+                    showError('No account found with this email address');
+                } else {
+                    showError('Error sending reset email: ' + error.message);
+                }
+            }
+        }
+
+        document.getElementById('email').addEventListener('keypress', (e) => {
+            if (e.key === 'Enter') login();
+        });
+
+        document.getElementById('password').addEventListener('keypress', (e) => {
+            if (e.key === 'Enter') login();
+        });
+    </script>
+</body>
+</html>
