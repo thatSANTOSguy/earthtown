@@ -267,6 +267,74 @@
             background: rgba(230, 57, 70, 0.2);
             border-color: #e63946;
         }
+        
+        /* MOBILE RESPONSIVE */
+        @media (max-width: 768px) {
+            body {
+                padding: 12px;
+            }
+            
+            .header {
+                margin-bottom: 24px;
+            }
+            
+            .back-link {
+                font-size: 1rem;
+            }
+            
+            h1 {
+                font-size: 2.2rem;
+            }
+            
+            .subtitle {
+                font-size: 0.8rem;
+            }
+            
+            .container {
+                padding: 24px 16px;
+                margin: 0;
+            }
+            
+            .upload-btn {
+                font-size: 1rem;
+                padding: 12px 30px;
+                min-height: 48px;
+            }
+            
+            .canvas-container {
+                margin: 30px 0;
+            }
+            
+            #canvas {
+                max-width: 100%;
+                height: auto;
+            }
+            
+            .control-group {
+                padding: 16px;
+            }
+            
+            .control-group label {
+                font-size: 1.1rem;
+            }
+            
+            input[type="number"] {
+                width: 70px;
+                font-size: 0.95rem;
+            }
+            
+            .button-group {
+                flex-direction: column;
+                gap: 12px;
+            }
+            
+            .btn {
+                width: 100%;
+                font-size: 1rem;
+                padding: 14px 24px;
+                min-height: 48px;
+            }
+        }
     </style>
 </head>
 <body>
@@ -320,9 +388,8 @@
         const downloadBtn = document.getElementById('downloadBtn');
         const statusMessage = document.getElementById('statusMessage');
 
-        // Initialize canvas
-        ctx.fillStyle = '#0a0a0a';
-        ctx.fillRect(0, 0, canvas.width, canvas.height);
+        // Initialize canvas (transparent by default)
+        // No background fill needed
 
         imageInput.addEventListener('change', handleImageUpload);
         
@@ -399,9 +466,8 @@
         function renderImage() {
             if (!processedImage) return;
 
-            // Clear canvas
-            ctx.fillStyle = '#0a0a0a';
-            ctx.fillRect(0, 0, canvas.width, canvas.height);
+            // Clear canvas to transparent
+            ctx.clearRect(0, 0, canvas.width, canvas.height);
 
             // Calculate scaling to fit canvas
             const scale = Math.min(canvas.width / processedImage.width, canvas.height / processedImage.height);
@@ -423,9 +489,7 @@
             const imageData = ctx.getImageData(0, 0, canvas.width, canvas.height);
             ctx.clearRect(0, 0, canvas.width, canvas.height);
 
-            // Fill background
-            ctx.fillStyle = '#0a0a0a';
-            ctx.fillRect(0, 0, canvas.width, canvas.height);
+            // NO background fill - keep transparent!
 
             for (let y = 0; y < canvas.height; y += pixelSize) {
                 for (let x = 0; x < canvas.width; x += pixelSize) {
@@ -461,8 +525,7 @@
             pixelSizeSlider.value = 2;
             pixelInput.value = 2;
             document.getElementById('pixelValue').textContent = '2px';
-            ctx.fillStyle = '#0a0a0a';
-            ctx.fillRect(0, 0, canvas.width, canvas.height);
+            ctx.clearRect(0, 0, canvas.width, canvas.height);
             statusMessage.className = 'status-message';
             downloadBtn.disabled = false;
             imageInput.value = '';
@@ -472,7 +535,7 @@
     <!-- Firebase for character update -->
     <script type="module">
         import { initializeApp } from 'https://www.gstatic.com/firebasejs/10.7.1/firebase-app.js';
-        import { getAuth, onAuthStateChanged } from 'https://www.gstatic.com/firebasejs/10.7.1/firebase-auth.js';
+        import { getAuth, onAuthStateChanged, setPersistence, browserLocalPersistence } from 'https://www.gstatic.com/firebasejs/10.7.1/firebase-auth.js';
         import { getFirestore, doc, updateDoc } from 'https://www.gstatic.com/firebasejs/10.7.1/firebase-firestore.js';
         import { getStorage, ref, uploadBytes } from 'https://www.gstatic.com/firebasejs/10.7.1/firebase-storage.js';
 
@@ -489,6 +552,11 @@
         const auth = getAuth(app);
         const db = getFirestore(app);
         const storage = getStorage(app);
+
+        // Enable persistent login
+        setPersistence(auth, browserLocalPersistence).catch(err => {
+            console.error('Persistence error:', err);
+        });
 
         let currentUser = null;
 

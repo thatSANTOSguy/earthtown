@@ -135,23 +135,36 @@
         }
 
         @media (max-width: 768px) {
-            .logo-text {
-                font-size: 3.5rem;
+            .container {
+                padding: 30px 16px;
             }
-
-            .btn {
-                font-size: 1.5rem;
-                padding: 15px 40px;
+            
+            .logo-image {
+                width: 140px;
+                margin-bottom: 30px;
+            }
+            
+            .logo-text {
+                font-size: 3rem;
+            }
+            
+            .tagline {
+                font-size: 0.9rem;
+                margin-bottom: 30px;
             }
 
             .cta-buttons {
                 flex-direction: column;
-                align-items: center;
+                align-items: stretch;
+                gap: 12px;
             }
 
             .btn {
                 width: 100%;
-                max-width: 300px;
+                max-width: 100%;
+                font-size: 1.1rem;
+                padding: 14px 32px;
+                min-height: 48px;
             }
         }
     </style>

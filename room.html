@@ -55,7 +55,7 @@
 
         /* Header */
         .room-header {
-            background: rgba(0, 0, 0, 0.05);
+            background: rgba(10, 10, 10, 0.85);
             border-bottom: 2px solid rgba(241, 250, 238, 0.2);
             padding: 15px 30px;
             display: flex;
@@ -938,6 +938,162 @@
             letter-spacing: 1px;
         }
 
+        
+        /* MOBILE RESPONSIVE */
+        @media (max-width: 768px) {
+            .room-header {
+                padding: 12px 16px;
+                flex-direction: column;
+                gap: 12px;
+                align-items: flex-start;
+            }
+            
+            .room-info {
+                width: 100%;
+            }
+            
+            .back-button {
+                font-size: 1rem;
+                padding: 6px 12px;
+            }
+            
+            .room-title {
+                font-size: 2rem;
+            }
+            
+            .room-title span:first-child {
+                font-size: 1.8rem;
+            }
+            
+            .online-indicator {
+                font-size: 0.85rem;
+            }
+            
+            .main-layout {
+                flex-direction: column;
+                height: auto;
+                min-height: calc(100vh - 80px);
+            }
+            
+            .sidebar {
+                width: 100%;
+                max-width: 100%;
+                border-right: none;
+                border-bottom: 1px solid rgba(241, 250, 238, 0.1);
+                max-height: 300px;
+                overflow-y: auto;
+            }
+            
+            .main-area {
+                width: 100%;
+                padding: 20px 16px;
+            }
+            
+            /* Avatar grid mobile */
+            .avatars-grid {
+                grid-template-columns: repeat(auto-fill, minmax(60px, 1fr));
+                gap: 12px;
+                padding: 16px;
+            }
+            
+            .avatar-container {
+                width: 60px;
+                height: 120px;
+            }
+            
+            .username {
+                font-size: 0.7rem;
+            }
+            
+            /* Chat mobile */
+            .chat-container {
+                height: 300px;
+            }
+            
+            .message {
+                padding: 12px;
+                font-size: 0.9rem;
+            }
+            
+            .message-input {
+                padding: 12px;
+                font-size: 0.9rem;
+            }
+            
+            /* Music player mobile */
+            .music-player {
+                padding: 16px;
+            }
+            
+            .now-playing {
+                flex-direction: column;
+                gap: 12px;
+                text-align: center;
+            }
+            
+            .album-art {
+                font-size: 2.5rem;
+            }
+            
+            .track-title {
+                font-size: 1.1rem;
+            }
+            
+            .playback-controls {
+                flex-wrap: wrap;
+                gap: 8px;
+            }
+            
+            .control-btn {
+                font-size: 1.2rem;
+                min-width: 44px;
+                min-height: 44px;
+            }
+            
+            /* Vote button mobile */
+            .vote-section {
+                padding: 12px 16px;
+            }
+            
+            .vote-btn {
+                font-size: 0.9rem;
+                padding: 10px 20px;
+                min-height: 44px;
+            }
+            
+            /* Add track modal mobile */
+            .modal-content {
+                width: 95%;
+                max-width: 95%;
+                margin: 20px auto;
+                padding: 24px 16px;
+                max-height: 85vh;
+                overflow-y: auto;
+            }
+            
+            .modal-title {
+                font-size: 1.8rem;
+            }
+            
+            .upload-box {
+                padding: 30px 20px;
+                min-height: 120px;
+            }
+            
+            .upload-icon {
+                font-size: 2.5rem;
+            }
+            
+            .queue-item {
+                padding: 12px;
+            }
+            
+            .close-modal {
+                font-size: 1.5rem;
+                width: 36px;
+                height: 36px;
+            }
+        }
     </style>
 </head>
 <body>
@@ -1351,7 +1507,7 @@
         
         // Import Firebase
         import { initializeApp } from 'https://www.gstatic.com/firebasejs/10.7.1/firebase-app.js';
-        import { getAuth, onAuthStateChanged } from 'https://www.gstatic.com/firebasejs/10.7.1/firebase-auth.js';
+        import { getAuth, onAuthStateChanged, setPersistence, browserLocalPersistence } from 'https://www.gstatic.com/firebasejs/10.7.1/firebase-auth.js';
         import { getFirestore, doc, getDoc, setDoc, updateDoc, collection, query, where, onSnapshot, addDoc, orderBy, limit, getDocs } from 'https://www.gstatic.com/firebasejs/10.7.1/firebase-firestore.js';
         import { getStorage, ref, getDownloadURL } from 'https://www.gstatic.com/firebasejs/10.7.1/firebase-storage.js';
 
@@ -1371,6 +1527,11 @@
         const auth = getAuth(app);
         const db = getFirestore(app);
         const storage = getStorage(app);
+        
+        // Enable persistent login
+        setPersistence(auth, browserLocalPersistence).catch(err => {
+            console.error('Persistence error:', err);
+        });
         
         console.log('✓ Firebase initialized');
         console.log('Auth:', auth);
@@ -1900,12 +2061,13 @@
         }
 
         function setupEventListeners() {
-            // Drag to move avatar
+            // Drag to move avatar (MOUSE + TOUCH)
             let dragStartX, dragStartY, avatarStartX, avatarStartY;
             let hasMoved = false;
 
             const roomSpace = document.getElementById('roomSpace');
 
+            // MOUSE EVENTS
             roomSpace.addEventListener('mousedown', (e) => {
                 const avatar = e.target.closest('.avatar.current-user');
                 if (avatar) {
@@ -1949,6 +2111,76 @@
                         const avatar = e.target.closest('.avatar.current-user');
                         if (avatar) {
                             showAvatarDetail(currentUserData, e.clientX, e.clientY);
+                        }
+                    }
+
+                    // Update position in Firebase when drag ends (if moved)
+                    if (hasMoved) {
+                        try {
+                            await updateDoc(
+                                doc(db, 'rooms', roomName, 'presence', currentUser.uid),
+                                {
+                                    x: currentUserData.x,
+                                    y: currentUserData.y
+                                }
+                            );
+                        } catch (error) {
+                            console.error('Error updating position:', error);
+                        }
+                    }
+                }
+            });
+
+            // TOUCH EVENTS (for mobile)
+            roomSpace.addEventListener('touchstart', (e) => {
+                const avatar = e.target.closest('.avatar.current-user');
+                if (avatar) {
+                    isDraggingGlobal = true;
+                    hasMoved = false;
+                    const touch = e.touches[0];
+                    dragStartX = touch.clientX;
+                    dragStartY = touch.clientY;
+                    avatarStartX = currentUserData.x;
+                    avatarStartY = currentUserData.y;
+                    e.preventDefault(); // Prevent scrolling while dragging
+                }
+            }, { passive: false });
+
+            document.addEventListener('touchmove', async (e) => {
+                if (isDraggingGlobal && currentUserData) {
+                    const touch = e.touches[0];
+                    const deltaX = touch.clientX - dragStartX;
+                    const deltaY = touch.clientY - dragStartY;
+                    
+                    // Mark as moved if dragged more than 5px
+                    if (Math.abs(deltaX) > 5 || Math.abs(deltaY) > 5) {
+                        hasMoved = true;
+                    }
+
+                    const rect = roomSpace.getBoundingClientRect();
+                    currentUserData.x = Math.max(0, Math.min(avatarStartX + deltaX, rect.width - 150));
+                    currentUserData.y = Math.max(0, Math.min(avatarStartY + deltaY, rect.height - 190));
+
+                    const avatar = document.getElementById('avatar-' + currentUser.uid);
+                    if (avatar) {
+                        avatar.style.left = currentUserData.x + 'px';
+                        avatar.style.top = currentUserData.y + 'px';
+                    }
+                    
+                    e.preventDefault(); // Prevent scrolling
+                }
+            }, { passive: false });
+
+            document.addEventListener('touchend', async (e) => {
+                if (isDraggingGlobal) {
+                    isDraggingGlobal = false;
+
+                    // Only show popup if didn't move (was a tap)
+                    if (!hasMoved) {
+                        const avatar = e.target.closest('.avatar.current-user');
+                        if (avatar) {
+                            const touch = e.changedTouches[0];
+                            showAvatarDetail(currentUserData, touch.clientX, touch.clientY);
                         }
                     }
 
