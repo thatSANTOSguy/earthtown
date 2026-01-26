@@ -987,6 +987,7 @@
             .main-area {
                 width: 100%;
                 padding: 20px 16px;
+                position: relative;
             }
             
             /* Avatar grid mobile */
@@ -1005,9 +1006,49 @@
                 font-size: 0.7rem;
             }
             
-            /* Chat mobile */
+            /* RETRACTABLE CHAT */
             .chat-container {
-                height: 300px;
+                position: fixed;
+                bottom: 0;
+                left: 0;
+                right: 0;
+                height: 60px;
+                max-height: 60px;
+                transition: height 0.3s ease, max-height 0.3s ease;
+                z-index: 100;
+                border-radius: 12px 12px 0 0;
+            }
+            
+            .chat-container.expanded {
+                height: 400px;
+                max-height: 400px;
+            }
+            
+            .chat-container::before {
+                content: '💬 Chat';
+                position: absolute;
+                top: 0;
+                left: 0;
+                right: 0;
+                height: 50px;
+                display: flex;
+                align-items: center;
+                justify-content: center;
+                font-family: 'VT323', monospace;
+                font-size: 1.2rem;
+                background: rgba(241, 250, 238, 0.03);
+                border-bottom: 1px solid rgba(241, 250, 238, 0.1);
+                cursor: pointer;
+                border-radius: 12px 12px 0 0;
+            }
+            
+            .chat-container.expanded::before {
+                content: '✕ Close Chat';
+            }
+            
+            .chat-messages {
+                margin-top: 50px;
+                height: calc(100% - 110px);
             }
             
             .message {
@@ -1020,12 +1061,48 @@
                 font-size: 0.9rem;
             }
             
-            /* Music player mobile */
+            /* RETRACTABLE MUSIC PLAYER */
             .music-player {
-                padding: 16px;
+                position: fixed;
+                bottom: 60px;
+                left: 0;
+                right: 0;
+                height: 60px;
+                max-height: 60px;
+                transition: height 0.3s ease, max-height 0.3s ease;
+                z-index: 99;
+                border-radius: 12px 12px 0 0;
+            }
+            
+            .music-player.expanded {
+                height: 350px;
+                max-height: 350px;
+            }
+            
+            .music-player::before {
+                content: '🎵 Music';
+                position: absolute;
+                top: 0;
+                left: 0;
+                right: 0;
+                height: 50px;
+                display: flex;
+                align-items: center;
+                justify-content: center;
+                font-family: 'VT323', monospace;
+                font-size: 1.2rem;
+                background: rgba(241, 250, 238, 0.03);
+                border-bottom: 1px solid rgba(241, 250, 238, 0.1);
+                cursor: pointer;
+                border-radius: 12px 12px 0 0;
+            }
+            
+            .music-player.expanded::before {
+                content: '✕ Close Music';
             }
             
             .now-playing {
+                margin-top: 50px;
                 flex-direction: column;
                 gap: 12px;
                 text-align: center;
@@ -1053,6 +1130,7 @@
             /* Vote button mobile */
             .vote-section {
                 padding: 12px 16px;
+                margin-bottom: 120px;
             }
             
             .vote-btn {
@@ -1578,6 +1656,34 @@
                 console.log('Room joined, setting up listeners');
                 setupEventListeners();
                 console.log('✓ Setup complete');
+                
+                // Mobile: Add toggle functionality for chat and music player
+                if (window.innerWidth <= 768) {
+                    const chatContainer = document.querySelector('.chat-container');
+                    const musicPlayer = document.querySelector('.music-player');
+                    
+                    if (chatContainer) {
+                        chatContainer.addEventListener('click', function(e) {
+                            // Only toggle if clicking the header area (top 50px)
+                            const rect = chatContainer.getBoundingClientRect();
+                            const clickY = e.clientY - rect.top;
+                            if (clickY <= 50) {
+                                chatContainer.classList.toggle('expanded');
+                            }
+                        });
+                    }
+                    
+                    if (musicPlayer) {
+                        musicPlayer.addEventListener('click', function(e) {
+                            // Only toggle if clicking the header area (top 50px)
+                            const rect = musicPlayer.getBoundingClientRect();
+                            const clickY = e.clientY - rect.top;
+                            if (clickY <= 50) {
+                                musicPlayer.classList.toggle('expanded');
+                            }
+                        });
+                    }
+                }
             } else {
                 console.log('No user, redirecting to index');
                 window.location.href = 'index.html';
