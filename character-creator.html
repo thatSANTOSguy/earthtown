@@ -339,7 +339,7 @@
 </head>
 <body>
     <div class="header">
-        <a href="index.html" class="back-link">← back</a>
+        <a href="#" id="backLink" class="back-link" onclick="goBack(event)">← back</a>
         <h1>character creator</h1>
         <p class="subtitle">upload a photo, we'll remove the background & pixelate it</p>
     </div>
@@ -564,16 +564,34 @@
         onAuthStateChanged(auth, (user) => {
             const loginBtn = document.getElementById('loginBtn');
             const updateBtn = document.getElementById('updateBtn');
+            const backLink = document.getElementById('backLink');
 
             if (user) {
                 currentUser = user;
                 loginBtn.style.display = 'none';
                 updateBtn.style.display = 'inline-block';
+                // Update back link for logged in users
+                if (backLink) {
+                    backLink.textContent = '← back to hub';
+                }
             } else {
                 loginBtn.style.display = 'inline-block';
                 updateBtn.style.display = 'none';
+                if (backLink) {
+                    backLink.textContent = '← back';
+                }
             }
         });
+
+        // Smart back navigation
+        window.goBack = function(e) {
+            e.preventDefault();
+            if (currentUser) {
+                window.location.href = 'hub.html';
+            } else {
+                window.location.href = 'index.html';
+            }
+        };
 
         // Login button
         document.getElementById('loginBtn').addEventListener('click', () => {

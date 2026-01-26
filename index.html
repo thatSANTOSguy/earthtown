@@ -176,12 +176,47 @@
         <p class="tagline">a digital sanctuary for conscious creatives</p>
         
         <div class="cta-buttons">
-            <a href="signup.html" class="btn btn-primary">create character</a>
-            <a href="login.html" class="btn btn-secondary">enter</a>
+            <a href="signup.html" class="btn btn-primary" id="signupBtn">create character</a>
+            <a href="login.html" class="btn btn-secondary" id="enterBtn">enter</a>
             <a href="character-creator.html" class="btn btn-secondary" style="border-color: rgba(247, 127, 0, 0.4); background: rgba(247, 127, 0, 0.05);">
                 ✨ character creator
             </a>
         </div>
     </div>
+
+    <!-- Firebase to check auth state -->
+    <script type="module">
+        import { initializeApp } from 'https://www.gstatic.com/firebasejs/10.7.1/firebase-app.js';
+        import { getAuth, onAuthStateChanged } from 'https://www.gstatic.com/firebasejs/10.7.1/firebase-auth.js';
+
+        const firebaseConfig = {
+            apiKey: "AIzaSyCXFlGeJodOUVn-3bYocPhFRtzs9DBHEFA",
+            authDomain: "earthtown-92993.firebaseapp.com",
+            projectId: "earthtown-92993",
+            storageBucket: "earthtown-92993.firebasestorage.app",
+            messagingSenderId: "830730193161",
+            appId: "1:830730193161:web:af18953dd80872b1396bd8"
+        };
+
+        const app = initializeApp(firebaseConfig);
+        const auth = getAuth(app);
+
+        // Check if user is already logged in
+        onAuthStateChanged(auth, (user) => {
+            const enterBtn = document.getElementById('enterBtn');
+            const signupBtn = document.getElementById('signupBtn');
+            
+            if (user) {
+                // User is logged in - go straight to hub
+                enterBtn.href = 'hub.html';
+                enterBtn.textContent = 'enter hub';
+                signupBtn.style.display = 'none'; // Hide signup if already logged in
+            } else {
+                // Not logged in - go to login page
+                enterBtn.href = 'login.html';
+                enterBtn.textContent = 'enter';
+            }
+        });
+    </script>
 </body>
 </html>
