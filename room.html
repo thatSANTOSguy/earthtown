@@ -1010,7 +1010,7 @@
                 font-size: 0.7rem;
             }
             
-            /* RETRACTABLE CHAT */
+            /* Chat mobile - RETRACTABLE */
             .chat-sidebar {
                 position: fixed;
                 bottom: 0;
@@ -1021,13 +1021,12 @@
                 transition: height 0.3s ease, max-height 0.3s ease;
                 z-index: 100;
                 border-radius: 12px 12px 0 0;
-                background: rgba(10, 10, 10, 0.5);
+                background: rgba(10, 10, 10, 0.95);
             }
             
             .chat-sidebar.expanded {
                 height: 400px;
                 max-height: 400px;
-                background: rgba(10, 10, 10, 0.95);
                 backdrop-filter: blur(10px);
             }
             
@@ -1081,15 +1080,12 @@
                 font-size: 0.9rem;
             }
             
-            .chat-input-container {
-                padding: 12px;
-            }
-            
             .chat-input {
+                padding: 12px;
                 font-size: 0.9rem;
             }
             
-            /* RETRACTABLE MUSIC PLAYER */
+            /* Music player mobile - RETRACTABLE */
             .music-control {
                 position: fixed;
                 bottom: 60px;
@@ -1100,13 +1096,12 @@
                 transition: height 0.3s ease, max-height 0.3s ease;
                 z-index: 99;
                 border-radius: 12px 12px 0 0;
-                background: rgba(10, 10, 10, 0.5);
+                background: rgba(10, 10, 10, 0.95);
             }
             
             .music-control.expanded {
                 height: 350px;
                 max-height: 350px;
-                background: rgba(10, 10, 10, 0.95);
                 backdrop-filter: blur(10px);
             }
             
@@ -1181,7 +1176,6 @@
             /* Vote button mobile */
             .vote-section {
                 padding: 12px 16px;
-                margin-bottom: 120px;
             }
             
             .vote-btn {
@@ -1709,25 +1703,17 @@
                 console.log('✓ Setup complete');
                 
                 // Mobile: Add toggle functionality for chat and music player
-                console.log('Window width:', window.innerWidth);
-                const isMobile = window.innerWidth <= 768 || window.matchMedia('(max-width: 768px)').matches;
-                console.log('Is mobile:', isMobile);
-                
-                if (isMobile) {
+                if (window.innerWidth <= 768) {
                     const chatSidebar = document.querySelector('.chat-sidebar');
                     const musicControl = document.querySelector('.music-control');
                     
-                    console.log('Setting up mobile toggles:', { chatSidebar: !!chatSidebar, musicControl: !!musicControl });
-                    
                     if (chatSidebar) {
                         chatSidebar.addEventListener('click', function(e) {
-                            // Only toggle if clicking the header area (top 60px for easier tapping)
+                            // Only toggle if clicking the header area (top 50px)
                             const rect = chatSidebar.getBoundingClientRect();
                             const clickY = e.clientY - rect.top;
-                            console.log('Chat clicked at Y:', clickY);
-                            if (clickY <= 60) {
+                            if (clickY <= 50) {
                                 chatSidebar.classList.toggle('expanded');
-                                console.log('Chat expanded:', chatSidebar.classList.contains('expanded'));
                                 // Auto-collapse music when chat opens
                                 if (chatSidebar.classList.contains('expanded') && musicControl) {
                                     musicControl.classList.remove('expanded');
@@ -1738,13 +1724,11 @@
                     
                     if (musicControl) {
                         musicControl.addEventListener('click', function(e) {
-                            // Only toggle if clicking the header area (top 60px for easier tapping)
+                            // Only toggle if clicking the header area (top 50px)
                             const rect = musicControl.getBoundingClientRect();
                             const clickY = e.clientY - rect.top;
-                            console.log('Music clicked at Y:', clickY);
-                            if (clickY <= 60) {
+                            if (clickY <= 50) {
                                 musicControl.classList.toggle('expanded');
-                                console.log('Music expanded:', musicControl.classList.contains('expanded'));
                                 // Auto-collapse chat when music opens
                                 if (musicControl.classList.contains('expanded') && chatSidebar) {
                                     chatSidebar.classList.remove('expanded');
