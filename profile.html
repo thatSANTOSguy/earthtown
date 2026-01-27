@@ -392,6 +392,20 @@
             </div>
         </div>
 
+        <!-- Username Change -->
+        <div class="section">
+            <h2 class="section-title">change username</h2>
+            <div id="usernameChangeArea">
+                <div style="margin-bottom: 15px;">
+                    <input type="text" id="newUsername" placeholder="New username" maxlength="20" style="width: 100%; padding: 12px; background: rgba(241, 250, 238, 0.05); border: 1px solid rgba(241, 250, 238, 0.2); border-radius: 8px; color: #f1faee; font-family: 'Inter', sans-serif; font-size: 1rem;">
+                </div>
+                <div id="usernameStatus" style="font-family: 'VT323', monospace; font-size: 1rem; color: #888; margin-bottom: 15px;"></div>
+                <button id="changeUsernameBtn" onclick="changeUsername()" style="padding: 12px 24px; background: rgba(124, 194, 155, 0.15); border: 1px solid #7fc29b; border-radius: 8px; color: #7fc29b; font-family: 'VT323', monospace; font-size: 1.2rem; cursor: pointer; transition: all 0.3s;">
+                    change username
+                </button>
+            </div>
+        </div>
+
         <!-- Archetype Selection -->
         <div class="section">
             <h2 class="section-title">change archetype</h2>
@@ -480,6 +494,7 @@
                     }
                     
                     renderArchetypes();
+                    updateUsernameChangeStatus();
                 }
             } catch (error) {
                 console.error('Error loading profile:', error);
@@ -553,6 +568,109 @@
                 }, 3000);
             }
         }
+
+        // USERNAME CHANGE SYSTEM
+        function updateUsernameChangeStatus() {
+            const statusEl = document.getElementById('usernameStatus');
+            const btn = document.getElementById('changeUsernameBtn');
+            const input = document.getElementById('newUsername');
+            
+            const lastChange = currentUserData.lastUsernameChange;
+            const changeCount = currentUserData.usernameChangeCount || 0;
+            
+            if (!lastChange) {
+                // Never changed username
+                statusEl.textContent = 'You can change your username';
+                statusEl.style.color = '#7fc29b';
+                btn.disabled = false;
+                input.disabled = false;
+                return;
+            }
+            
+            const lastChangeDate = new Date(lastChange);
+            const now = new Date();
+            const hoursSinceChange = (now - lastChangeDate) / (1000 * 60 * 60);
+            const daysSinceChange = hoursSinceChange / 24;
+            
+            // Within 2-day adjustment window and haven't used the tweak yet
+            if (daysSinceChange < 2 && changeCount < 2) {
+                const hoursLeft = Math.ceil(48 - hoursSinceChange);
+                statusEl.textContent = `You have ${hoursLeft} hours left to adjust (${2 - changeCount} tweak${2 - changeCount > 1 ? 's' : ''} remaining)`;
+                statusEl.style.color = '#f77f00';
+                btn.disabled = false;
+                input.disabled = false;
+                return;
+            }
+            
+            // Check if 3 weeks have passed
+            const weeksSinceChange = daysSinceChange / 7;
+            if (weeksSinceChange >= 3) {
+                statusEl.textContent = 'You can change your username again';
+                statusEl.style.color = '#7fc29b';
+                btn.disabled = false;
+                input.disabled = false;
+                return;
+            }
+            
+            // Locked
+            const daysLeft = Math.ceil(21 - daysSinceChange);
+            statusEl.textContent = `Username locked for ${daysLeft} more days`;
+            statusEl.style.color = '#d62828';
+            btn.disabled = true;
+            input.disabled = true;
+        }
+
+        window.changeUsername = async function() {
+            const newUsername = document.getElementById('newUsername').value.trim();
+            
+            if (!newUsername) {
+                alert('Please enter a username');
+                return;
+            }
+            
+            if (newUsername.length < 3 || newUsername.length > 20) {
+                alert('Username must be 3-20 characters');
+                return;
+            }
+            
+            if (!/^[a-zA-Z0-9_-]+$/.test(newUsername)) {
+                alert('Username can only contain letters, numbers, underscores, and hyphens');
+                return;
+            }
+            
+            if (!confirm(`Change username to "${newUsername}"?`)) {
+                return;
+            }
+            
+            try {
+                const lastChange = currentUserData.lastUsernameChange;
+                const changeCount = currentUserData.usernameChangeCount || 0;
+                
+                let newChangeCount = 1;
+                
+                // If within 2-day window, increment count
+                if (lastChange) {
+                    const daysSince = (new Date() - new Date(lastChange)) / (1000 * 60 * 60 * 24);
+                    if (daysSince < 2 && changeCount < 2) {
+                        newChangeCount = changeCount + 1;
+                    }
+                }
+                
+                await updateDoc(doc(db, 'users', currentUser.uid), {
+                    username: newUsername,
+                    lastUsernameChange: new Date().toISOString(),
+                    usernameChangeCount: newChangeCount
+                });
+                
+                showStatus('Username changed successfully!', 'success');
+                await loadProfile();
+                document.getElementById('newUsername').value = '';
+                
+            } catch (error) {
+                console.error('Error changing username:', error);
+                alert('Failed to change username');
+            }
+        };
     </script>
 </body>
 </html>
