@@ -1047,7 +1047,6 @@
                 cursor: pointer;
                 border-radius: 12px 12px 0 0;
                 z-index: 1;
-                pointer-events: none;
             }
             
             .chat-sidebar.expanded::before {
@@ -1122,7 +1121,6 @@
                 cursor: pointer;
                 border-radius: 12px 12px 0 0;
                 z-index: 1;
-                pointer-events: none;
             }
             
             .music-control.expanded::before {
@@ -1744,6 +1742,27 @@
             }
         });
 
+        // Cleanup on page leave
+        window.addEventListener('beforeunload', async () => {
+            console.log('🚪 User leaving, cleaning up...');
+            
+            // Stop heartbeat
+            if (presenceInterval) {
+                clearInterval(presenceInterval);
+            }
+            
+            // Try to delete presence immediately (best effort)
+            if (currentUser) {
+                try {
+                    const presenceDocRef = doc(db, 'rooms', roomName, 'presence', currentUser.uid);
+                    await deleteDoc(presenceDocRef);
+                    console.log('✓ Presence deleted');
+                } catch (error) {
+                    console.log('Presence cleanup failed (fallback will handle it)');
+                }
+            }
+        });
+
         async function loadUserData(uid) {
             try {
                 const userDoc = await getDoc(doc(db, 'users', uid));
@@ -1778,8 +1797,12 @@
                     characterImage: currentUserData.characterImage,
                     x: currentUserData.x,
                     y: currentUserData.y,
-                    joinedAt: new Date().toISOString()
+                    joinedAt: new Date().toISOString(),
+                    lastSeen: new Date().toISOString() // NEW - for presence tracking
                 });
+
+                // Start presence heartbeat (update lastSeen every 30 seconds)
+                startPresenceHeartbeat();
 
                 // Listen to room presence
                 listenToRoomPresence();
@@ -1792,6 +1815,33 @@
             }
         }
 
+        // Presence heartbeat - update lastSeen every 30 seconds
+        let presenceInterval = null;
+        
+        function startPresenceHeartbeat() {
+            // Clear any existing interval
+            if (presenceInterval) clearInterval(presenceInterval);
+            
+            presenceInterval = setInterval(async () => {
+                if (!currentUser) {
+                    clearInterval(presenceInterval);
+                    return;
+                }
+                
+                try {
+                    const presenceDocRef = doc(db, 'rooms', roomName, 'presence', currentUser.uid);
+                    await updateDoc(presenceDocRef, {
+                        lastSeen: new Date().toISOString()
+                    });
+                    console.log('💓 Presence heartbeat updated');
+                } catch (error) {
+                    console.log('Presence update failed (user may have left)');
+                }
+            }, 30000); // Every 30 seconds
+            
+            console.log('✓ Presence heartbeat started');
+        }
+
         function listenToRoomPresence() {
             console.log('👥 Setting up room presence listener for room:', roomName);
             const presenceRef = collection(db, 'rooms', roomName, 'presence');
@@ -1802,6 +1852,24 @@
                 snapshot.forEach((docSnapshot) => {
                     console.log('Processing user:', docSnapshot.id, docSnapshot.data());
                     const userData = docSnapshot.data();
+                    
+                    // Check if presence is stale and clean it up
+                    const lastSeen = userData.lastSeen;
+                    if (lastSeen) {
+                        const timeSince = Date.now() - new Date(lastSeen).getTime();
+                        if (timeSince > 120000) { // 2 minutes
+                            // Delete stale presence doc
+                            console.log('🧹 Deleting stale presence for:', docSnapshot.id);
+                            deleteDoc(docSnapshot.ref).catch(err => console.log('Failed to delete stale presence'));
+                            return; // Don't add to usersInRoom
+                        }
+                    } else {
+                        // No lastSeen field = old doc from before this feature, clean it up
+                        console.log('🧹 Deleting old presence (no lastSeen) for:', docSnapshot.id);
+                        deleteDoc(docSnapshot.ref).catch(err => console.log('Failed to delete old presence'));
+                        return; // Don't add to usersInRoom
+                    }
+                    
                     if (docSnapshot.id !== currentUser.uid) {
                         usersInRoom.push({
                             id: docSnapshot.id,
