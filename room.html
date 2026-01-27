@@ -230,6 +230,10 @@
             -webkit-user-drag: none;
         }
 
+        .avatar.current-user {
+            z-index: 100 !important; /* Always on top so you can drag it */
+        }
+
         .avatar.current-user .avatar-image img {
             filter: drop-shadow(0 0 10px rgba(241, 250, 238, 0.5)); /* Glow only on your avatar */
         }
@@ -1244,6 +1248,7 @@
                 <div class="chat-header">
                     <div class="chat-title">room chat</div>
                     <div class="users-in-room" id="usersInRoom">7 people here</div>
+                    <button id="wipeChatBtn" onclick="wipeChat()" style="display: none; padding: 4px 12px; background: rgba(214, 40, 40, 0.2); border: 1px solid #d62828; border-radius: 4px; color: #d62828; font-family: 'VT323', monospace; font-size: 0.9rem; cursor: pointer; margin-left: auto;" title="Delete all messages (admin)">wipe chat</button>
                 </div>
                 <div class="chat-messages" id="chatMessages"></div>
                 <div class="chat-input-container">
@@ -1627,7 +1632,7 @@
         // Import Firebase
         import { initializeApp } from 'https://www.gstatic.com/firebasejs/10.7.1/firebase-app.js';
         import { getAuth, onAuthStateChanged, setPersistence, browserLocalPersistence } from 'https://www.gstatic.com/firebasejs/10.7.1/firebase-auth.js';
-        import { getFirestore, doc, getDoc, setDoc, updateDoc, collection, query, where, onSnapshot, addDoc, orderBy, limit, getDocs } from 'https://www.gstatic.com/firebasejs/10.7.1/firebase-firestore.js';
+        import { getFirestore, doc, getDoc, setDoc, updateDoc, deleteDoc, collection, query, where, onSnapshot, addDoc, orderBy, limit, getDocs } from 'https://www.gstatic.com/firebasejs/10.7.1/firebase-firestore.js';
         import { getStorage, ref, getDownloadURL } from 'https://www.gstatic.com/firebasejs/10.7.1/firebase-storage.js';
 
         // Firebase configuration
@@ -1744,6 +1749,12 @@
                 const userDoc = await getDoc(doc(db, 'users', uid));
                 if (userDoc.exists()) {
                     currentUserData = { id: uid, ...userDoc.data(), x: 300, y: 250 };
+                    
+                    // Show wipe chat button for admins
+                    if (currentUserData.isAdmin === true) {
+                        const wipeChatBtn = document.getElementById('wipeChatBtn');
+                        if (wipeChatBtn) wipeChatBtn.style.display = 'block';
+                    }
                 }
             } catch (error) {
                 console.error('Error loading user data:', error);
@@ -1981,7 +1992,7 @@
                 console.log('Avatar container:', avatarImgContainer);
                 
                 if (avatarImgContainer) {
-                    avatarImgContainer.innerHTML = `<img src="${charURL}" draggable="false" style="width: 150px; height: 150px; object-fit: contain; image-rendering: pixelated; background: none; pointer-events: none; user-select: none; filter: drop-shadow(0 0 6px rgba(241, 250, 238, 0.3));">`;
+                    avatarImgContainer.innerHTML = `<img src="${charURL}" draggable="false" style="width: 150px; height: 150px; object-fit: contain; image-rendering: pixelated; background: none; pointer-events: none; user-select: none;">`;
                     console.log('✓ Character image loaded for', userId);
                 } else {
                     console.error('Avatar container not found for', userId);
@@ -2177,22 +2188,51 @@
             
             const msgId = `msg-${Date.now()}-${Math.random()}`;
             
+            // Check if current user can delete (own message) or is admin
+            const isOwnMessage = currentUser && msg.userId === currentUser.uid;
+            const isAdmin = currentUserData && currentUserData.isAdmin === true;
+            
+            // Build delete buttons
+            let deleteButtons = '';
+            if (isOwnMessage || isAdmin) {
+                deleteButtons = `<button onclick="deleteMessage('${msg.id}', false)" style="background: none; border: none; color: #d62828; cursor: pointer; font-size: 0.85rem; padding: 0 5px; opacity: 0.6; transition: opacity 0.2s;" onmouseover="this.style.opacity='1'" onmouseout="this.style.opacity='0.6'" title="Delete (shows deleted)">delete</button>`;
+            }
+            if (isAdmin) {
+                deleteButtons += `<button onclick="deleteMessage('${msg.id}', true)" style="background: none; border: none; color: #f77f00; cursor: pointer; font-size: 0.85rem; padding: 0 5px; opacity: 0.6; transition: opacity 0.2s; margin-left: 5px;" onmouseover="this.style.opacity='1'" onmouseout="this.style.opacity='0.6'" title="Remove (no trace)">remove</button>`;
+            }
+            
             const div = document.createElement('div');
             div.className = 'message';
-            div.innerHTML = `
-                <div class="message-avatar" id="${msgId}" style="background: ${placeholderColor};"></div>
-                <div class="message-content">
-                    <div class="message-header">
-                        <span class="message-author archetype-${msg.archetype}">${msg.username}</span>
-                        <span class="message-time">${time}</span>
-                    </div>
-                    <div class="message-text">${msg.text}</div>
-                </div>
-            `;
             
-            // Load character image for message
-            if (msg.characterImage) {
-                loadMessageCharacterImage(msgId, msg.characterImage);
+            // Check if message is deleted
+            if (msg.deleted) {
+                div.innerHTML = `
+                    <div class="message-avatar" style="background: rgba(214, 40, 40, 0.2);"></div>
+                    <div class="message-content">
+                        <div class="message-header">
+                            <span class="message-author" style="color: #888;">[deleted]</span>
+                            <span class="message-time">${time}</span>
+                        </div>
+                        <div class="message-text" style="color: #666; font-style: italic;">[message deleted]</div>
+                    </div>
+                `;
+            } else {
+                div.innerHTML = `
+                    <div class="message-avatar" id="${msgId}" style="background: ${placeholderColor};"></div>
+                    <div class="message-content">
+                        <div class="message-header">
+                            <span class="message-author archetype-${msg.archetype}">${msg.username}</span>
+                            <span class="message-time">${time}</span>
+                            ${deleteButtons}
+                        </div>
+                        <div class="message-text">${msg.text}</div>
+                    </div>
+                `;
+                
+                // Load character image for message
+                if (msg.characterImage) {
+                    loadMessageCharacterImage(msgId, msg.characterImage);
+                }
             }
             
             return div;
@@ -2212,6 +2252,71 @@
                 console.log('Could not load message character image');
             }
         }
+
+        // Delete message function
+        window.deleteMessage = async function(messageId, removeCompletely) {
+            if (!currentUser) return;
+            
+            const isAdmin = currentUserData && currentUserData.isAdmin === true;
+            
+            // Confirm action
+            const action = removeCompletely ? 'remove' : 'delete';
+            if (!confirm(`${action.charAt(0).toUpperCase() + action.slice(1)} this message?`)) {
+                return;
+            }
+            
+            try {
+                if (removeCompletely && isAdmin) {
+                    // Admin remove: delete completely (no trace)
+                    await deleteDoc(doc(db, 'rooms', roomName, 'messages', messageId));
+                    console.log('Message removed completely');
+                } else {
+                    // Regular delete: mark as deleted (shows placeholder)
+                    await updateDoc(doc(db, 'rooms', roomName, 'messages', messageId), {
+                        deleted: true,
+                        text: '[message deleted]',
+                        username: '[deleted]'
+                    });
+                    console.log('Message marked as deleted');
+                }
+            } catch (error) {
+                console.error('Error deleting message:', error);
+                console.error('Error code:', error.code);
+                console.error('Error message:', error.message);
+                alert(`Failed to delete message: ${error.message}`);
+            }
+        };
+
+        // Wipe chat function (admin only)
+        window.wipeChat = async function() {
+            if (!currentUser || !currentUserData || !currentUserData.isAdmin) {
+                alert('Admin only');
+                return;
+            }
+            
+            if (!confirm('WIPE ALL MESSAGES in this room? This cannot be undone!')) {
+                return;
+            }
+            
+            try {
+                const messagesRef = collection(db, 'rooms', roomName, 'messages');
+                const snapshot = await getDocs(messagesRef);
+                
+                const deletePromises = [];
+                snapshot.forEach(doc => {
+                    deletePromises.push(deleteDoc(doc.ref));
+                });
+                
+                await Promise.all(deletePromises);
+                alert(`Wiped ${deletePromises.length} messages`);
+                console.log('Chat wiped');
+            } catch (error) {
+                console.error('Error wiping chat:', error);
+                console.error('Error code:', error.code);
+                console.error('Error message:', error.message);
+                alert(`Failed to wipe chat: ${error.message}`);
+            }
+        };
 
         function setupEventListeners() {
             // Drag to move avatar (MOUSE + TOUCH)
@@ -2410,7 +2515,6 @@
         }
 
         async function goToHub() {
-            await leaveRoom();
             window.location.href = 'hub.html';
         }
 
