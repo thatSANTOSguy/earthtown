@@ -1709,17 +1709,25 @@
                 console.log('✓ Setup complete');
                 
                 // Mobile: Add toggle functionality for chat and music player
-                if (window.innerWidth <= 768) {
+                console.log('Window width:', window.innerWidth);
+                const isMobile = window.innerWidth <= 768 || window.matchMedia('(max-width: 768px)').matches;
+                console.log('Is mobile:', isMobile);
+                
+                if (isMobile) {
                     const chatSidebar = document.querySelector('.chat-sidebar');
                     const musicControl = document.querySelector('.music-control');
                     
+                    console.log('Setting up mobile toggles:', { chatSidebar: !!chatSidebar, musicControl: !!musicControl });
+                    
                     if (chatSidebar) {
                         chatSidebar.addEventListener('click', function(e) {
-                            // Only toggle if clicking the header area (top 50px)
+                            // Only toggle if clicking the header area (top 60px for easier tapping)
                             const rect = chatSidebar.getBoundingClientRect();
                             const clickY = e.clientY - rect.top;
-                            if (clickY <= 50) {
+                            console.log('Chat clicked at Y:', clickY);
+                            if (clickY <= 60) {
                                 chatSidebar.classList.toggle('expanded');
+                                console.log('Chat expanded:', chatSidebar.classList.contains('expanded'));
                                 // Auto-collapse music when chat opens
                                 if (chatSidebar.classList.contains('expanded') && musicControl) {
                                     musicControl.classList.remove('expanded');
@@ -1730,11 +1738,13 @@
                     
                     if (musicControl) {
                         musicControl.addEventListener('click', function(e) {
-                            // Only toggle if clicking the header area (top 50px)
+                            // Only toggle if clicking the header area (top 60px for easier tapping)
                             const rect = musicControl.getBoundingClientRect();
                             const clickY = e.clientY - rect.top;
-                            if (clickY <= 50) {
+                            console.log('Music clicked at Y:', clickY);
+                            if (clickY <= 60) {
                                 musicControl.classList.toggle('expanded');
+                                console.log('Music expanded:', musicControl.classList.contains('expanded'));
                                 // Auto-collapse chat when music opens
                                 if (musicControl.classList.contains('expanded') && chatSidebar) {
                                     chatSidebar.classList.remove('expanded');
@@ -2851,7 +2861,7 @@
             <div id="sharedQueue" class="queue-section active">
                 <div class="upload-area">
                     <div class="upload-box" onclick="document.getElementById('fileUpload').click()">
-                        <input type="file" id="fileUpload" accept="audio/*,.mp3,.wav,.m4a,.aac,.ogg,.flac,.wma" style="display:none" onchange="handleFileUpload(event)">
+                        <input type="file" id="fileUpload" accept="audio/mpeg,audio/wav,audio/mp4,audio/x-m4a,audio/aac,audio/ogg,audio/flac,audio/x-ms-wma,.mp3,.wav,.m4a,.aac,.ogg,.flac,.wma" style="display:none" onchange="handleFileUpload(event)">
                         <span class="upload-icon">📁</span>
                         <p>drop audio or click to upload</p>
                     </div>
