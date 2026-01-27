@@ -233,10 +233,6 @@
         .avatar.current-user .avatar-image img {
             filter: drop-shadow(0 0 10px rgba(241, 250, 238, 0.5)); /* Glow only on your avatar */
         }
-        
-        .avatar.current-user {
-            z-index: 100 !important; /* Always on top for dragging */
-        }
 
         .avatar-name {
             font-family: 'VT323', monospace;
@@ -1631,7 +1627,7 @@
         // Import Firebase
         import { initializeApp } from 'https://www.gstatic.com/firebasejs/10.7.1/firebase-app.js';
         import { getAuth, onAuthStateChanged, setPersistence, browserLocalPersistence } from 'https://www.gstatic.com/firebasejs/10.7.1/firebase-auth.js';
-        import { getFirestore, doc, getDoc, setDoc, updateDoc, deleteDoc, collection, query, where, onSnapshot, addDoc, orderBy, limit, getDocs, onDisconnect } from 'https://www.gstatic.com/firebasejs/10.7.1/firebase-firestore.js';
+        import { getFirestore, doc, getDoc, setDoc, updateDoc, collection, query, where, onSnapshot, addDoc, orderBy, limit, getDocs } from 'https://www.gstatic.com/firebasejs/10.7.1/firebase-firestore.js';
         import { getStorage, ref, getDownloadURL } from 'https://www.gstatic.com/firebasejs/10.7.1/firebase-storage.js';
 
         // Firebase configuration
@@ -1772,11 +1768,6 @@
                     x: currentUserData.x,
                     y: currentUserData.y,
                     joinedAt: new Date().toISOString()
-                });
-
-                // AUTO-REMOVE: Set up onDisconnect to remove presence when user leaves
-                onDisconnect(presenceDocRef).delete().catch(err => {
-                    console.error('Error setting up onDisconnect:', err);
                 });
 
                 // Listen to room presence
@@ -2186,16 +2177,6 @@
             
             const msgId = `msg-${Date.now()}-${Math.random()}`;
             
-            // Check if user can delete this message
-            const canDelete = currentUserData && (
-                msg.userId === currentUser.uid || // Own message
-                currentUserData.isAdmin // Or is admin
-            );
-            
-            const deleteButton = canDelete ? 
-                `<button onclick="deleteMessage('${msg.id}')" style="background: none; border: none; color: #d62828; cursor: pointer; font-size: 0.9rem; padding: 0 5px; opacity: 0.6; transition: opacity 0.2s;" onmouseover="this.style.opacity='1'" onmouseout="this.style.opacity='0.6'" title="Delete message">✕</button>` : 
-                '';
-            
             const div = document.createElement('div');
             div.className = 'message';
             div.innerHTML = `
@@ -2204,7 +2185,6 @@
                     <div class="message-header">
                         <span class="message-author archetype-${msg.archetype}">${msg.username}</span>
                         <span class="message-time">${time}</span>
-                        ${deleteButton}
                     </div>
                     <div class="message-text">${msg.text}</div>
                 </div>
@@ -2403,18 +2383,6 @@
             }
         }
 
-        window.deleteMessage = async function(messageId) {
-            if (!confirm('Delete this message?')) return;
-            
-            try {
-                await deleteDoc(doc(db, 'rooms', roomName, 'messages', messageId));
-                console.log('Message deleted');
-            } catch (error) {
-                console.error('Error deleting message:', error);
-                alert('Failed to delete message');
-            }
-        };
-
         function togglePlay() {
             isPlaying = !isPlaying;
             document.getElementById('playBtn').textContent = isPlaying ? '⏸' : '▶';
@@ -2446,23 +2414,6 @@
             window.location.href = 'hub.html';
         }
 
-        async function leaveRoom() {
-            if (!currentUser) return;
-            
-            try {
-                // Remove presence from room
-                await updateDoc(doc(db, 'users', currentUser.uid), {
-                    currentRoom: null
-                });
-                
-                // Unsubscribe from listeners
-                if (presenceUnsubscribe) presenceUnsubscribe();
-                if (messagesUnsubscribe) messagesUnsubscribe();
-            } catch (error) {
-                console.error('Error leaving room:', error);
-            }
-        }
-
         // Make functions available globally for onclick handlers
         window.togglePlayback = togglePlayback;
         window.previousTrack = previousTrack;
@@ -2471,9 +2422,6 @@
         window.closeQueue = closeQueue;
         window.enterPod = enterPod;
         window.goToHub = goToHub;
-        
-        // Cleanup on page close
-        window.addEventListener('beforeunload', leaveRoom);
     
         
         // ============================================
