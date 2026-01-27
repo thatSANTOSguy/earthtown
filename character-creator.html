@@ -466,67 +466,25 @@
         function renderImage() {
             if (!processedImage) return;
 
-            // Draw original image temporarily to analyze it
+            // Clear canvas to transparent
             ctx.clearRect(0, 0, canvas.width, canvas.height);
-            ctx.drawImage(processedImage, 0, 0);
+
+            // Define padding
+            const padding = 15;
+            const targetWidth = canvas.width - (padding * 2);
+            const targetHeight = canvas.height - (padding * 2);
             
-            // Get image data to find character bounds
-            const imageData = ctx.getImageData(0, 0, processedImage.width, processedImage.height);
-            const pixels = imageData.data;
+            // Scale to fill the padded area
+            const scale = Math.min(targetWidth / processedImage.width, targetHeight / processedImage.height);
+            const scaledWidth = processedImage.width * scale;
+            const scaledHeight = processedImage.height * scale;
             
-            // Find actual character bounds (non-transparent pixels)
-            let minX = processedImage.width, maxX = 0;
-            let minY = processedImage.height, maxY = 0;
-            let hasContent = false;
+            // Center in the canvas
+            const x = (canvas.width - scaledWidth) / 2;
+            const y = (canvas.height - scaledHeight) / 2;
             
-            for (let y = 0; y < processedImage.height; y++) {
-                for (let x = 0; x < processedImage.width; x++) {
-                    const alpha = pixels[(y * processedImage.width + x) * 4 + 3];
-                    if (alpha > 10) {  // Threshold to ignore nearly-transparent pixels
-                        hasContent = true;
-                        minX = Math.min(minX, x);
-                        maxX = Math.max(maxX, x);
-                        minY = Math.min(minY, y);
-                        maxY = Math.max(maxY, y);
-                    }
-                }
-            }
-            
-            // Clear and redraw with smart scaling
-            ctx.clearRect(0, 0, canvas.width, canvas.height);
-            
-            if (!hasContent) {
-                // No content found, just center the image
-                ctx.drawImage(processedImage, 
-                    (canvas.width - processedImage.width) / 2,
-                    (canvas.height - processedImage.height) / 2
-                );
-            } else {
-                // Calculate character dimensions
-                const charWidth = maxX - minX + 1;
-                const charHeight = maxY - minY + 1;
-                
-                // Add padding (5% of canvas size)
-                const paddingX = canvas.width * 0.05;
-                const paddingY = canvas.height * 0.05;
-                const targetWidth = canvas.width - (paddingX * 2);
-                const targetHeight = canvas.height - (paddingY * 2);
-                
-                // Scale to fill canvas while maintaining aspect ratio
-                const scale = Math.min(targetWidth / charWidth, targetHeight / charHeight);
-                const finalWidth = charWidth * scale;
-                const finalHeight = charHeight * scale;
-                
-                // Center on canvas
-                const x = (canvas.width - finalWidth) / 2;
-                const y = (canvas.height - finalHeight) / 2;
-                
-                // Draw the cropped character portion at scale
-                ctx.drawImage(processedImage,
-                    minX, minY, charWidth, charHeight,  // Source: crop to character bounds
-                    x, y, finalWidth, finalHeight        // Destination: scaled and centered
-                );
-            }
+            // Draw image
+            ctx.drawImage(processedImage, x, y, scaledWidth, scaledHeight);
 
             // Apply pixelation
             if (currentPixelSize > 1) {
