@@ -2575,14 +2575,6 @@
             document.getElementById('playBtn').textContent = isPlaying ? '⏸' : '▶';
         }
 
-        function previousTrack() {
-            console.log('Previous track');
-        }
-
-        function nextTrack() {
-            console.log('Next track');
-        }
-
         function openQueue() {
             document.getElementById('queueModal').style.display = 'flex';
         }
@@ -2601,9 +2593,6 @@
         }
 
         // Make functions available globally for onclick handlers
-        window.togglePlayback = togglePlayback;
-        window.previousTrack = previousTrack;
-        window.nextTrack = nextTrack;
         window.openQueue = openQueue;
         window.closeQueue = closeQueue;
         window.enterPod = enterPod;
@@ -2683,14 +2672,14 @@
             if (isPlaying) {
                 audioPlayer.pause();
                 isPlaying = false;
-                document.getElementById('playPauseBtn').textContent = '▶';
+                document.getElementById('playBtn').textContent = '▶';
             } else {
                 if (!audioPlayer.src && currentQueue.length > 0) {
                     playTrack(0);
                 } else {
                     audioPlayer.play();
                     isPlaying = true;
-                    document.getElementById('playPauseBtn').textContent = '⏸';
+                    document.getElementById('playBtn').textContent = '⏸';
                 }
             }
         };
@@ -2708,7 +2697,7 @@
                 audioPlayer.src = track.url;
                 audioPlayer.play();
                 isPlaying = true;
-                document.getElementById('playPauseBtn').textContent = '⏸';
+                document.getElementById('playBtn').textContent = '⏸';
                 updateNowPlaying(track);
             } else {
                 alert('This track type requires additional integration (YouTube/SoundCloud API)');
