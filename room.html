@@ -1031,6 +1031,15 @@
                 backdrop-filter: blur(10px);
             }
             
+            /* Hide collapsed tabs when other is expanded */
+            .music-control.hide-tab {
+                display: none;
+            }
+            
+            .chat-sidebar.hide-tab {
+                display: none;
+            }
+            
             .chat-sidebar::before {
                 content: '💬 Chat';
                 position: absolute;
@@ -1717,6 +1726,9 @@
                                 // Auto-collapse music when chat opens
                                 if (chatSidebar.classList.contains('expanded') && musicControl) {
                                     musicControl.classList.remove('expanded');
+                                    musicControl.classList.add('hide-tab'); // Hide music tab
+                                } else if (musicControl) {
+                                    musicControl.classList.remove('hide-tab'); // Show music tab
                                 }
                             }
                         });
@@ -1732,6 +1744,9 @@
                                 // Auto-collapse chat when music opens
                                 if (musicControl.classList.contains('expanded') && chatSidebar) {
                                     chatSidebar.classList.remove('expanded');
+                                    chatSidebar.classList.add('hide-tab'); // Hide chat tab
+                                } else if (chatSidebar) {
+                                    chatSidebar.classList.remove('hide-tab'); // Show chat tab
                                 }
                             }
                         });
