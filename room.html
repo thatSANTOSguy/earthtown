@@ -1294,7 +1294,6 @@
         // These need to be available for onclick handlers
         
         // Music queue state (available immediately)
-        let tempQueue = [];
         let audioPlayer = null;
         
         window.openQueue = function() {
@@ -1321,133 +1320,9 @@
         };
         
         // File upload handler
-        window.handleFileUpload = function(event) {
-            console.log('handleFileUpload called');
-            const file = event.target.files[0];
-            if (!file) {
-                console.log('No file selected');
-                return;
-            }
-            
-            console.log('File selected:', file.name, file.type);
-            
-            // Create object URL for immediate playback
-            const url = URL.createObjectURL(file);
-            
-            const track = {
-                type: 'file',
-                title: file.name.replace(/\.[^/.]+$/, ''),
-                artist: 'Local Upload',
-                url: url,
-                duration: '0:00'
-            };
-            
-            // Add to temp queue
-            tempQueue.push(track);
-            console.log('Track added to queue:', track.title);
-            
-            // Add to UI
-            addToQueueUI(track.title, track.artist, track.duration);
-            
-            // Try to play if audio element exists
-            if (!audioPlayer) {
-                audioPlayer = document.getElementById('audioPlayer');
-            }
-            
-            if (audioPlayer && !audioPlayer.src) {
-                audioPlayer.src = url;
-                console.log('Audio source set, ready to play');
-                
-                // Update now playing
-                const titleEl = document.getElementById('nowPlayingTitle');
-                const artistEl = document.getElementById('nowPlayingArtist');
-                if (titleEl) titleEl.textContent = track.title;
-                if (artistEl) artistEl.textContent = track.artist;
-            }
-            
-            // Show feedback
-            alert(`✓ Added: ${track.title}\nClick play button to hear it!`);
-        };
+        // File upload and URL handlers are defined in the music module below
         
-        // URL handler
-        window.addFromURL = function() {
-            const urlInput = document.getElementById('urlInput');
-            const url = urlInput ? urlInput.value.trim() : '';
-            
-            if (!url) {
-                alert('Please paste a URL first');
-                return;
-            }
-            
-            console.log('URL submitted:', url);
-            
-            let track = null;
-            
-            // YouTube
-            if (url.includes('youtube.com') || url.includes('youtu.be')) {
-                const videoId = extractYouTubeID(url);
-                if (!videoId) {
-                    alert('Could not extract YouTube video ID. Please check the URL.');
-                    return;
-                }
-                
-                track = {
-                    type: 'youtube',
-                    title: 'YouTube Video',
-                    artist: 'YouTube',
-                    url: url,
-                    videoId: videoId,
-                    embedUrl: `https://www.youtube.com/embed/${videoId}?enablejsapi=1`,
-                    duration: '0:00'
-                };
-                
-                console.log('YouTube track created:', track);
-            }
-            // SoundCloud
-            else if (url.includes('soundcloud.com')) {
-                track = {
-                    type: 'soundcloud',
-                    title: 'SoundCloud Track',
-                    artist: 'SoundCloud',
-                    url: url,
-                    embedUrl: `https://w.soundcloud.com/player/?url=${encodeURIComponent(url)}&auto_play=false&show_artwork=true`,
-                    duration: '0:00'
-                };
-                
-                console.log('SoundCloud track created:', track);
-            }
-            // Direct audio URL
-            else {
-                track = {
-                    type: 'url',
-                    title: 'External Track',
-                    artist: 'External Link',
-                    url: url,
-                    duration: '0:00'
-                };
-            }
-            
-            if (track) {
-                tempQueue.push(track);
-                addToQueueUI(track.title, track.artist, track.duration);
-                urlInput.value = '';
-                
-                // If no track playing, set this one
-                if (!audioPlayer) audioPlayer = document.getElementById('audioPlayer');
-                
-                if (track.type === 'youtube' || track.type === 'soundcloud') {
-                    // For embeds, we'll need a different player
-                    switchToEmbedPlayer(track);
-                    alert(`✓ Added: ${track.title}\n\nClick play button to start!`);
-                } else {
-                    // For direct URLs, use audio element
-                    if (audioPlayer && !audioPlayer.src) {
-                        audioPlayer.src = track.url;
-                    }
-                    alert('✓ Added to queue');
-                }
-            }
-        };
+        // URL handler - defined in music module below
         
         // Extract YouTube video ID from various URL formats
         function extractYouTubeID(url) {
@@ -2603,13 +2478,17 @@
         // MUSIC PLAYER WITH ROOM/SOLO MODES
         // ============================================
 
+        // Initialize audio player
+        if (!audioPlayer) {
+            audioPlayer = document.getElementById('audioPlayer');
+        }
+
         // Player State
         let listeningMode = 'room'; // 'room' or 'solo'
         let roomQueue = []; // Shared room queue
         let soloQueue = []; // Personal queue
         let currentTrackIndex = 0;
         let isPlaying = false;
-        // audioPlayer is already declared in the immediate script above
         
         // Vote State
         let activeVote = null;
@@ -2948,6 +2827,9 @@
             queueList.appendChild(item);
         }
 
+        // Expose music functions to window for onclick handlers
+        window.handleFileUpload = handleFileUpload;
+        window.addFromURL = addFromURL;
 
     </script>
 
