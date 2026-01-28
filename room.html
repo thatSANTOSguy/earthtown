@@ -1741,12 +1741,10 @@
                             const clickY = e.clientY - rect.top;
                             if (clickY <= 50) {
                                 musicControl.classList.toggle('expanded');
-                                // Auto-collapse chat when music opens
+                                // Auto-collapse chat when music opens (but keep chat tab visible)
                                 if (musicControl.classList.contains('expanded') && chatSidebar) {
                                     chatSidebar.classList.remove('expanded');
-                                    chatSidebar.classList.add('hide-tab'); // Hide chat tab
-                                } else if (chatSidebar) {
-                                    chatSidebar.classList.remove('hide-tab'); // Show chat tab
+                                    // Don't hide chat tab - it stays visible
                                 }
                             }
                         });
