@@ -1012,6 +1012,16 @@
                 alert('Error creating account: ' + error.message);
             }
         }
+
+        // Expose functions to window for onclick handlers
+        window.goToStep2 = goToStep2;
+        window.goToStep3 = goToStep3;
+        window.selectArchetype = selectArchetype;
+        window.handleImageUpload = handleImageUpload;
+        window.cropAndProcess = cropAndProcess;
+        window.pixelateImage = pixelateImage;
+        window.downloadCharacter = downloadCharacter;
+        window.startOver = startOver;
     </script>
 </body>
 </html>
