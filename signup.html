@@ -281,6 +281,9 @@
             letter-spacing: 2px;
             flex: 1;
             position: relative;
+            -webkit-tap-highlight-color: rgba(0,0,0,0);
+            touch-action: manipulation;
+            user-select: none;
         }
 
         .btn-primary {
@@ -561,8 +564,8 @@
             </div>
 
             <div class="button-row">
-                <button class="btn btn-secondary" onclick="goToStep1()">back</button>
-                <button class="btn btn-primary" id="continueBtn2" onclick="goToStep3()" disabled>continue</button>
+                <button type="button" class="btn btn-secondary" onclick="goToStep1()">back</button>
+                <button type="button" class="btn btn-primary" id="continueBtn2" onclick="goToStep3()" disabled>continue</button>
             </div>
         </div>
 
@@ -1024,6 +1027,7 @@
         }
 
         // Expose functions to window for onclick handlers
+        window.goToStep1 = goToStep1;
         window.goToStep2 = goToStep2;
         window.goToStep3 = goToStep3;
         window.selectArchetype = selectArchetype;
