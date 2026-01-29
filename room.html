@@ -1549,14 +1549,60 @@
         const urlParams = new URLSearchParams(window.location.search);
         const roomName = urlParams.get('room') || 'sanctuary';
         
+        // ============================================
+        // ROOM PLAYLISTS CONFIG
+        // ============================================
+        const roomPlaylists = {
+            sanctuary: [
+                // Meditation playlist - add track info when ready
+                // { title: "Track Title", artist: "Artist Name", url: "./music/sanctuary/track1.flac" }
+            ],
+            studio: [
+                // Alive & Well - add your track titles here
+                { title: "Track 1", artist: "Your Artist Name", url: "./music/studio/aw1.flac" },
+                { title: "Track 2", artist: "Your Artist Name", url: "./music/studio/aw2.flac" },
+                { title: "Track 3", artist: "Your Artist Name", url: "./music/studio/aw3.flac" },
+                { title: "Track 4", artist: "Your Artist Name", url: "./music/studio/aw4.flac" },
+                { title: "Track 5", artist: "Your Artist Name", url: "./music/studio/aw5.flac" },
+                { title: "Track 6", artist: "Your Artist Name", url: "./music/studio/aw6.flac" }
+            ],
+            supernaturvl: [
+                // SUPERNATURVL EP - add your track titles here
+                { title: "Track 1", artist: "Your Artist Name", url: "./music/supernaturvl/sn1.flac" },
+                { title: "Track 2", artist: "Your Artist Name", url: "./music/supernaturvl/sn2.flac" },
+                { title: "Track 3", artist: "Your Artist Name", url: "./music/supernaturvl/sn3.flac" },
+                { title: "Track 4", artist: "Your Artist Name", url: "./music/supernaturvl/sn4.flac" }
+            ],
+            gathering: [] // Empty - users upload
+        };
+
         // Room configurations
         const roomConfigs = {
-            sanctuary: { icon: '🌙', name: 'the sanctuary' },
-            grove: { icon: '🌿', name: 'the grove' },
-            gathering: { icon: '🔥', name: 'the gathering' },
-            studio: { icon: '🎨', name: 'the studio' },
-            garden: { icon: '🌸', name: 'the garden' },
-            lab: { icon: '⚡', name: 'the lab' }
+            sanctuary: { 
+                icon: '🌙', 
+                name: 'the sanctuary',
+                uploadsAllowed: false,
+                forceMode: null // 'solo' or 'room' or null for choice
+            },
+            studio: { 
+                icon: '🎙️', 
+                name: 'the studio',
+                uploadsAllowed: false,
+                forceMode: null, // User chooses on entry
+                showModeModal: true // Show choice modal on entry
+            },
+            gathering: { 
+                icon: '🌍', 
+                name: 'the gathering',
+                uploadsAllowed: true,
+                forceMode: null // User can toggle
+            },
+            supernaturvl: { 
+                icon: '👁️', 
+                name: 'SUPERNATURVL',
+                uploadsAllowed: false,
+                forceMode: 'solo' // Always solo mode
+            }
         };
         
         // Update room title and icon
@@ -1584,6 +1630,12 @@
                 await joinRoom();
                 console.log('Room joined, setting up listeners');
                 setupEventListeners();
+                
+                // Initialize room-specific features
+                loadRoomPlaylist();
+                configureRoomControls();
+                showModeModal();
+                
                 console.log('✓ Setup complete');
                 
                 // Mobile: Add toggle functionality for chat and music player
@@ -2484,7 +2536,7 @@
         }
 
         // Player State
-        let listeningMode = 'room'; // 'room' or 'solo'
+        let listeningMode = roomConfig.forceMode || 'room'; // Force mode if specified
         let roomQueue = []; // Shared room queue
         let soloQueue = []; // Personal queue
         let currentTrackIndex = 0;
@@ -2493,6 +2545,102 @@
         // Vote State
         let activeVote = null;
         let userVote = null;
+
+        // Load pre-configured playlist for this room
+        function loadRoomPlaylist() {
+            const playlist = roomPlaylists[roomName] || [];
+            if (playlist.length > 0) {
+                console.log(`Loading ${playlist.length} tracks for ${roomName}`);
+                roomQueue = [...playlist];
+                soloQueue = [...playlist];
+                
+                // Update queue UI
+                playlist.forEach(track => {
+                    addToQueueUI(track.title, track.artist, track.duration || '0:00');
+                });
+                
+                console.log('✓ Room playlist loaded');
+            }
+        }
+
+        // Hide/show upload controls based on room config
+        function configureRoomControls() {
+            const fileUploadBtn = document.querySelector('.upload-box');
+            const urlInputSection = document.querySelector('.url-input-section');
+            
+            if (!roomConfig.uploadsAllowed) {
+                // Hide upload controls
+                if (fileUploadBtn) fileUploadBtn.style.display = 'none';
+                if (urlInputSection) urlInputSection.style.display = 'none';
+                console.log('✓ Uploads disabled for', roomName);
+            }
+            
+            // For SUPERNATURVL - hide mode toggle button
+            if (roomConfig.forceMode === 'solo') {
+                const modeToggleBtn = document.getElementById('modeToggleBtn');
+                if (modeToggleBtn) modeToggleBtn.style.display = 'none';
+                console.log('✓ Solo mode forced for', roomName);
+            }
+        }
+
+        // Show mode selection modal for studio
+        function showModeModal() {
+            if (roomConfig.showModeModal) {
+                const modal = document.createElement('div');
+                modal.style.cssText = `
+                    position: fixed;
+                    top: 0; left: 0; right: 0; bottom: 0;
+                    background: rgba(0,0,0,0.9);
+                    display: flex;
+                    align-items: center;
+                    justify-content: center;
+                    z-index: 10000;
+                `;
+                modal.innerHTML = `
+                    <div style="background: #0a0a0a; border: 2px solid #f1faee; border-radius: 12px; padding: 40px; max-width: 500px; text-align: center;">
+                        <h2 style="font-family: 'VT323', monospace; font-size: 2.5rem; color: #f1faee; margin-bottom: 20px;">
+                            ${roomConfig.icon} ${roomConfig.name}
+                        </h2>
+                        <p style="font-family: 'Inter', sans-serif; font-size: 1.1rem; color: #ccc; margin-bottom: 30px;">
+                            Alive & Well listening party
+                        </p>
+                        <div style="display: flex; gap: 20px; justify-content: center;">
+                            <button onclick="selectListeningMode('room')" style="
+                                font-family: 'VT323', monospace;
+                                font-size: 1.5rem;
+                                padding: 15px 30px;
+                                background: rgba(124, 194, 155, 0.2);
+                                border: 2px solid #7fc29b;
+                                border-radius: 8px;
+                                color: #7fc29b;
+                                cursor: pointer;
+                            ">🌍 join live playback</button>
+                            <button onclick="selectListeningMode('solo')" style="
+                                font-family: 'VT323', monospace;
+                                font-size: 1.5rem;
+                                padding: 15px 30px;
+                                background: rgba(106, 76, 147, 0.2);
+                                border: 2px solid #6a4c93;
+                                border-radius: 8px;
+                                color: #6a4c93;
+                                cursor: pointer;
+                            ">🎧 listen alone</button>
+                        </div>
+                    </div>
+                `;
+                document.body.appendChild(modal);
+                
+                window.selectListeningMode = function(mode) {
+                    listeningMode = mode;
+                    if (mode === 'solo') {
+                        document.getElementById('modeIndicator').innerHTML = '🎧 solo listening';
+                        document.getElementById('modeIndicator').style.color = '#6a4c93';
+                    }
+                    document.body.removeChild(modal);
+                    console.log('✓ User selected:', mode);
+                };
+            }
+        }
 
         // Initialize audio events
         if (audioPlayer) {
