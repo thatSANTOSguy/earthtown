@@ -1555,23 +1555,23 @@
         const roomPlaylists = {
             sanctuary: [
                 // Meditation playlist - add track info when ready
-                // { title: "Track Title", artist: "Artist Name", url: "./music/sanctuary/track1.mp3" }
+                // { title: "Track Title", artist: "Artist Name", url: "./track1.mp3" }
             ],
             studio: [
                 // Alive & Well - EP by CLOUD5 & santos bluː
-                { title: "Love or War", artist: "CLOUD5 & santos bluː", url: "./music/studio/aw1.mp3" },
-                { title: "13 Bricks", artist: "CLOUD5 & santos bluː", url: "./music/studio/aw2.mp3" },
-                { title: "Filet Mignon", artist: "CLOUD5 & santos bluː", url: "./music/studio/aw3.mp3" },
-                { title: "we were gonna call it alive n well (interlude)", artist: "CLOUD5 & santos bluː", url: "./music/studio/aw4.mp3" },
-                { title: "3", artist: "CLOUD5 & santos bluː", url: "./music/studio/aw5.mp3" },
-                { title: "Fluid, Go Stupid !", artist: "CLOUD5 & santos bluː", url: "./music/studio/aw6.mp3" }
+                { title: "Love or War", artist: "CLOUD5 & santos bluː", url: "./aw1.mp3" },
+                { title: "13 Bricks", artist: "CLOUD5 & santos bluː", url: "./aw2.mp3" },
+                { title: "Filet Mignon", artist: "CLOUD5 & santos bluː", url: "./aw3.mp3" },
+                { title: "we were gonna call it alive n well (interlude)", artist: "CLOUD5 & santos bluː", url: "./aw4.mp3" },
+                { title: "3", artist: "CLOUD5 & santos bluː", url: "./aw5.mp3" },
+                { title: "Fluid, Go Stupid !", artist: "CLOUD5 & santos bluː", url: "./aw6.mp3" }
             ],
             supernaturvl: [
                 // SUPERNATURVL EP - add your track titles here
-                { title: "Track 1", artist: "Your Artist Name", url: "./music/supernaturvl/sn1.mp3" },
-                { title: "Track 2", artist: "Your Artist Name", url: "./music/supernaturvl/sn2.mp3" },
-                { title: "Track 3", artist: "Your Artist Name", url: "./music/supernaturvl/sn3.mp3" },
-                { title: "Track 4", artist: "Your Artist Name", url: "./music/supernaturvl/sn4.mp3" }
+                { title: "Track 1", artist: "Your Artist Name", url: "./sn1.mp3" },
+                { title: "Track 2", artist: "Your Artist Name", url: "./sn2.mp3" },
+                { title: "Track 3", artist: "Your Artist Name", url: "./sn3.mp3" },
+                { title: "Track 4", artist: "Your Artist Name", url: "./sn4.mp3" }
             ],
             gathering: [] // Empty - users upload
         };
@@ -2720,9 +2720,13 @@
             currentTrackIndex = index;
             const track = currentQueue[index];
             
-            if (track.type === 'file' || track.type === 'url') {
+            // If track has no type, or type is 'file' or 'url', play it directly
+            if (!track.type || track.type === 'file' || track.type === 'url') {
                 audioPlayer.src = track.url;
-                audioPlayer.play();
+                audioPlayer.play().catch(error => {
+                    console.error('Playback error:', error);
+                    alert(`Could not play track: ${track.title}\n\nMake sure the file exists at: ${track.url}`);
+                });
                 isPlaying = true;
                 document.getElementById('playBtn').textContent = '⏸';
                 updateNowPlaying(track);
