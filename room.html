@@ -2798,8 +2798,8 @@
         // ============================================
 
         function initiateSkipVote() {
-            // TODO: Get current room user count from Firebase presence
-            const roomUserCount = 5; // Placeholder
+            // Get actual room user count from presence
+            const roomUserCount = usersInRoom.length + 1; // +1 for current user
             const requiredVotes = Math.ceil(roomUserCount * 0.7); // 70% threshold
             
             activeVote = {
@@ -3005,13 +3005,7 @@
                 </div>
 
                 <div class="queue-list" id="queueList">
-                    <div class="queue-item">
-                        <div class="queue-item-info">
-                            <div class="queue-item-title">ambient waves</div>
-                            <div class="queue-item-artist">example track</div>
-                        </div>
-                        <div class="queue-item-time">3:45</div>
-                    </div>
+                    <!-- Queue tracks will appear here -->
                 </div>
             </div>
 
