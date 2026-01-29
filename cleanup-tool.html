@@ -1,0 +1,810 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Earthtown - Database Cleanup Tool</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
+            background: #0a0a0a;
+            color: #f1faee;
+            padding: 40px 20px;
+            min-height: 100vh;
+        }
+
+        .container {
+            max-width: 1200px;
+            margin: 0 auto;
+        }
+
+        h1 {
+            font-family: 'VT323', monospace;
+            font-size: 3rem;
+            color: #d62828;
+            margin-bottom: 10px;
+            text-align: center;
+        }
+
+        .warning {
+            background: rgba(214, 40, 40, 0.1);
+            border: 2px solid #d62828;
+            border-radius: 8px;
+            padding: 20px;
+            margin-bottom: 40px;
+            text-align: center;
+        }
+
+        .warning-title {
+            font-family: 'VT323', monospace;
+            font-size: 1.8rem;
+            color: #d62828;
+            margin-bottom: 10px;
+        }
+
+        .section {
+            background: rgba(241, 250, 238, 0.05);
+            border: 1px solid rgba(241, 250, 238, 0.1);
+            border-radius: 12px;
+            padding: 30px;
+            margin-bottom: 30px;
+        }
+
+        .section-title {
+            font-family: 'VT323', monospace;
+            font-size: 2rem;
+            color: #7fc29b;
+            margin-bottom: 20px;
+        }
+
+        .btn {
+            font-family: 'VT323', monospace;
+            font-size: 1.3rem;
+            padding: 12px 24px;
+            border-radius: 8px;
+            border: 2px solid;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            margin: 5px;
+        }
+
+        .btn-load {
+            background: rgba(124, 194, 155, 0.2);
+            border-color: #7fc29b;
+            color: #7fc29b;
+        }
+
+        .btn-load:hover {
+            background: rgba(124, 194, 155, 0.3);
+        }
+
+        .btn-danger {
+            background: rgba(214, 40, 40, 0.2);
+            border-color: #d62828;
+            color: #d62828;
+        }
+
+        .btn-danger:hover {
+            background: rgba(214, 40, 40, 0.3);
+        }
+
+        .btn:disabled {
+            opacity: 0.5;
+            cursor: not-allowed;
+        }
+
+        .data-list {
+            margin-top: 20px;
+            max-height: 400px;
+            overflow-y: auto;
+        }
+
+        .data-item {
+            background: rgba(10, 10, 10, 0.5);
+            border: 1px solid rgba(241, 250, 238, 0.1);
+            border-radius: 8px;
+            padding: 15px;
+            margin-bottom: 10px;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+
+        .data-info {
+            flex: 1;
+        }
+
+        .data-id {
+            font-family: 'VT323', monospace;
+            font-size: 1.2rem;
+            color: #7fc29b;
+            margin-bottom: 5px;
+        }
+
+        .data-details {
+            font-size: 0.9rem;
+            color: #888;
+        }
+
+        .status {
+            padding: 10px 20px;
+            margin-top: 20px;
+            border-radius: 8px;
+            font-family: 'VT323', monospace;
+            font-size: 1.2rem;
+        }
+
+        .status-info {
+            background: rgba(168, 218, 220, 0.1);
+            border: 1px solid #a8dae8;
+            color: #a8dae8;
+        }
+
+        .status-success {
+            background: rgba(124, 194, 155, 0.1);
+            border: 1px solid #7fc29b;
+            color: #7fc29b;
+        }
+
+        .status-error {
+            background: rgba(214, 40, 40, 0.1);
+            border: 1px solid #d62828;
+            color: #d62828;
+        }
+
+        .checkbox {
+            margin-right: 10px;
+            transform: scale(1.2);
+        }
+
+        .select-all {
+            margin-bottom: 15px;
+            padding: 10px;
+            background: rgba(241, 250, 238, 0.05);
+            border-radius: 6px;
+        }
+
+        input[type="checkbox"] {
+            cursor: pointer;
+        }
+
+        .count {
+            font-family: 'VT323', monospace;
+            font-size: 1.5rem;
+            color: #f77f00;
+            margin-bottom: 10px;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h1>🧹 DATABASE CLEANUP TOOL</h1>
+        
+        <div class="warning">
+            <div class="warning-title">⚠️ DANGER ZONE</div>
+            <p>This tool permanently deletes data from your Firebase database.</p>
+            <p>There is NO UNDO. Use with extreme caution.</p>
+        </div>
+
+        <!-- Login Section -->
+        <div class="section" id="loginSection">
+            <div class="section-title">🔐 Authentication Required</div>
+            <p style="margin-bottom: 20px;">Sign in with your admin account to access cleanup tools.</p>
+            <div style="display: flex; gap: 10px; flex-direction: column; max-width: 400px;">
+                <input type="email" id="loginEmail" placeholder="Admin Email" style="
+                    padding: 12px;
+                    background: rgba(10, 10, 10, 0.8);
+                    border: 1px solid rgba(241, 250, 238, 0.2);
+                    border-radius: 8px;
+                    color: #f1faee;
+                    font-size: 1rem;
+                ">
+                <input type="password" id="loginPassword" placeholder="Password" style="
+                    padding: 12px;
+                    background: rgba(10, 10, 10, 0.8);
+                    border: 1px solid rgba(241, 250, 238, 0.2);
+                    border-radius: 8px;
+                    color: #f1faee;
+                    font-size: 1rem;
+                ">
+                <button class="btn btn-load" onclick="signIn()">Sign In</button>
+            </div>
+            <div id="loginStatus"></div>
+        </div>
+
+        <!-- Cleanup Tools (hidden until authenticated) -->
+        <div id="cleanupTools" style="display: none;">
+            <div style="background: rgba(124, 194, 155, 0.1); border: 1px solid #7fc29b; border-radius: 8px; padding: 15px; margin-bottom: 30px; text-align: center;">
+                <span style="color: #7fc29b; font-family: 'VT323', monospace; font-size: 1.3rem;">✓ Authenticated as: <span id="userEmail"></span></span>
+                <button class="btn btn-danger" onclick="signOut()" style="margin-left: 20px;">Sign Out</button>
+            </div>
+
+        <!-- Users Section -->
+        <div class="section">
+            <div class="section-title">👥 Users</div>
+            <button class="btn btn-load" onclick="loadUsers()">Load All Users</button>
+            <div id="usersStatus"></div>
+            <div id="usersData"></div>
+        </div>
+
+        <!-- Gallery Section -->
+        <div class="section">
+            <div class="section-title">🖼️ Gallery Items</div>
+            <button class="btn btn-load" onclick="loadGallery()">Load All Gallery Items</button>
+            <div id="galleryStatus"></div>
+            <div id="galleryData"></div>
+        </div>
+
+        <!-- Messages Section -->
+        <div class="section">
+            <div class="section-title">💬 Messages</div>
+            <button class="btn btn-load" onclick="loadMessages()">Load All Messages</button>
+            <div id="messagesStatus"></div>
+            <div id="messagesData"></div>
+        </div>
+
+        <!-- Presence Section -->
+        <div class="section">
+            <div class="section-title">👻 Ghost Presence (Stale)</div>
+            <button class="btn btn-load" onclick="loadPresence()">Load All Presence Docs</button>
+            <div id="presenceStatus"></div>
+            <div id="presenceData"></div>
+        </div>
+        </div> <!-- End cleanupTools -->
+    </div> <!-- End container -->
+
+    <script type="module">
+        import { initializeApp } from 'https://www.gstatic.com/firebasejs/10.7.1/firebase-app.js';
+        import { getFirestore, collection, getDocs, deleteDoc, doc } from 'https://www.gstatic.com/firebasejs/10.7.1/firebase-firestore.js';
+        import { getAuth, signInWithEmailAndPassword } from 'https://www.gstatic.com/firebasejs/10.7.1/firebase-auth.js';
+
+        // Firebase config - REPLACE WITH YOUR CONFIG
+        const firebaseConfig = {
+            apiKey: "AIzaSyCHGvi86xxT-t6xKQnk35zpwf6y42awgY8",
+            authDomain: "earthtown-92993.firebaseapp.com",
+            projectId: "earthtown-92993",
+            storageBucket: "earthtown-92993.firebasestorage.app",
+            messagingSenderId: "72981024939",
+            appId: "1:72981024939:web:91c7fb88598be2e0e6e5de"
+        };
+
+        const app = initializeApp(firebaseConfig);
+        const db = getFirestore(app);
+        const auth = getAuth(app);
+
+        let selectedUsers = new Set();
+        let selectedGallery = new Set();
+        let selectedMessages = new Set();
+        let selectedPresence = new Set();
+
+        // Sign In
+        window.signIn = async function() {
+            const email = document.getElementById('loginEmail').value.trim();
+            const password = document.getElementById('loginPassword').value;
+            const status = document.getElementById('loginStatus');
+
+            if (!email || !password) {
+                status.innerHTML = '<div class="status status-error">Please enter email and password</div>';
+                return;
+            }
+
+            status.innerHTML = '<div class="status status-info">Signing in...</div>';
+
+            try {
+                await signInWithEmailAndPassword(auth, email, password);
+                document.getElementById('loginSection').style.display = 'none';
+                document.getElementById('cleanupTools').style.display = 'block';
+                document.getElementById('userEmail').textContent = email;
+            } catch (error) {
+                status.innerHTML = `<div class="status status-error">Sign in failed: ${error.message}</div>`;
+            }
+        };
+
+        // Sign Out
+        window.signOut = async function() {
+            await auth.signOut();
+            document.getElementById('loginSection').style.display = 'block';
+            document.getElementById('cleanupTools').style.display = 'none';
+            document.getElementById('loginEmail').value = '';
+            document.getElementById('loginPassword').value = '';
+        };
+
+        // Load Users
+        window.loadUsers = async function() {
+            const status = document.getElementById('usersStatus');
+            const dataDiv = document.getElementById('usersData');
+            
+            status.innerHTML = '<div class="status status-info">Loading users...</div>';
+            
+            try {
+                const snapshot = await getDocs(collection(db, 'users'));
+                const users = [];
+                
+                snapshot.forEach(doc => {
+                    users.push({ id: doc.id, ...doc.data() });
+                });
+
+                if (users.length === 0) {
+                    status.innerHTML = '<div class="status status-info">No users found.</div>';
+                    return;
+                }
+
+                status.innerHTML = `<div class="count">Found ${users.length} users</div>`;
+                
+                let html = `
+                    <div class="select-all">
+                        <input type="checkbox" id="selectAllUsers" onchange="toggleAllUsers(this.checked)">
+                        <label for="selectAllUsers">Select All</label>
+                    </div>
+                    <div class="data-list">
+                `;
+
+                users.forEach(user => {
+                    html += `
+                        <div class="data-item">
+                            <input type="checkbox" class="checkbox user-checkbox" 
+                                   data-id="${user.id}" 
+                                   onchange="toggleUser('${user.id}', this.checked)">
+                            <div class="data-info">
+                                <div class="data-id">${user.username || 'No username'}</div>
+                                <div class="data-details">
+                                    Email: ${user.email || 'N/A'} | 
+                                    Archetype: ${user.archetype || 'N/A'} | 
+                                    Created: ${user.createdAt || 'N/A'}
+                                </div>
+                            </div>
+                        </div>
+                    `;
+                });
+
+                html += `</div>`;
+                html += `<button class="btn btn-danger" onclick="deleteSelectedUsers()" style="margin-top: 20px;">Delete Selected Users</button>`;
+                
+                dataDiv.innerHTML = html;
+                
+            } catch (error) {
+                status.innerHTML = `<div class="status status-error">Error: ${error.message}</div>`;
+            }
+        };
+
+        window.toggleUser = function(id, checked) {
+            if (checked) {
+                selectedUsers.add(id);
+            } else {
+                selectedUsers.delete(id);
+            }
+        };
+
+        window.toggleAllUsers = function(checked) {
+            selectedUsers.clear();
+            document.querySelectorAll('.user-checkbox').forEach(cb => {
+                cb.checked = checked;
+                if (checked) selectedUsers.add(cb.dataset.id);
+            });
+        };
+
+        window.deleteSelectedUsers = async function() {
+            if (selectedUsers.size === 0) {
+                alert('No users selected');
+                return;
+            }
+
+            const confirm = window.confirm(`⚠️ DELETE ${selectedUsers.size} USERS?\n\nThis will permanently delete:\n- User accounts\n- Their characters\n- Their gallery submissions\n\nThis CANNOT be undone!`);
+            
+            if (!confirm) return;
+
+            const secondConfirm = window.confirm('Are you ABSOLUTELY sure? Type confirmation needed.');
+            if (!secondConfirm) return;
+
+            const status = document.getElementById('usersStatus');
+            status.innerHTML = '<div class="status status-info">Deleting users...</div>';
+
+            let deleted = 0;
+            let errors = 0;
+
+            for (const userId of selectedUsers) {
+                try {
+                    await deleteDoc(doc(db, 'users', userId));
+                    deleted++;
+                } catch (error) {
+                    console.error('Error deleting user:', userId, error);
+                    errors++;
+                }
+            }
+
+            status.innerHTML = `<div class="status status-success">✓ Deleted ${deleted} users. Errors: ${errors}</div>`;
+            selectedUsers.clear();
+            
+            // Reload
+            setTimeout(() => loadUsers(), 1000);
+        };
+
+        // Load Gallery
+        window.loadGallery = async function() {
+            const status = document.getElementById('galleryStatus');
+            const dataDiv = document.getElementById('galleryData');
+            
+            status.innerHTML = '<div class="status status-info">Loading gallery items...</div>';
+            
+            try {
+                const snapshot = await getDocs(collection(db, 'gallery'));
+                const items = [];
+                
+                snapshot.forEach(doc => {
+                    items.push({ id: doc.id, ...doc.data() });
+                });
+
+                if (items.length === 0) {
+                    status.innerHTML = '<div class="status status-info">No gallery items found.</div>';
+                    return;
+                }
+
+                status.innerHTML = `<div class="count">Found ${items.length} items</div>`;
+                
+                let html = `
+                    <div class="select-all">
+                        <input type="checkbox" id="selectAllGallery" onchange="toggleAllGallery(this.checked)">
+                        <label for="selectAllGallery">Select All</label>
+                    </div>
+                    <div class="data-list">
+                `;
+
+                items.forEach(item => {
+                    html += `
+                        <div class="data-item">
+                            <input type="checkbox" class="checkbox gallery-checkbox" 
+                                   data-id="${item.id}" 
+                                   onchange="toggleGallery('${item.id}', this.checked)">
+                            <div class="data-info">
+                                <div class="data-id">${item.title || 'Untitled'}</div>
+                                <div class="data-details">
+                                    Status: ${item.status || 'N/A'} | 
+                                    User: ${item.userId || 'N/A'} | 
+                                    Created: ${item.createdAt || 'N/A'}
+                                </div>
+                            </div>
+                        </div>
+                    `;
+                });
+
+                html += `</div>`;
+                html += `<button class="btn btn-danger" onclick="deleteSelectedGallery()" style="margin-top: 20px;">Delete Selected Items</button>`;
+                
+                dataDiv.innerHTML = html;
+                
+            } catch (error) {
+                status.innerHTML = `<div class="status status-error">Error: ${error.message}</div>`;
+            }
+        };
+
+        window.toggleGallery = function(id, checked) {
+            if (checked) {
+                selectedGallery.add(id);
+            } else {
+                selectedGallery.delete(id);
+            }
+        };
+
+        window.toggleAllGallery = function(checked) {
+            selectedGallery.clear();
+            document.querySelectorAll('.gallery-checkbox').forEach(cb => {
+                cb.checked = checked;
+                if (checked) selectedGallery.add(cb.dataset.id);
+            });
+        };
+
+        window.deleteSelectedGallery = async function() {
+            if (selectedGallery.size === 0) {
+                alert('No items selected');
+                return;
+            }
+
+            const confirm = window.confirm(`⚠️ DELETE ${selectedGallery.size} GALLERY ITEMS?\n\nThis CANNOT be undone!`);
+            if (!confirm) return;
+
+            const status = document.getElementById('galleryStatus');
+            status.innerHTML = '<div class="status status-info">Deleting items...</div>';
+
+            let deleted = 0;
+            let errors = 0;
+
+            for (const itemId of selectedGallery) {
+                try {
+                    await deleteDoc(doc(db, 'gallery', itemId));
+                    deleted++;
+                } catch (error) {
+                    console.error('Error deleting item:', itemId, error);
+                    errors++;
+                }
+            }
+
+            status.innerHTML = `<div class="status status-success">✓ Deleted ${deleted} items. Errors: ${errors}</div>`;
+            selectedGallery.clear();
+            
+            setTimeout(() => loadGallery(), 1000);
+        };
+
+        // Load Messages
+        window.loadMessages = async function() {
+            const status = document.getElementById('messagesStatus');
+            const dataDiv = document.getElementById('messagesData');
+            
+            status.innerHTML = '<div class="status status-info">Loading messages from all rooms...</div>';
+            
+            try {
+                const rooms = ['sanctuary', 'studio', 'gathering', 'supernaturvl'];
+                let allMessages = [];
+
+                for (const roomName of rooms) {
+                    const snapshot = await getDocs(collection(db, 'rooms', roomName, 'messages'));
+                    snapshot.forEach(doc => {
+                        allMessages.push({ 
+                            id: doc.id, 
+                            room: roomName,
+                            ...doc.data() 
+                        });
+                    });
+                }
+
+                if (allMessages.length === 0) {
+                    status.innerHTML = '<div class="status status-info">No messages found.</div>';
+                    return;
+                }
+
+                status.innerHTML = `<div class="count">Found ${allMessages.length} messages</div>`;
+                
+                let html = `
+                    <div class="select-all">
+                        <input type="checkbox" id="selectAllMessages" onchange="toggleAllMessages(this.checked)">
+                        <label for="selectAllMessages">Select All</label>
+                    </div>
+                    <div class="data-list">
+                `;
+
+                allMessages.forEach(msg => {
+                    html += `
+                        <div class="data-item">
+                            <input type="checkbox" class="checkbox message-checkbox" 
+                                   data-id="${msg.id}" 
+                                   data-room="${msg.room}"
+                                   onchange="toggleMessage('${msg.id}', '${msg.room}', this.checked)">
+                            <div class="data-info">
+                                <div class="data-id">${msg.username || 'Unknown'} (${msg.room})</div>
+                                <div class="data-details">
+                                    ${msg.text || '[deleted]'} | ${msg.timestamp || 'N/A'}
+                                </div>
+                            </div>
+                        </div>
+                    `;
+                });
+
+                html += `</div>`;
+                html += `<button class="btn btn-danger" onclick="deleteSelectedMessages()" style="margin-top: 20px;">Delete Selected Messages</button>`;
+                
+                dataDiv.innerHTML = html;
+                
+            } catch (error) {
+                status.innerHTML = `<div class="status status-error">Error: ${error.message}</div>`;
+            }
+        };
+
+        window.toggleMessage = function(id, room, checked) {
+            const key = `${room}:::${id}`;
+            if (checked) {
+                selectedMessages.add(key);
+            } else {
+                selectedMessages.delete(key);
+            }
+        };
+
+        window.toggleAllMessages = function(checked) {
+            selectedMessages.clear();
+            document.querySelectorAll('.message-checkbox').forEach(cb => {
+                cb.checked = checked;
+                if (checked) {
+                    const key = `${cb.dataset.room}:::${cb.dataset.id}`;
+                    selectedMessages.add(key);
+                }
+            });
+        };
+
+        window.deleteSelectedMessages = async function() {
+            if (selectedMessages.size === 0) {
+                alert('No messages selected');
+                return;
+            }
+
+            const confirm = window.confirm(`⚠️ DELETE ${selectedMessages.size} MESSAGES?\n\nThis CANNOT be undone!`);
+            if (!confirm) return;
+
+            const status = document.getElementById('messagesStatus');
+            status.innerHTML = '<div class="status status-info">Deleting messages...</div>';
+
+            let deleted = 0;
+            let errors = 0;
+
+            for (const key of selectedMessages) {
+                try {
+                    const [room, id] = key.split(':::');
+                    await deleteDoc(doc(db, 'rooms', room, 'messages', id));
+                    deleted++;
+                } catch (error) {
+                    console.error('Error deleting message:', key, error);
+                    errors++;
+                }
+            }
+
+            status.innerHTML = `<div class="status status-success">✓ Deleted ${deleted} messages. Errors: ${errors}</div>`;
+            selectedMessages.clear();
+            
+            setTimeout(() => loadMessages(), 1000);
+        };
+
+        // Load Presence
+        window.loadPresence = async function() {
+            const status = document.getElementById('presenceStatus');
+            const dataDiv = document.getElementById('presenceData');
+            
+            status.innerHTML = '<div class="status status-info">Loading presence docs...</div>';
+            
+            try {
+                const rooms = ['sanctuary', 'studio', 'gathering', 'supernaturvl'];
+                let allPresence = [];
+
+                for (const roomName of rooms) {
+                    const snapshot = await getDocs(collection(db, 'rooms', roomName, 'presence'));
+                    snapshot.forEach(doc => {
+                        allPresence.push({ 
+                            id: doc.id, 
+                            room: roomName,
+                            ...doc.data() 
+                        });
+                    });
+                }
+
+                if (allPresence.length === 0) {
+                    status.innerHTML = '<div class="status status-info">No presence docs found.</div>';
+                    return;
+                }
+
+                status.innerHTML = `<div class="count">Found ${allPresence.length} presence docs</div>`;
+                
+                let html = `
+                    <div class="select-all">
+                        <input type="checkbox" id="selectAllPresence" onchange="toggleAllPresence(this.checked)">
+                        <label for="selectAllPresence">Select All</label>
+                    </div>
+                    <div class="data-list">
+                `;
+
+                allPresence.forEach(pres => {
+                    const lastSeen = pres.lastSeen ? new Date(pres.lastSeen).toLocaleString() : 'Never';
+                    const timeSince = pres.lastSeen ? Math.floor((Date.now() - new Date(pres.lastSeen).getTime()) / 60000) : 999999;
+                    const isStale = timeSince > 2;
+
+                    html += `
+                        <div class="data-item" style="${isStale ? 'border-color: #d62828;' : ''}">
+                            <input type="checkbox" class="checkbox presence-checkbox" 
+                                   data-id="${pres.id}" 
+                                   data-room="${pres.room}"
+                                   onchange="togglePresence('${pres.id}', '${pres.room}', this.checked)">
+                            <div class="data-info">
+                                <div class="data-id">${pres.username || 'Unknown'} (${pres.room})</div>
+                                <div class="data-details">
+                                    Last seen: ${lastSeen} (${timeSince} min ago)
+                                    ${isStale ? '<span style="color: #d62828;"> ⚠️ STALE</span>' : '<span style="color: #7fc29b;"> ✓ ACTIVE</span>'}
+                                </div>
+                            </div>
+                        </div>
+                    `;
+                });
+
+                html += `</div>`;
+                html += `<button class="btn btn-danger" onclick="deleteSelectedPresence()" style="margin-top: 20px;">Delete Selected Presence</button>`;
+                html += `<button class="btn btn-danger" onclick="deleteStalePresence()" style="margin-top: 20px;">Delete All Stale (>2 min)</button>`;
+                
+                dataDiv.innerHTML = html;
+                
+            } catch (error) {
+                status.innerHTML = `<div class="status status-error">Error: ${error.message}</div>`;
+            }
+        };
+
+        window.togglePresence = function(id, room, checked) {
+            const key = `${room}:::${id}`;
+            if (checked) {
+                selectedPresence.add(key);
+            } else {
+                selectedPresence.delete(key);
+            }
+        };
+
+        window.toggleAllPresence = function(checked) {
+            selectedPresence.clear();
+            document.querySelectorAll('.presence-checkbox').forEach(cb => {
+                cb.checked = checked;
+                if (checked) {
+                    const key = `${cb.dataset.room}:::${cb.dataset.id}`;
+                    selectedPresence.add(key);
+                }
+            });
+        };
+
+        window.deleteSelectedPresence = async function() {
+            if (selectedPresence.size === 0) {
+                alert('No presence docs selected');
+                return;
+            }
+
+            const confirm = window.confirm(`⚠️ DELETE ${selectedPresence.size} PRESENCE DOCS?`);
+            if (!confirm) return;
+
+            const status = document.getElementById('presenceStatus');
+            status.innerHTML = '<div class="status status-info">Deleting presence...</div>';
+
+            let deleted = 0;
+            let errors = 0;
+
+            for (const key of selectedPresence) {
+                try {
+                    const [room, id] = key.split(':::');
+                    await deleteDoc(doc(db, 'rooms', room, 'presence', id));
+                    deleted++;
+                } catch (error) {
+                    console.error('Error deleting presence:', key, error);
+                    errors++;
+                }
+            }
+
+            status.innerHTML = `<div class="status status-success">✓ Deleted ${deleted} presence docs. Errors: ${errors}</div>`;
+            selectedPresence.clear();
+            
+            setTimeout(() => loadPresence(), 1000);
+        };
+
+        window.deleteStalePresence = async function() {
+            const status = document.getElementById('presenceStatus');
+            status.innerHTML = '<div class="status status-info">Finding stale presence...</div>';
+
+            try {
+                const rooms = ['sanctuary', 'studio', 'gathering', 'supernaturvl'];
+                let deleted = 0;
+
+                for (const roomName of rooms) {
+                    const snapshot = await getDocs(collection(db, 'rooms', roomName, 'presence'));
+                    
+                    for (const docSnapshot of snapshot.docs) {
+                        const data = docSnapshot.data();
+                        const lastSeen = data.lastSeen;
+                        
+                        if (lastSeen) {
+                            const timeSince = Date.now() - new Date(lastSeen).getTime();
+                            if (timeSince > 120000) { // 2 minutes
+                                await deleteDoc(docSnapshot.ref);
+                                deleted++;
+                            }
+                        } else {
+                            // No lastSeen = old doc, delete it
+                            await deleteDoc(docSnapshot.ref);
+                            deleted++;
+                        }
+                    }
+                }
+
+                status.innerHTML = `<div class="status status-success">✓ Deleted ${deleted} stale presence docs</div>`;
+                setTimeout(() => loadPresence(), 1000);
+                
+            } catch (error) {
+                status.innerHTML = `<div class="status status-error">Error: ${error.message}</div>`;
+            }
+        };
+
+    </script>
+</body>
+</html>
