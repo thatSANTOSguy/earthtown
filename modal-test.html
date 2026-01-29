@@ -1,0 +1,125 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>Queue Modal Test</title>
+    <style>
+        body { font-family: monospace; padding: 20px; background: #0a0a0a; color: #0f0; }
+        button { padding: 15px 30px; margin: 10px; font-size: 16px; }
+        .modal {
+            display: none;
+            position: fixed;
+            top: 0; left: 0;
+            width: 100%; height: 100%;
+            background: rgba(0,0,0,0.9);
+            z-index: 1000;
+        }
+        .modal-content {
+            background: #111;
+            margin: 100px auto;
+            padding: 40px;
+            width: 500px;
+            border: 2px solid #0f0;
+        }
+        .log { margin: 10px 0; padding: 10px; background: #111; border: 1px solid #333; }
+    </style>
+</head>
+<body>
+    <h1>Queue Modal Diagnostic</h1>
+    
+    <div id="log"></div>
+    
+    <h2>Test Buttons:</h2>
+    <button onclick="testDirectOpen()">Test 1: Direct openQueue()</button>
+    <button onclick="testWindowOpen()">Test 2: window.openQueue()</button>
+    <button onclick="testGetElement()">Test 3: Check if modal exists</button>
+    <button onclick="testDisplay()">Test 4: Change display directly</button>
+    
+    <div class="modal" id="queueModal">
+        <div class="modal-content">
+            <h2>QUEUE MODAL</h2>
+            <p>If you see this, the modal opened!</p>
+            <button onclick="closeQueue()">Close</button>
+        </div>
+    </div>
+    
+    <script type="module">
+        function log(msg, status = 'info') {
+            const div = document.createElement('div');
+            div.className = 'log';
+            div.style.color = status === 'pass' ? '#0f0' : status === 'fail' ? '#f00' : '#fff';
+            div.textContent = `[${new Date().toLocaleTimeString()}] ${msg}`;
+            document.getElementById('log').prepend(div);
+        }
+        
+        // Define functions inside module
+        function openQueue() {
+            log('openQueue() called inside module', 'pass');
+            const modal = document.getElementById('queueModal');
+            if (modal) {
+                modal.style.display = 'flex';
+                log('Modal display set to flex', 'pass');
+            } else {
+                log('Modal element not found!', 'fail');
+            }
+        }
+        
+        function closeQueue() {
+            log('closeQueue() called', 'pass');
+            document.getElementById('queueModal').style.display = 'none';
+        }
+        
+        // Expose globally
+        window.openQueue = openQueue;
+        window.closeQueue = closeQueue;
+        
+        log('Functions exposed on window object', 'pass');
+        
+        // Also expose test functions globally
+        window.testDirectOpen = function() {
+            log('Testing direct openQueue() call...');
+            try {
+                openQueue();
+                log('Direct call succeeded', 'pass');
+            } catch(e) {
+                log('Direct call failed: ' + e.message, 'fail');
+            }
+        };
+        
+        window.testWindowOpen = function() {
+            log('Testing window.openQueue() call...');
+            try {
+                window.openQueue();
+                log('Window call succeeded', 'pass');
+            } catch(e) {
+                log('Window call failed: ' + e.message, 'fail');
+            }
+        };
+        
+        window.testGetElement = function() {
+            log('Checking if modal element exists...');
+            const modal = document.getElementById('queueModal');
+            if (modal) {
+                log('Modal found! ID: ' + modal.id, 'pass');
+                log('Current display: ' + modal.style.display);
+            } else {
+                log('Modal NOT found!', 'fail');
+            }
+        };
+        
+        window.testDisplay = function() {
+            log('Changing display directly with JavaScript...');
+            const modal = document.getElementById('queueModal');
+            if (modal) {
+                modal.style.display = 'flex';
+                log('Display changed to flex', 'pass');
+                setTimeout(() => {
+                    modal.style.display = 'none';
+                    log('Auto-closed after 3s');
+                }, 3000);
+            }
+        };
+        
+        log('Page loaded, all systems ready', 'pass');
+    </script>
+</body>
+</html>

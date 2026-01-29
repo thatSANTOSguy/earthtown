@@ -1,0 +1,161 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>Earthtown Function Test</title>
+    <style>
+        body {
+            font-family: monospace;
+            background: #0a0a0a;
+            color: #0f0;
+            padding: 20px;
+        }
+        .test {
+            margin: 10px 0;
+            padding: 10px;
+            background: #111;
+            border: 1px solid #333;
+        }
+        .pass { color: #0f0; }
+        .fail { color: #f00; }
+        button {
+            margin: 5px;
+            padding: 10px;
+            background: #222;
+            color: #0f0;
+            border: 1px solid #0f0;
+            cursor: pointer;
+        }
+    </style>
+</head>
+<body>
+    <h1>🧪 Earthtown Function Tests</h1>
+    
+    <div id="results"></div>
+    
+    <h2>Manual Tests:</h2>
+    <button onclick="testAudio()">Test Audio Element</button>
+    <button onclick="testFileUpload()">Test File Upload</button>
+    <button onclick="testQueue()">Test Queue</button>
+    
+    <audio id="testAudio" style="display:none"></audio>
+    <input type="file" id="testFile" style="display:none" accept="audio/*">
+    
+    <script>
+        const results = document.getElementById('results');
+        
+        function log(test, passed, details = '') {
+            const div = document.createElement('div');
+            div.className = 'test';
+            div.innerHTML = `
+                <span class="${passed ? 'pass' : 'fail'}">${passed ? '✓' : '✗'}</span>
+                <strong>${test}</strong>
+                ${details ? `<br><small>${details}</small>` : ''}
+            `;
+            results.appendChild(div);
+        }
+        
+        // Run automatic tests
+        function runTests() {
+            // Test 1: Check if audio element can be created
+            const audio = document.createElement('audio');
+            log('Audio element creation', !!audio, 'Audio API available');
+            
+            // Test 2: Check if object URL creation works
+            try {
+                const blob = new Blob(['test'], {type: 'audio/mp3'});
+                const url = URL.createObjectURL(blob);
+                log('Object URL creation', url.startsWith('blob:'), `URL: ${url.substring(0, 30)}...`);
+                URL.revokeObjectURL(url);
+            } catch(e) {
+                log('Object URL creation', false, e.message);
+            }
+            
+            // Test 3: Check if audio can play
+            const testAudio = document.getElementById('testAudio');
+            log('Audio element exists', !!testAudio);
+            
+            // Test 4: Check localStorage (for queue persistence)
+            try {
+                localStorage.setItem('test', 'value');
+                const val = localStorage.getItem('test');
+                localStorage.removeItem('test');
+                log('LocalStorage', val === 'value');
+            } catch(e) {
+                log('LocalStorage', false, 'Might be disabled');
+            }
+            
+            log('Auto-tests complete', true, 'Click manual test buttons above');
+        }
+        
+        function testAudio() {
+            const audio = document.getElementById('testAudio');
+            // Create a simple beep
+            const audioContext = new (window.AudioContext || window.webkitAudioContext)();
+            const oscillator = audioContext.createOscillator();
+            const gainNode = audioContext.createGain();
+            
+            oscillator.connect(gainNode);
+            gainNode.connect(audioContext.destination);
+            
+            oscillator.frequency.value = 440;
+            oscillator.type = 'sine';
+            
+            gainNode.gain.setValueAtTime(0.3, audioContext.currentTime);
+            gainNode.gain.exponentialRampToValueAtTime(0.01, audioContext.currentTime + 0.5);
+            
+            oscillator.start(audioContext.currentTime);
+            oscillator.stop(audioContext.currentTime + 0.5);
+            
+            log('Audio playback test', true, 'You should hear a beep');
+        }
+        
+        function testFileUpload() {
+            const input = document.getElementById('testFile');
+            input.onchange = (e) => {
+                const file = e.target.files[0];
+                if (!file) {
+                    log('File upload', false, 'No file selected');
+                    return;
+                }
+                
+                // Create object URL
+                const url = URL.createObjectURL(file);
+                
+                // Test audio loading
+                const audio = new Audio(url);
+                audio.onloadedmetadata = () => {
+                    log('File upload & audio load', true, 
+                        `File: ${file.name}, Duration: ${audio.duration}s`);
+                    URL.revokeObjectURL(url);
+                };
+                audio.onerror = (e) => {
+                    log('File upload & audio load', false, 'Failed to load audio');
+                    URL.revokeObjectURL(url);
+                };
+            };
+            input.click();
+        }
+        
+        function testQueue() {
+            // Simulate queue operations
+            let queue = [];
+            
+            // Add item
+            queue.push({title: 'Test Track', artist: 'Test Artist', url: 'blob:test'});
+            log('Queue add', queue.length === 1, `Queue size: ${queue.length}`);
+            
+            // Play (simulate)
+            const currentTrack = queue[0];
+            log('Queue play', !!currentTrack, `Playing: ${currentTrack.title}`);
+            
+            // Remove
+            queue = [];
+            log('Queue clear', queue.length === 0, `Queue size: ${queue.length}`);
+        }
+        
+        // Run tests on load
+        runTests();
+    </script>
+</body>
+</html>
