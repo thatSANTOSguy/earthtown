@@ -1592,7 +1592,7 @@
         import { initializeApp } from 'https://www.gstatic.com/firebasejs/10.7.1/firebase-app.js';
         import { getAuth, onAuthStateChanged, setPersistence, browserLocalPersistence } from 'https://www.gstatic.com/firebasejs/10.7.1/firebase-auth.js';
         import { getFirestore, doc, getDoc, setDoc, updateDoc, deleteDoc, collection, query, where, onSnapshot, addDoc, orderBy, limit, getDocs } from 'https://www.gstatic.com/firebasejs/10.7.1/firebase-firestore.js';
-        import { getStorage, ref, getDownloadURL, uploadBytes } from 'https://www.gstatic.com/firebasejs/10.7.1/firebase-storage.js';
+        import { getStorage, ref, getDownloadURL, uploadBytes, deleteObject } from 'https://www.gstatic.com/firebasejs/10.7.1/firebase-storage.js';
 
         // Firebase configuration
         const firebaseConfig = {
@@ -1716,6 +1716,9 @@
                 
                 // Listen for shared queue updates from Firebase
                 listenToRoomQueue();
+                
+                // Auto-cleanup old uploads (runs silently in background)
+                cleanOldUploadsBackground();
                 
                 console.log('✓ Setup complete');
                 
@@ -2791,6 +2794,13 @@
         function activatePodMode() {
             inPodMode = true;
             
+            // Stop current playback when switching
+            if (isPlaying) {
+                audioPlayer.pause();
+                isPlaying = false;
+                document.getElementById('playBtn').textContent = '▶';
+            }
+            
             // Update mode indicator
             document.getElementById('modeIndicator').innerHTML = '🎧 private pod';
             document.getElementById('modeIndicator').style.color = '#6a4c93';
@@ -2811,6 +2821,13 @@
         // Activate shared queue mode (without switching tabs)
         function activateSharedQueueMode() {
             inPodMode = false;
+            
+            // Stop current playback when switching
+            if (isPlaying) {
+                audioPlayer.pause();
+                isPlaying = false;
+                document.getElementById('playBtn').textContent = '▶';
+            }
             
             // Update mode indicator
             document.getElementById('modeIndicator').innerHTML = '🌍 shared queue';
@@ -2953,7 +2970,7 @@
         };
 
         // Share single track to room (90s cooldown)
-        window.sharePodTrackToRoom = function(index) {
+        window.sharePodTrackToRoom = async function(index) {
             const now = Date.now();
             const timeSinceLastShare = now - lastShareTime;
             
@@ -2964,15 +2981,74 @@
             }
             
             const track = podQueue[index];
-            roomQueue.push({...track, type: 'file'});
-            addToQueueUI(track.title, track.artist, track.duration || '0:00');
-            lastShareTime = now;
             
-            alert(`✓ Shared: ${track.title}\n\nNext share available in 90 seconds.`);
+            try {
+                let trackUrl = track.url;
+                let storagePath = null;
+                
+                // If it's a local upload (data URL), upload to Firebase Storage first
+                if (track.isLocalUpload && track.url.startsWith('data:')) {
+                    // Show uploading status
+                    const uploadMsg = document.createElement('div');
+                    uploadMsg.style.cssText = `
+                        position: fixed;
+                        top: 50%;
+                        left: 50%;
+                        transform: translate(-50%, -50%);
+                        background: rgba(10, 10, 10, 0.95);
+                        border: 2px solid #7fc29b;
+                        border-radius: 12px;
+                        padding: 30px;
+                        z-index: 10001;
+                        text-align: center;
+                        font-family: 'VT323', monospace;
+                        font-size: 1.5rem;
+                        color: #7fc29b;
+                    `;
+                    uploadMsg.innerHTML = '📤 Uploading to room...<br><span style="font-size: 1rem; color: #888;">Converting from pod</span>';
+                    document.body.appendChild(uploadMsg);
+                    
+                    // Convert data URL to Blob
+                    const response = await fetch(track.url);
+                    const blob = await response.blob();
+                    
+                    // Generate unique filename
+                    const timestamp = Date.now();
+                    const filename = `${track.title.replace(/[^a-zA-Z0-9._-]/g, '_')}_${timestamp}.${blob.type.split('/')[1] || 'mp3'}`;
+                    storagePath = `rooms/${roomName}/uploads/${currentUser.uid}_${filename}`;
+                    
+                    // Upload to Firebase Storage
+                    const storageRef = ref(storage, storagePath);
+                    await uploadBytes(storageRef, blob);
+                    
+                    // Get download URL
+                    trackUrl = await getDownloadURL(storageRef);
+                    
+                    document.body.removeChild(uploadMsg);
+                }
+                
+                // Add to Firestore room queue
+                await addDoc(collection(db, 'rooms', roomName, 'queue'), {
+                    type: track.type || 'file',
+                    title: track.title,
+                    artist: currentUserData.username || track.artist,
+                    url: trackUrl,
+                    duration: track.duration || '0:00',
+                    uploadedBy: currentUser.uid,
+                    uploadedAt: new Date().toISOString(),
+                    storagePath: storagePath
+                });
+                
+                lastShareTime = now;
+                alert(`✓ Shared: ${track.title}\n\nNext share available in 90 seconds.`);
+            } catch (error) {
+                console.error('Share error:', error);
+                alert(`❌ Failed to share track: ${error.message}`);
+            }
         };
 
         // Push all to room (1 per minute, max 10)
-        window.pushAllToRoom = function() {
+        window.pushAllToRoom = async function() {
             if (podQueue.length === 0) {
                 alert('Your pod is empty!');
                 return;
@@ -2989,7 +3065,8 @@
                 `📤 Queue ${tracksToSend.length} tracks to room?\n\n` +
                 `• Tracks will be added one per minute\n` +
                 `• First track adds immediately\n` +
-                `• Tracks stay in your pod\n\n` +
+                `• Tracks stay in your pod\n` +
+                `• Local uploads will be uploaded to Firebase\n\n` +
                 `Continue?`
             );
             
@@ -2998,10 +3075,49 @@
             bulkPushCount = 0;
             bulkPushTotal = tracksToSend.length;
             
+            // Function to add track to Firebase (with upload if needed)
+            const addTrackToRoom = async (track) => {
+                try {
+                    let trackUrl = track.url;
+                    let storagePath = null;
+                    
+                    // If it's a local upload (data URL), upload to Firebase Storage first
+                    if (track.isLocalUpload && track.url.startsWith('data:')) {
+                        // Convert data URL to Blob
+                        const response = await fetch(track.url);
+                        const blob = await response.blob();
+                        
+                        // Generate unique filename
+                        const timestamp = Date.now();
+                        const filename = `${track.title.replace(/[^a-zA-Z0-9._-]/g, '_')}_${timestamp}.${blob.type.split('/')[1] || 'mp3'}`;
+                        storagePath = `rooms/${roomName}/uploads/${currentUser.uid}_${filename}`;
+                        
+                        // Upload to Firebase Storage
+                        const storageRef = ref(storage, storagePath);
+                        await uploadBytes(storageRef, blob);
+                        
+                        // Get download URL
+                        trackUrl = await getDownloadURL(storageRef);
+                    }
+                    
+                    // Add to Firestore
+                    await addDoc(collection(db, 'rooms', roomName, 'queue'), {
+                        type: track.type || 'file',
+                        title: track.title,
+                        artist: currentUserData.username || track.artist,
+                        url: trackUrl,
+                        duration: track.duration || '0:00',
+                        uploadedBy: currentUser.uid,
+                        uploadedAt: new Date().toISOString(),
+                        storagePath: storagePath
+                    });
+                } catch (error) {
+                    console.error('Error adding track:', error);
+                }
+            };
+            
             // Add first track immediately
-            const firstTrack = tracksToSend[0];
-            roomQueue.push({...firstTrack, type: 'file'});
-            addToQueueUI(firstTrack.title, firstTrack.artist, firstTrack.duration || '0:00');
+            await addTrackToRoom(tracksToSend[0]);
             bulkPushCount++;
             
             if (tracksToSend.length === 1) {
@@ -3015,16 +3131,14 @@
             
             // Add remaining tracks every 60 seconds
             let index = 1;
-            bulkPushInterval = setInterval(() => {
+            bulkPushInterval = setInterval(async () => {
                 if (index >= tracksToSend.length) {
                     cancelBulkPush();
                     alert(`✓ All ${bulkPushTotal} tracks added to room queue!`);
                     return;
                 }
                 
-                const track = tracksToSend[index];
-                roomQueue.push({...track, type: 'file'});
-                addToQueueUI(track.title, track.artist, track.duration || '0:00');
+                await addTrackToRoom(tracksToSend[index]);
                 bulkPushCount++;
                 updateBulkPushProgress();
                 index++;
@@ -3059,6 +3173,52 @@
             if (sanctuaryTracks.length > 0 && podQueue.length === 0) {
                 podQueue = sanctuaryTracks.map(t => ({...t, note: ''}));
                 savePodToStorage();
+            }
+        }
+
+        // Background cleanup of old uploads (runs silently on room load)
+        async function cleanOldUploadsBackground() {
+            try {
+                console.log('🗑️ Running background cleanup...');
+                
+                const cutoffTime = new Date(Date.now() - 24 * 60 * 60 * 1000); // 24 hours ago
+                const queueRef = collection(db, 'rooms', roomName, 'queue');
+                const snapshot = await getDocs(queueRef);
+                
+                let deletedCount = 0;
+                
+                for (const docSnap of snapshot.docs) {
+                    const track = docSnap.data();
+                    
+                    // Only delete user uploads (have storagePath and uploadedAt)
+                    if (track.storagePath && track.uploadedAt) {
+                        const uploadTime = new Date(track.uploadedAt);
+                        
+                        if (uploadTime < cutoffTime) {
+                            try {
+                                // Delete from Firestore
+                                await deleteDoc(doc(db, 'rooms', roomName, 'queue', docSnap.id));
+                                
+                                // Delete from Storage
+                                const storageRef = ref(storage, track.storagePath);
+                                await deleteObject(storageRef);
+                                
+                                deletedCount++;
+                                console.log(`Deleted old upload: ${track.title}`);
+                            } catch (error) {
+                                console.error(`Error deleting ${track.title}:`, error);
+                            }
+                        }
+                    }
+                }
+                
+                if (deletedCount > 0) {
+                    console.log(`✓ Background cleanup: Deleted ${deletedCount} old uploads`);
+                }
+                
+            } catch (error) {
+                console.error('Background cleanup error:', error);
+                // Fail silently - don't interrupt user experience
             }
         }
 

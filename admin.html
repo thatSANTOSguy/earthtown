@@ -244,6 +244,29 @@
             </div>
         </div>
 
+        <!-- Storage Cleanup Section -->
+        <div class="stats" style="margin-top: 30px;">
+            <div class="stat-card" style="flex: 1;">
+                <div class="stat-label" style="margin-bottom: 15px;">🗑️ Storage Cleanup</div>
+                <button id="cleanupBtn" onclick="cleanOldUploads()" style="
+                    width: 100%;
+                    padding: 15px;
+                    background: rgba(230, 57, 70, 0.2);
+                    border: 2px solid #e63946;
+                    border-radius: 8px;
+                    color: #e63946;
+                    font-family: 'VT323', monospace;
+                    font-size: 1.3rem;
+                    cursor: pointer;
+                    transition: all 0.3s;
+                    letter-spacing: 1px;
+                ">
+                    Clean Old Uploads (24h+)
+                </button>
+                <div id="cleanupStatus" style="margin-top: 10px; font-size: 0.9rem; color: #888; text-align: center;"></div>
+            </div>
+        </div>
+
         <div class="tabs">
             <button class="tab active" data-type="music" onclick="switchTab('music')">🎵 music</button>
             <button class="tab" data-type="video" onclick="switchTab('video')">🎬 video</button>
@@ -258,7 +281,8 @@
     <script type="module">
         import { initializeApp } from 'https://www.gstatic.com/firebasejs/10.7.1/firebase-app.js';
         import { getAuth, onAuthStateChanged } from 'https://www.gstatic.com/firebasejs/10.7.1/firebase-auth.js';
-        import { getFirestore, collection, query, where, getDocs, doc, updateDoc, serverTimestamp } from 'https://www.gstatic.com/firebasejs/10.7.1/firebase-firestore.js';
+        import { getFirestore, collection, query, where, getDocs, doc, updateDoc, deleteDoc, serverTimestamp } from 'https://www.gstatic.com/firebasejs/10.7.1/firebase-firestore.js';
+        import { getStorage, ref, deleteObject } from 'https://www.gstatic.com/firebasejs/10.7.1/firebase-storage.js';
 
         const firebaseConfig = {
             apiKey: "AIzaSyCXFlGeJodOUVn-3bYocPhFRtzs9DBHEFA",
@@ -272,6 +296,7 @@
         const app = initializeApp(firebaseConfig);
         const auth = getAuth(app);
         const db = getFirestore(app);
+        const storage = getStorage(app);
 
         let currentUser = null;
         let currentType = 'music';
@@ -419,6 +444,101 @@
             } catch (error) {
                 console.error('Error rejecting:', error);
                 alert('Error rejecting item');
+            }
+        };
+
+        // Clean old uploads (24h+)
+        window.cleanOldUploads = async function() {
+            const statusDiv = document.getElementById('cleanupStatus');
+            const btn = document.getElementById('cleanupBtn');
+            
+            try {
+                btn.disabled = true;
+                btn.style.opacity = '0.5';
+                statusDiv.textContent = 'Scanning for old uploads...';
+                
+                const rooms = ['sanctuary', 'studio', 'gathering', 'supernaturvl'];
+                const cutoffTime = new Date(Date.now() - 24 * 60 * 60 * 1000); // 24 hours ago
+                let totalFound = 0;
+                let totalSize = 0;
+                const tracksToDelete = [];
+                
+                // Scan all rooms
+                for (const roomName of rooms) {
+                    const queueRef = collection(db, 'rooms', roomName, 'queue');
+                    const snapshot = await getDocs(queueRef);
+                    
+                    snapshot.forEach(doc => {
+                        const track = doc.data();
+                        // Only delete user uploads (have storagePath and uploadedAt)
+                        if (track.storagePath && track.uploadedAt) {
+                            const uploadTime = new Date(track.uploadedAt);
+                            if (uploadTime < cutoffTime) {
+                                tracksToDelete.push({
+                                    room: roomName,
+                                    docId: doc.id,
+                                    storagePath: track.storagePath,
+                                    title: track.title
+                                });
+                                totalFound++;
+                            }
+                        }
+                    });
+                }
+                
+                if (totalFound === 0) {
+                    statusDiv.textContent = '✓ No old uploads found';
+                    btn.disabled = false;
+                    btn.style.opacity = '1';
+                    return;
+                }
+                
+                // Confirm deletion
+                const confirmed = confirm(
+                    `Found ${totalFound} uploads older than 24 hours.\n\n` +
+                    `This will permanently delete:\n` +
+                    `• ${totalFound} tracks from queue\n` +
+                    `• ${totalFound} files from storage\n\n` +
+                    `Continue?`
+                );
+                
+                if (!confirmed) {
+                    statusDiv.textContent = 'Cleanup cancelled';
+                    btn.disabled = false;
+                    btn.style.opacity = '1';
+                    return;
+                }
+                
+                // Delete tracks
+                statusDiv.textContent = `Deleting ${totalFound} tracks...`;
+                let deleted = 0;
+                
+                for (const track of tracksToDelete) {
+                    try {
+                        // Delete from Firestore
+                        await deleteDoc(doc(db, 'rooms', track.room, 'queue', track.docId));
+                        
+                        // Delete from Storage
+                        const storageRef = ref(storage, track.storagePath);
+                        await deleteObject(storageRef);
+                        
+                        deleted++;
+                        statusDiv.textContent = `Deleted ${deleted} / ${totalFound}...`;
+                    } catch (error) {
+                        console.error(`Error deleting ${track.title}:`, error);
+                    }
+                }
+                
+                statusDiv.textContent = `✓ Deleted ${deleted} old uploads`;
+                alert(`✓ Cleanup complete!\n\nDeleted ${deleted} tracks older than 24 hours.`);
+                
+            } catch (error) {
+                console.error('Cleanup error:', error);
+                statusDiv.textContent = '❌ Cleanup failed';
+                alert(`Error during cleanup: ${error.message}`);
+            } finally {
+                btn.disabled = false;
+                btn.style.opacity = '1';
             }
         };
     </script>
