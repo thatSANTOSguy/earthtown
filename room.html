@@ -1345,16 +1345,16 @@
             <div class="now-playing">
                 <div class="album-art">🎵</div>
                 <div class="track-info">
-                    <div class="mode-indicator" id="modeIndicator" style="font-size: 0.85rem; color: #2d6a4f; margin-bottom: 5px;">
-                        🌍 listening with room
+                    <div class="mode-indicator" id="modeIndicator" style="font-size: 0.85rem; color: #7fc29b; margin-bottom: 5px;">
+                        🌍 shared queue
                     </div>
                     <div class="track-title" id="nowPlayingTitle">no track playing</div>
                     <div class="track-artist" id="nowPlayingArtist">upload or add a track</div>
                 </div>
             </div>
             <div class="playback-controls">
-                <button class="control-btn" id="modeToggleBtn" onclick="toggleListeningMode()" style="background: rgba(45, 106, 79, 0.2); color: #f1faee; font-weight: 500;">
-                    🎧 solo
+                <button class="control-btn" id="modeToggleBtn" onclick="toggleQueueMode()" style="background: rgba(106, 76, 147, 0.2); color: #f1faee; font-weight: 500;">
+                    🎧 private pod
                 </button>
                 <button class="control-btn" onclick="previousTrack()">⏮</button>
                 <button class="control-btn" onclick="togglePlayback()" id="playBtn">▶</button>
@@ -2617,16 +2617,10 @@
         }
 
         // Player State
-        let listeningMode = roomConfig.forceMode || 'room'; // Force mode if specified
         let roomQueue = []; // Shared room queue
-        let soloQueue = []; // Personal queue
         let currentTrackIndex = 0;
         let isPlaying = false;
         
-        // Vote State
-        let activeVote = null;
-        let userVote = null;
-
         // ============================================
         // PRIVATE POD STATE
         // ============================================
@@ -2850,19 +2844,28 @@
         function exitPodMode() {
             inPodMode = false;
             
-            // Switch back to shared queue tab
-            document.querySelectorAll('.tab-btn').forEach(b => b.classList.remove('active'));
-            document.querySelector('[data-tab="shared"]').classList.add('active');
-            document.querySelectorAll('.queue-section').forEach(s => s.classList.remove('active'));
-            document.getElementById('sharedQueue').classList.add('active');
+            // Update UI
+            document.getElementById('modeIndicator').innerHTML = '🌍 shared queue';
+            document.getElementById('modeIndicator').style.color = '#7fc29b';
+            document.getElementById('modeToggleBtn').innerHTML = '🎧 private pod';
+            document.getElementById('modeToggleBtn').style.background = 'rgba(106, 76, 147, 0.2)';
             
-            // Update indicators
-            updatePodModeIndicator();
+            // Restore avatar appearance
+            const currentAvatar = document.querySelector('.avatar.current-user');
+            if (currentAvatar) {
+                currentAvatar.style.opacity = '1';
+                currentAvatar.style.transform = 'scale(1)';
+                currentAvatar.style.filter = 'none';
+            }
             
-            // If something was playing in pod, stop it
-            audioPlayer.pause();
-            isPlaying = false;
-            document.getElementById('playBtn').textContent = '▶';
+            // Stop current playback
+            if (isPlaying) {
+                audioPlayer.pause();
+                isPlaying = false;
+                document.getElementById('playBtn').textContent = '▶';
+            }
+            
+            console.log('✓ Switched to SHARED QUEUE');
         }
 
         // Hide pod tab if uploads not allowed
@@ -3153,15 +3156,8 @@
         // Initialize audio events
         if (audioPlayer) {
             audioPlayer.addEventListener('ended', () => {
-                if (inPodMode) {
-                    // Pod mode: handle loop or stop
-                    playNextInQueue();
-                } else if (listeningMode === 'solo') {
-                    playNextInQueue();
-                } else {
-                    // In room mode, wait for Firebase sync
-                    console.log('Track ended in room mode');
-                }
+                // Auto-advance to next track
+                playNextInQueue();
             });
 
             audioPlayer.addEventListener('timeupdate', () => {
@@ -3169,38 +3165,43 @@
             });
         }
 
-        // Toggle between room and solo mode
-        window.toggleListeningMode = function() {
-            if (listeningMode === 'room') {
-                // Switch to solo mode
-                listeningMode = 'solo';
-                document.getElementById('modeIndicator').innerHTML = '🎧 solo listening';
-                document.getElementById('modeIndicator').style.color = '#6a4c93';
-                document.getElementById('modeToggleBtn').innerHTML = '🌍 rejoin';
-                document.getElementById('modeToggleBtn').style.background = 'rgba(106, 76, 147, 0.2)';
-                
-                // If nothing in solo queue, copy current room track
-                if (soloQueue.length === 0 && roomQueue.length > 0) {
-                    soloQueue = [...roomQueue];
-                }
-                
-                console.log('Switched to SOLO mode');
+        // Toggle between shared queue and private pod
+        window.toggleQueueMode = function() {
+            if (inPodMode) {
+                // Switch to shared queue
+                exitPodMode();
             } else {
-                // Switch back to room mode
-                listeningMode = 'room';
-                document.getElementById('modeIndicator').innerHTML = '🌍 listening with room';
-                document.getElementById('modeIndicator').style.color = '#2d6a4f';
-                document.getElementById('modeToggleBtn').innerHTML = '🎧 solo';
-                document.getElementById('modeToggleBtn').style.background = 'rgba(45, 106, 79, 0.2)';
-                
-                // TODO: Sync to current room track from Firebase
-                console.log('Switched to ROOM mode');
+                // Switch to private pod
+                enterPodMode();
             }
         };
 
+        // Enter pod mode
+        function enterPodMode() {
+            inPodMode = true;
+            
+            // Update UI
+            document.getElementById('modeIndicator').innerHTML = '🎧 private pod';
+            document.getElementById('modeIndicator').style.color = '#6a4c93';
+            document.getElementById('modeToggleBtn').innerHTML = '🌍 shared queue';
+            document.getElementById('modeToggleBtn').style.background = 'rgba(124, 194, 155, 0.2)';
+            
+            // Grey out avatar
+            updatePodModeIndicator();
+            
+            // Stop current playback
+            if (isPlaying) {
+                audioPlayer.pause();
+                isPlaying = false;
+                document.getElementById('playBtn').textContent = '▶';
+            }
+            
+            console.log('✓ Switched to PRIVATE POD');
+        }
+
         // Play/Pause
         window.togglePlayback = function() {
-            const currentQueue = listeningMode === 'room' ? roomQueue : soloQueue;
+            const currentQueue = inPodMode ? podQueue : roomQueue;
             
             if (!audioPlayer || currentQueue.length === 0) {
                 alert('No tracks in queue. Upload or add a track first.');
@@ -3224,18 +3225,12 @@
 
         // Play specific track
         function playTrack(index) {
-            // Determine which queue to use based on pod mode
-            let currentQueue;
-            if (inPodMode) {
-                currentQueue = podQueue;
-                currentTrackIndex = index; // Pod uses its own index
-            } else {
-                currentQueue = listeningMode === 'room' ? roomQueue : soloQueue;
-                currentTrackIndex = index;
-            }
+            // Simple: pod queue or room queue
+            const currentQueue = inPodMode ? podQueue : roomQueue;
             
             if (index < 0 || index >= currentQueue.length) return;
             
+            currentTrackIndex = index;
             const track = currentQueue[index];
             
             // If track has no type, or type is 'file' or 'url', play it directly
@@ -3255,34 +3250,17 @@
 
         // Next track
         window.nextTrack = function() {
-            if (inPodMode) {
-                // Pod mode: always skip immediately
-                playNextInQueue();
-            } else if (listeningMode === 'room') {
-                // Room mode: initiate vote
-                initiateSkipVote();
-            } else {
-                // Solo mode: skip immediately
-                playNextInQueue();
-            }
+            playNextInQueue();
         };
 
         // Previous track
         window.previousTrack = function() {
-            if (inPodMode) {
-                // Pod mode: always go back immediately
-                playPreviousInQueue();
-            } else if (listeningMode === 'room') {
-                alert('Previous track in room mode requires majority vote (coming soon)');
-                // TODO: Implement previous vote
-            } else {
-                playPreviousInQueue();
-            }
+            playPreviousInQueue();
         };
 
         // Play next in queue
         function playNextInQueue() {
-            const currentQueue = inPodMode ? podQueue : (listeningMode === 'room' ? roomQueue : soloQueue);
+            const currentQueue = inPodMode ? podQueue : roomQueue;
             
             if (currentTrackIndex < currentQueue.length - 1) {
                 playTrack(currentTrackIndex + 1);
@@ -3290,11 +3268,8 @@
                 // If in pod mode with loop enabled, restart
                 if (inPodMode && podLoopMode) {
                     playTrack(0);
-                } else if (!inPodMode) {
-                    // Normal loop for room/solo
-                    playTrack(0);
                 } else {
-                    // Pod without loop - stop at end
+                    // Stop at end
                     isPlaying = false;
                     document.getElementById('playBtn').textContent = '▶';
                 }
@@ -3303,7 +3278,7 @@
 
         // Play previous in queue
         function playPreviousInQueue() {
-            const currentQueue = inPodMode ? podQueue : (listeningMode === 'room' ? roomQueue : soloQueue);
+            const currentQueue = inPodMode ? podQueue : roomQueue;
             
             if (currentTrackIndex > 0) {
                 playTrack(currentTrackIndex - 1);
@@ -3481,8 +3456,8 @@
                 // Show success
                 alert(`✓ ${track.title} added to room queue!`);
                 
-                // Auto-play if nothing playing
-                if (!isPlaying && listeningMode === 'room') {
+                // Auto-play if nothing playing and not in pod mode
+                if (!isPlaying && !inPodMode) {
                     playTrack(roomQueue.length - 1);
                 }
                 
@@ -3633,8 +3608,8 @@
     <audio id="audioPlayer" style="display: none;"></audio>
 
 
-    <!-- Vote Notification -->
-    <div class="vote-notification" id="voteNotification">
+    <!-- Vote Notification (disabled for v1) -->
+    <div class="vote-notification" id="voteNotification" style="display: none;">
         <div class="vote-title">skip track?</div>
         <div class="vote-options">
             <button class="vote-btn yes" onclick="castVote(true)">✓ yes</button>
