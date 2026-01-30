@@ -2773,84 +2773,52 @@
                 document.querySelectorAll('.queue-section').forEach(s => s.classList.remove('active'));
                 if (tab === 'shared') {
                     document.getElementById('sharedQueue').classList.add('active');
-                    // Don't auto-exit pod - user might just be checking shared queue
+                    // Activate shared queue mode
+                    if (inPodMode) {
+                        activateSharedQueueMode();
+                    }
                 } else if (tab === 'pod') {
                     document.getElementById('privatePod').classList.add('active');
-                    // Don't auto-enter pod - user might just be browsing
+                    // Activate pod mode
+                    if (!inPodMode) {
+                        activatePodMode();
+                    }
                 }
             });
         });
 
-        // Update avatar appearance based on pod mode
-        function updatePodModeIndicator() {
-            const currentAvatar = document.querySelector('.avatar.current-user');
-            const modeIndicator = document.getElementById('modeIndicator');
-            const modeToggleBtn = document.getElementById('modeToggleBtn');
+        // Activate pod mode (without switching tabs)
+        function activatePodMode() {
+            inPodMode = true;
             
-            if (inPodMode) {
-                // Pod mode: grey avatar
-                if (currentAvatar) {
-                    currentAvatar.style.opacity = '0.6';
-                    currentAvatar.style.transform = 'scale(0.9)';
-                    currentAvatar.style.filter = 'grayscale(0.5)';
-                }
-                
-                // Update mode indicator
-                if (modeIndicator) {
-                    modeIndicator.innerHTML = '🎧 in your pod';
-                    modeIndicator.style.color = '#6a4c93';
-                }
-                
-                // Update toggle button
-                if (modeToggleBtn) {
-                    modeToggleBtn.innerHTML = '🌍 exit pod';
-                    modeToggleBtn.style.background = 'rgba(106, 76, 147, 0.2)';
-                    modeToggleBtn.style.borderColor = '#6a4c93';
-                    modeToggleBtn.onclick = exitPodMode;
-                }
-            } else {
-                // Normal appearance
-                if (currentAvatar) {
-                    currentAvatar.style.opacity = '1';
-                    currentAvatar.style.transform = 'scale(1)';
-                    currentAvatar.style.filter = 'none';
-                }
-                
-                // Restore normal mode toggle
-                if (modeToggleBtn) {
-                    modeToggleBtn.onclick = window.toggleListeningMode;
-                }
-                
-                // Update based on current listening mode
-                if (modeIndicator && modeToggleBtn) {
-                    if (listeningMode === 'room') {
-                        modeIndicator.innerHTML = '🌍 listening with room';
-                        modeIndicator.style.color = '#7fc29b';
-                        modeToggleBtn.innerHTML = '🎧 solo';
-                        modeToggleBtn.style.background = 'rgba(106, 76, 147, 0.2)';
-                        modeToggleBtn.style.borderColor = '#6a4c93';
-                    } else {
-                        modeIndicator.innerHTML = '🎧 solo listening';
-                        modeIndicator.style.color = '#6a4c93';
-                        modeToggleBtn.innerHTML = '🌍 rejoin';
-                        modeToggleBtn.style.background = 'rgba(124, 194, 155, 0.2)';
-                        modeToggleBtn.style.borderColor = '#7fc29b';
-                    }
-                }
+            // Update mode indicator
+            document.getElementById('modeIndicator').innerHTML = '🎧 private pod';
+            document.getElementById('modeIndicator').style.color = '#6a4c93';
+            document.getElementById('modeToggleBtn').innerHTML = '🌍 shared queue';
+            document.getElementById('modeToggleBtn').style.background = 'rgba(124, 194, 155, 0.2)';
+            
+            // Grey out avatar
+            const currentAvatar = document.querySelector('.avatar.current-user');
+            if (currentAvatar) {
+                currentAvatar.style.opacity = '0.6';
+                currentAvatar.style.transform = 'scale(0.9)';
+                currentAvatar.style.filter = 'grayscale(0.5)';
             }
+            
+            console.log('✓ Pod mode activated');
         }
 
-        // Exit pod mode
-        function exitPodMode() {
+        // Activate shared queue mode (without switching tabs)
+        function activateSharedQueueMode() {
             inPodMode = false;
             
-            // Update UI
+            // Update mode indicator
             document.getElementById('modeIndicator').innerHTML = '🌍 shared queue';
             document.getElementById('modeIndicator').style.color = '#7fc29b';
             document.getElementById('modeToggleBtn').innerHTML = '🎧 private pod';
             document.getElementById('modeToggleBtn').style.background = 'rgba(106, 76, 147, 0.2)';
             
-            // Restore avatar appearance
+            // Restore avatar
             const currentAvatar = document.querySelector('.avatar.current-user');
             if (currentAvatar) {
                 currentAvatar.style.opacity = '1';
@@ -2858,14 +2826,20 @@
                 currentAvatar.style.filter = 'none';
             }
             
-            // Stop current playback
-            if (isPlaying) {
-                audioPlayer.pause();
-                isPlaying = false;
-                document.getElementById('playBtn').textContent = '▶';
-            }
+            console.log('✓ Shared queue mode activated');
+        }
+
+        // Update avatar appearance based on pod mode
+        // Exit pod mode
+        function exitPodMode() {
+            // Switch to shared queue tab
+            document.querySelectorAll('.tab-btn').forEach(b => b.classList.remove('active'));
+            document.querySelector('[data-tab="shared"]').classList.add('active');
+            document.querySelectorAll('.queue-section').forEach(s => s.classList.remove('active'));
+            document.getElementById('sharedQueue').classList.add('active');
             
-            console.log('✓ Switched to SHARED QUEUE');
+            // Activate shared queue mode
+            activateSharedQueueMode();
         }
 
         // Hide pod tab if uploads not allowed
@@ -3170,33 +3144,32 @@
             if (inPodMode) {
                 // Switch to shared queue
                 exitPodMode();
+                // Also switch the tab
+                document.querySelectorAll('.tab-btn').forEach(b => b.classList.remove('active'));
+                document.querySelector('[data-tab="shared"]').classList.add('active');
+                document.querySelectorAll('.queue-section').forEach(s => s.classList.remove('active'));
+                document.getElementById('sharedQueue').classList.add('active');
             } else {
                 // Switch to private pod
                 enterPodMode();
+                // Also switch the tab
+                document.querySelectorAll('.tab-btn').forEach(b => b.classList.remove('active'));
+                document.querySelector('[data-tab="pod"]').classList.add('active');
+                document.querySelectorAll('.queue-section').forEach(s => s.classList.remove('active'));
+                document.getElementById('privatePod').classList.add('active');
             }
         };
 
         // Enter pod mode
         function enterPodMode() {
-            inPodMode = true;
+            // Switch to pod tab
+            document.querySelectorAll('.tab-btn').forEach(b => b.classList.remove('active'));
+            document.querySelector('[data-tab="pod"]').classList.add('active');
+            document.querySelectorAll('.queue-section').forEach(s => s.classList.remove('active'));
+            document.getElementById('privatePod').classList.add('active');
             
-            // Update UI
-            document.getElementById('modeIndicator').innerHTML = '🎧 private pod';
-            document.getElementById('modeIndicator').style.color = '#6a4c93';
-            document.getElementById('modeToggleBtn').innerHTML = '🌍 shared queue';
-            document.getElementById('modeToggleBtn').style.background = 'rgba(124, 194, 155, 0.2)';
-            
-            // Grey out avatar
-            updatePodModeIndicator();
-            
-            // Stop current playback
-            if (isPlaying) {
-                audioPlayer.pause();
-                isPlaying = false;
-                document.getElementById('playBtn').textContent = '▶';
-            }
-            
-            console.log('✓ Switched to PRIVATE POD');
+            // Activate pod mode
+            activatePodMode();
         }
 
         // Play/Pause
