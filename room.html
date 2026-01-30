@@ -2932,10 +2932,12 @@
                                onchange="updatePodTrackNote(${index}, this.value)">
                     </div>
                     <div style="display: flex; gap: 8px;" onclick="event.stopPropagation()">
+                        <!-- SHARE BUTTONS TEMPORARILY HIDDEN - UNCOMMENT WHEN STORAGE RULES ARE SET
                         <button class="pod-track-btn" onclick="sharePodTrackToRoom(${index})"
                                 style="background: rgba(124, 194, 155, 0.2); border-color: #7fc29b; color: #7fc29b; width: auto; padding: 0 12px;">
                             📤 share
                         </button>
+                        -->
                         <button class="pod-track-btn" onclick="removePodTrack(${index})"
                                 style="background: rgba(214, 40, 40, 0.2); border-color: #d62828; color: #d62828;">
                             ✕
@@ -3710,9 +3712,11 @@
                         <input type="checkbox" id="podLoopMode" onchange="togglePodLoop()" style="transform: scale(1.2);">
                         <span style="font-family: 'VT323', monospace; font-size: 1.2rem;">🔁 loop pod</span>
                     </label>
+                    <!-- PUSH ALL BUTTON TEMPORARILY HIDDEN - UNCOMMENT WHEN STORAGE RULES ARE SET
                     <button class="pod-action-btn" onclick="pushAllToRoom()" style="background: rgba(124, 194, 155, 0.2); border-color: #7fc29b; color: #7fc29b;">
                         📤 push all to room (max 10)
                     </button>
+                    -->
                 </div>
 
                 <div class="upload-area">
