@@ -2728,23 +2728,18 @@
             
             const fileUploadBtn = document.querySelector('.upload-box');
             const urlInputSection = document.querySelector('.url-input-section');
+            const modeToggleBtn = document.getElementById('modeToggleBtn');
             
             if (!roomConfig.uploadsAllowed) {
                 // Hide upload controls
                 if (fileUploadBtn) fileUploadBtn.style.display = 'none';
                 if (urlInputSection) urlInputSection.style.display = 'none';
                 console.log('✓ Uploads disabled for', roomName);
-            }
-            
-            // For SUPERNATURVL - hide mode toggle button
-            if (roomConfig.forceMode === 'solo') {
-                const modeToggleBtn = document.getElementById('modeToggleBtn');
-                console.log('🔍 Found modeToggleBtn:', modeToggleBtn);
+                
+                // Also hide pod toggle (no pod without uploads)
                 if (modeToggleBtn) {
                     modeToggleBtn.style.display = 'none';
-                    console.log('✓ Mode toggle hidden for', roomName);
-                } else {
-                    console.error('❌ modeToggleBtn not found!');
+                    console.log('✓ Pod toggle hidden (no uploads allowed)');
                 }
             }
         }
