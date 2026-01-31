@@ -2712,7 +2712,6 @@
             if (playlist.length > 0) {
                 console.log(`Loading ${playlist.length} tracks for ${roomName}`);
                 roomQueue = [...playlist];
-                soloQueue = [...playlist];
                 
                 // Update queue UI
                 playlist.forEach(track => {
@@ -3425,7 +3424,7 @@
         // Update now playing display
         function updateNowPlaying(track) {
             if (!track) {
-                const currentQueue = listeningMode === 'room' ? roomQueue : soloQueue;
+                const currentQueue = inPodMode ? podQueue : roomQueue;
                 if (currentQueue.length === 0) return;
                 track = currentQueue[currentTrackIndex];
             }
@@ -3630,13 +3629,9 @@
                 return;
             }
             
-            // Add to appropriate queue
-            if (listeningMode === 'room') {
-                roomQueue.push(track);
-                // TODO: Sync to Firebase
-            } else {
-                soloQueue.push(track);
-            }
+            // Add to room queue only (no solo mode anymore)
+            roomQueue.push(track);
+            // TODO: Sync to Firebase
             
             addToQueueUI(track.title, track.artist, track.duration);
             document.getElementById('urlInput').value = '';
@@ -3649,17 +3644,14 @@
         // Enhanced queue UI
         function addToQueueUI(title, artist, time) {
             const queueList = document.getElementById('queueList');
-            const currentQueue = listeningMode === 'room' ? roomQueue : soloQueue;
+            const currentQueue = inPodMode ? podQueue : roomQueue;
             const trackIndex = currentQueue.length - 1;
             
             const item = document.createElement('div');
             item.className = 'queue-item';
             item.onclick = () => {
-                if (listeningMode === 'solo') {
-                    playTrack(trackIndex);
-                } else {
-                    alert('In room mode, track selection requires majority vote (coming soon)');
-                }
+                // Simple click to play (no voting in v1)
+                playTrack(trackIndex);
             };
             item.style.cursor = 'pointer';
             item.innerHTML = `
