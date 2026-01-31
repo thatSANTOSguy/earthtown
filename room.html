@@ -1710,19 +1710,10 @@
                 // Initialize room-specific features
                 loadRoomPlaylist();
                 configureRoomControls();
-                showModeModal();
                 loadPodFromStorage();
                 renderPodQueue();
                 
-                // Listen for shared queue updates from Firebase
-                listenToRoomQueue();
-                
-                // Auto-cleanup old uploads (runs silently in background)
-                cleanOldUploadsBackground();
-                
-                console.log('✓ Setup complete');
-                
-                // Mobile: Add toggle functionality for chat and music player
+                // Mobile: Add toggle functionality for chat and music player (BEFORE modal)
                 if (window.innerWidth <= 768) {
                     const chatSidebar = document.querySelector('.chat-sidebar');
                     const musicControl = document.querySelector('.music-control');
@@ -1761,6 +1752,17 @@
                         });
                     }
                 }
+                
+                // Show mode modal AFTER mobile setup
+                showModeModal();
+                
+                // Listen for shared queue updates from Firebase
+                listenToRoomQueue();
+                
+                // Auto-cleanup old uploads (runs silently in background)
+                cleanOldUploadsBackground();
+                
+                console.log('✓ Setup complete');
             } else {
                 console.log('No user, redirecting to index');
                 window.location.href = 'index.html';
@@ -2700,62 +2702,12 @@
             }
         }
 
-        // Show mode selection modal for studio
+        // Show mode selection modal for studio (DEPRECATED - keeping for reference)
         function showModeModal() {
+            // Modal removed since we simplified to pod/shared queue system
+            // Studio no longer needs mode selection
             if (roomConfig.showModeModal) {
-                const modal = document.createElement('div');
-                modal.style.cssText = `
-                    position: fixed;
-                    top: 0; left: 0; right: 0; bottom: 0;
-                    background: rgba(0,0,0,0.9);
-                    display: flex;
-                    align-items: center;
-                    justify-content: center;
-                    z-index: 10000;
-                `;
-                modal.innerHTML = `
-                    <div style="background: #0a0a0a; border: 2px solid #f1faee; border-radius: 12px; padding: 40px; max-width: 500px; text-align: center;">
-                        <h2 style="font-family: 'VT323', monospace; font-size: 2.5rem; color: #f1faee; margin-bottom: 20px;">
-                            ${roomConfig.icon} ${roomConfig.name}
-                        </h2>
-                        <p style="font-family: 'Inter', sans-serif; font-size: 1.1rem; color: #ccc; margin-bottom: 30px;">
-                            Alive & Well listening party
-                        </p>
-                        <div style="display: flex; gap: 20px; justify-content: center;">
-                            <button onclick="selectListeningMode('room')" style="
-                                font-family: 'VT323', monospace;
-                                font-size: 1.5rem;
-                                padding: 15px 30px;
-                                background: rgba(124, 194, 155, 0.2);
-                                border: 2px solid #7fc29b;
-                                border-radius: 8px;
-                                color: #7fc29b;
-                                cursor: pointer;
-                            ">🌍 join live playback</button>
-                            <button onclick="selectListeningMode('solo')" style="
-                                font-family: 'VT323', monospace;
-                                font-size: 1.5rem;
-                                padding: 15px 30px;
-                                background: rgba(106, 76, 147, 0.2);
-                                border: 2px solid #6a4c93;
-                                border-radius: 8px;
-                                color: #6a4c93;
-                                cursor: pointer;
-                            ">🎧 listen alone</button>
-                        </div>
-                    </div>
-                `;
-                document.body.appendChild(modal);
-                
-                window.selectListeningMode = function(mode) {
-                    listeningMode = mode;
-                    if (mode === 'solo') {
-                        document.getElementById('modeIndicator').innerHTML = '🎧 solo listening';
-                        document.getElementById('modeIndicator').style.color = '#6a4c93';
-                    }
-                    document.body.removeChild(modal);
-                    console.log('✓ User selected:', mode);
-                };
+                console.log('Mode modal skipped - using simplified pod/shared system');
             }
         }
 
