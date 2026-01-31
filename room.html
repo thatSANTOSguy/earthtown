@@ -200,11 +200,12 @@
             user-select: none;
             -webkit-user-select: none;
             transition: transform 0.3s cubic-bezier(0.68, -0.55, 0.265, 1.55);
+            z-index: 5; /* Below mobile controls (z-index: 199-200) */
         }
         
         .avatar:hover {
             transform: scale(1.05);
-            z-index: 10;
+            z-index: 10; /* Still below mobile controls */
         }
 
         .avatar-image {
@@ -1713,45 +1714,85 @@
                 loadPodFromStorage();
                 renderPodQueue();
                 
-                // Mobile: Add toggle functionality for chat and music player (BEFORE modal)
-                if (window.innerWidth <= 768) {
+                // Setup mobile toggles (simple, clean approach)
+                let mobileListenersAttached = false;
+                
+                function setupMobileToggles() {
                     const chatSidebar = document.querySelector('.chat-sidebar');
                     const musicControl = document.querySelector('.music-control');
                     
-                    if (chatSidebar) {
-                        chatSidebar.addEventListener('click', function(e) {
-                            // Only toggle if clicking the header area (top 50px)
-                            const rect = chatSidebar.getBoundingClientRect();
-                            const clickY = e.clientY - rect.top;
-                            if (clickY <= 50) {
-                                chatSidebar.classList.toggle('expanded');
-                                // Auto-collapse music when chat opens
-                                if (chatSidebar.classList.contains('expanded') && musicControl) {
-                                    musicControl.classList.remove('expanded');
-                                    musicControl.classList.add('hide-tab'); // Hide music tab
-                                } else if (musicControl) {
-                                    musicControl.classList.remove('hide-tab'); // Show music tab
-                                }
+                    if (window.innerWidth <= 768) {
+                        // Mobile/tablet mode - add toggle functionality if not already attached
+                        if (!mobileListenersAttached) {
+                            console.log('📱 Attaching mobile toggle listeners');
+                            
+                            if (chatSidebar) {
+                                chatSidebar.addEventListener('click', function(e) {
+                                    const rect = chatSidebar.getBoundingClientRect();
+                                    const clickY = e.clientY - rect.top;
+                                    if (clickY <= 50) {
+                                        console.log('💬 Chat clicked');
+                                        chatSidebar.classList.toggle('expanded');
+                                        if (chatSidebar.classList.contains('expanded') && musicControl) {
+                                            musicControl.classList.remove('expanded');
+                                            musicControl.classList.add('hide-tab');
+                                        } else if (musicControl) {
+                                            musicControl.classList.remove('hide-tab');
+                                        }
+                                    }
+                                });
                             }
-                        });
-                    }
-                    
-                    if (musicControl) {
-                        musicControl.addEventListener('click', function(e) {
-                            // Only toggle if clicking the header area (top 50px)
-                            const rect = musicControl.getBoundingClientRect();
-                            const clickY = e.clientY - rect.top;
-                            if (clickY <= 50) {
-                                musicControl.classList.toggle('expanded');
-                                // Auto-collapse chat when music opens (but keep chat tab visible)
-                                if (musicControl.classList.contains('expanded') && chatSidebar) {
-                                    chatSidebar.classList.remove('expanded');
-                                    // Don't hide chat tab - it stays visible
-                                }
+                            
+                            if (musicControl) {
+                                musicControl.addEventListener('click', function(e) {
+                                    const rect = musicControl.getBoundingClientRect();
+                                    const clickY = e.clientY - rect.top;
+                                    if (clickY <= 50) {
+                                        console.log('🎵 Music clicked');
+                                        musicControl.classList.toggle('expanded');
+                                        if (musicControl.classList.contains('expanded') && chatSidebar) {
+                                            chatSidebar.classList.remove('expanded');
+                                        }
+                                    }
+                                });
                             }
-                        });
+                            
+                            mobileListenersAttached = true;
+                        }
+                    } else {
+                        // Desktop mode - remove mobile classes
+                        if (chatSidebar) {
+                            chatSidebar.classList.remove('expanded', 'hide-tab');
+                        }
+                        if (musicControl) {
+                            musicControl.classList.remove('expanded', 'hide-tab');
+                        }
                     }
                 }
+                
+                // Run on load
+                setupMobileToggles();
+                
+                // Run on resize (debounced)
+                let resizeTimeout;
+                window.addEventListener('resize', function() {
+                    clearTimeout(resizeTimeout);
+                    resizeTimeout = setTimeout(function() {
+                        // Reset flag on resize to allow re-checking
+                        const wasMobile = mobileListenersAttached;
+                        const isMobileNow = window.innerWidth <= 768;
+                        
+                        if (wasMobile && !isMobileNow) {
+                            // Switched from mobile to desktop - cleanup mobile classes
+                            setupMobileToggles();
+                        } else if (!wasMobile && isMobileNow) {
+                            // Switched from desktop to mobile - this shouldn't happen since we attach on load
+                            // But handle it anyway
+                            mobileListenersAttached = false;
+                            setupMobileToggles();
+                        }
+                    }, 250);
+                });
                 
                 // Show mode modal AFTER mobile setup
                 showModeModal();
@@ -2684,6 +2725,8 @@
 
         // Hide/show upload controls based on room config
         function configureRoomControls() {
+            console.log('🔧 configureRoomControls for:', roomName, roomConfig);
+            
             const fileUploadBtn = document.querySelector('.upload-box');
             const urlInputSection = document.querySelector('.url-input-section');
             
@@ -2697,8 +2740,13 @@
             // For SUPERNATURVL - hide mode toggle button
             if (roomConfig.forceMode === 'solo') {
                 const modeToggleBtn = document.getElementById('modeToggleBtn');
-                if (modeToggleBtn) modeToggleBtn.style.display = 'none';
-                console.log('✓ Solo mode forced for', roomName);
+                console.log('🔍 Found modeToggleBtn:', modeToggleBtn);
+                if (modeToggleBtn) {
+                    modeToggleBtn.style.display = 'none';
+                    console.log('✓ Mode toggle hidden for', roomName);
+                } else {
+                    console.error('❌ modeToggleBtn not found!');
+                }
             }
         }
 
