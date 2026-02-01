@@ -1835,7 +1835,11 @@
             try {
                 const userDoc = await getDoc(doc(db, 'users', uid));
                 if (userDoc.exists()) {
-                    currentUserData = { id: uid, ...userDoc.data(), x: 300, y: 250 };
+                    // Random spawn location within safe bounds
+                    const spawnX = Math.floor(Math.random() * (window.innerWidth - 200)) + 100; // 100px from edges
+                    const spawnY = Math.floor(Math.random() * (window.innerHeight - 400)) + 100; // Avoid top/bottom UI
+                    
+                    currentUserData = { id: uid, ...userDoc.data(), x: spawnX, y: spawnY };
                     
                     // Show wipe chat button for admins
                     if (currentUserData.isAdmin === true) {
