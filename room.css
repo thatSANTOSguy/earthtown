@@ -545,20 +545,6 @@ body::before {
     border-color: rgba(241, 250, 238, 0.6);
 }
 
-/* Responsive */
-@media (max-width: 1024px) {
-    .main-area {
-        grid-template-columns: 1fr;
-        grid-template-rows: 1fr auto;
-    }
-
-    .chat-sidebar {
-        border-left: none;
-        border-top: 2px solid rgba(241, 250, 238, 0.2);
-        max-height: 40vh;
-    }
-}
-
 /* Scrollbar */
 ::-webkit-scrollbar {
     width: 6px;
