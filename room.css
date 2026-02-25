@@ -1126,6 +1126,7 @@ background: linear-gradient(90deg, #f77f00, #d62828, #6a4c93);
         cursor: pointer;
         border-radius: 12px 12px 0 0;
         z-index: 1;
+        pointer-events: none; /* Allow clicks to pass through to parent */
     }
     
     .chat-sidebar.expanded::before {
@@ -1200,6 +1201,7 @@ background: linear-gradient(90deg, #f77f00, #d62828, #6a4c93);
         cursor: pointer;
         border-radius: 12px 12px 0 0;
         z-index: 1;
+        pointer-events: none; /* Allow clicks to pass through to parent */
     }
     
     .music-control.expanded::before {
