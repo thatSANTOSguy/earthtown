@@ -371,6 +371,10 @@
                     }
                 });
                 console.log('Room joined, setting up listeners');
+                
+                // Listen to chat messages
+                listenToRoomMessages();
+                
                 setupEventListeners();
                 
                 // Initialize room-specific features
@@ -524,26 +528,35 @@
         let isDraggingGlobal = false;
 
         function listenToRoomMessages() {
-            const messagesRef = collection(db, 'rooms', roomName, 'messages');
-            const messagesQuery = query(messagesRef, orderBy('timestamp', 'desc'), limit(50));
-            
-            messagesUnsubscribe = onSnapshot(messagesQuery, (snapshot) => {
-                const container = document.getElementById('chatMessages');
-                container.innerHTML = '';
+            try {
+                console.log('💬 Setting up chat message listener for room:', roomName);
+                const messagesRef = collection(db, 'rooms', roomName, 'messages');
+                console.log('✓ messagesRef created');
+                const messagesQuery = query(messagesRef, orderBy('timestamp', 'desc'), limit(50));
+                console.log('✓ messagesQuery created');
                 
-                const messages = [];
-                snapshot.forEach((doc) => {
-                    messages.push({ id: doc.id, ...doc.data() });
+                messagesUnsubscribe = onSnapshot(messagesQuery, (snapshot) => {
+                    console.log('📨 Messages snapshot received, size:', snapshot.size);
+                    const container = document.getElementById('chatMessages');
+                    container.innerHTML = '';
+                    
+                    const messages = [];
+                    snapshot.forEach((doc) => {
+                        messages.push({ id: doc.id, ...doc.data() });
+                    });
+                    
+                    // Reverse to show oldest first
+                    messages.reverse().forEach(msg => {
+                        const messageEl = createMessageElement(msg);
+                        container.appendChild(messageEl);
+                    });
+                    
+                    container.scrollTop = container.scrollHeight;
                 });
-                
-                // Reverse to show oldest first
-                messages.reverse().forEach(msg => {
-                    const messageEl = createMessageElement(msg);
-                    container.appendChild(messageEl);
-                });
-                
-                container.scrollTop = container.scrollHeight;
-            });
+                console.log('✓ Chat listener attached');
+            } catch (error) {
+                console.error('💥 CHAT SETUP ERROR:', error);
+            }
         }
 
         function updateOnlineCount() {
