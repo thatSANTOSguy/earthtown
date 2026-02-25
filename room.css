@@ -1000,6 +1000,15 @@ background: linear-gradient(90deg, #f77f00, #d62828, #6a4c93);
 
 /* MOBILE RESPONSIVE */
 @media (max-width: 768px) {
+    /* DEBUGGING BORDERS - Remove after finding culprit */
+    .main-area { border: 5px solid red !important; }
+    .room-space { border: 5px solid blue !important; }
+    .chat-sidebar { border: 5px solid green !important; }
+    .music-control { border: 5px solid yellow !important; }
+    .room-header { border: 5px solid purple !important; }
+    .main-layout { border: 5px solid orange !important; }
+    .room-container { border: 5px solid pink !important; }
+    
     .room-header {
         padding: 12px 16px;
         flex-direction: column;
@@ -1044,19 +1053,21 @@ background: linear-gradient(90deg, #f77f00, #d62828, #6a4c93);
     }
     
     .main-area {
+        display: block; /* Remove grid layout on mobile */
         width: 100%;
-        padding: 20px 16px;
+        height: 100vh;
+        padding: 0; /* Remove padding */
         position: relative;
-        z-index: 1; /* Creates proper stacking context for chat/music */
+        z-index: 1;
     }
     
-    /* Room space on mobile - full screen dimensions */
+    /* Room space on mobile - full screen */
     .room-space {
-        position: fixed;
+        position: absolute;
         top: 0;
         left: 0;
-        width: 100vw;
-        height: 100vh;
+        width: 100%;
+        height: 100%;
         padding-top: 80px; /* Account for header */
         padding-bottom: 120px; /* Account for music/chat tabs */
     }
