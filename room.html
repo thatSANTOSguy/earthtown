@@ -360,47 +360,83 @@
                 // Auto-cleanup old uploads (runs silently in background)
                 cleanOldUploadsBackground();
                 
-                console.log('✓ Setup complete');
+                // Setup mobile toggles (simple, clean approach)
+                let mobileListenersAttached = false;
                 
-                // Mobile: Add toggle functionality for chat and music player
-                if (window.innerWidth <= 768) {
+                function setupMobileToggles() {
                     const chatSidebar = document.querySelector('.chat-sidebar');
                     const musicControl = document.querySelector('.music-control');
                     
-                    if (chatSidebar) {
-                        chatSidebar.addEventListener('click', function(e) {
-                            // Only toggle if clicking the header area (top 50px)
-                            const rect = chatSidebar.getBoundingClientRect();
-                            const clickY = e.clientY - rect.top;
-                            if (clickY <= 50) {
-                                chatSidebar.classList.toggle('expanded');
-                                // Auto-collapse music when chat opens
-                                if (chatSidebar.classList.contains('expanded') && musicControl) {
-                                    musicControl.classList.remove('expanded');
-                                    musicControl.classList.add('hide-tab'); // Hide music tab
-                                } else if (musicControl) {
-                                    musicControl.classList.remove('hide-tab'); // Show music tab
-                                }
+                    if (window.innerWidth <= 768) {
+                        // Mobile/tablet mode - add toggle functionality if not already attached
+                        if (!mobileListenersAttached) {
+                            console.log('📱 Attaching mobile toggle listeners');
+                            
+                            if (chatSidebar) {
+                                chatSidebar.addEventListener('click', function(e) {
+                                    const rect = chatSidebar.getBoundingClientRect();
+                                    const clickY = e.clientY - rect.top;
+                                    if (clickY <= 50) {
+                                        console.log('💬 Chat clicked');
+                                        chatSidebar.classList.toggle('expanded');
+                                        if (chatSidebar.classList.contains('expanded') && musicControl) {
+                                            musicControl.classList.remove('expanded');
+                                            musicControl.classList.add('hide-tab');
+                                        } else if (musicControl) {
+                                            musicControl.classList.remove('hide-tab');
+                                        }
+                                    }
+                                });
                             }
-                        });
-                    }
-                    
-                    if (musicControl) {
-                        musicControl.addEventListener('click', function(e) {
-                            // Only toggle if clicking the header area (top 50px)
-                            const rect = musicControl.getBoundingClientRect();
-                            const clickY = e.clientY - rect.top;
-                            if (clickY <= 50) {
-                                musicControl.classList.toggle('expanded');
-                                // Auto-collapse chat when music opens (but keep chat tab visible)
-                                if (musicControl.classList.contains('expanded') && chatSidebar) {
-                                    chatSidebar.classList.remove('expanded');
-                                    // Don't hide chat tab - it stays visible
-                                }
+                            
+                            if (musicControl) {
+                                musicControl.addEventListener('click', function(e) {
+                                    const rect = musicControl.getBoundingClientRect();
+                                    const clickY = e.clientY - rect.top;
+                                    if (clickY <= 50) {
+                                        console.log('🎵 Music clicked');
+                                        musicControl.classList.toggle('expanded');
+                                        if (musicControl.classList.contains('expanded') && chatSidebar) {
+                                            chatSidebar.classList.remove('expanded');
+                                        }
+                                    }
+                                });
                             }
-                        });
+                            
+                            mobileListenersAttached = true;
+                        }
+                    } else {
+                        // Desktop mode - remove mobile classes
+                        if (chatSidebar) {
+                            chatSidebar.classList.remove('expanded', 'hide-tab');
+                        }
+                        if (musicControl) {
+                            musicControl.classList.remove('expanded', 'hide-tab');
+                        }
                     }
                 }
+                
+                // Run on load
+                setupMobileToggles();
+                
+                // Run on resize (debounced)
+                let resizeTimeout;
+                window.addEventListener('resize', function() {
+                    clearTimeout(resizeTimeout);
+                    resizeTimeout = setTimeout(function() {
+                        const wasMobile = mobileListenersAttached;
+                        const isMobileNow = window.innerWidth <= 768;
+                        
+                        if (wasMobile && !isMobileNow) {
+                            setupMobileToggles();
+                        } else if (!wasMobile && isMobileNow) {
+                            mobileListenersAttached = false;
+                            setupMobileToggles();
+                        }
+                    }, 250);
+                });
+                
+                console.log('✓ Setup complete');
             } else {
                 console.log('No user, redirecting to index');
                 window.location.href = 'index.html';
@@ -1322,21 +1358,23 @@
 
         // Hide/show upload controls based on room config
         function configureRoomControls() {
+            console.log('🔧 configureRoomControls for:', roomName, roomConfig);
+            
             const fileUploadBtn = document.querySelector('.upload-box');
             const urlInputSection = document.querySelector('.url-input-section');
+            const modeToggleBtn = document.getElementById('modeToggleBtn');
             
             if (!roomConfig.uploadsAllowed) {
                 // Hide upload controls
                 if (fileUploadBtn) fileUploadBtn.style.display = 'none';
                 if (urlInputSection) urlInputSection.style.display = 'none';
                 console.log('✓ Uploads disabled for', roomName);
-            }
-            
-            // For SUPERNATURVL - hide mode toggle button
-            if (roomConfig.forceMode === 'solo') {
-                const modeToggleBtn = document.getElementById('modeToggleBtn');
-                if (modeToggleBtn) modeToggleBtn.style.display = 'none';
-                console.log('✓ Solo mode forced for', roomName);
+                
+                // Also hide pod toggle (no pod without uploads)
+                if (modeToggleBtn) {
+                    modeToggleBtn.style.display = 'none';
+                    console.log('✓ Pod toggle hidden (no uploads allowed)');
+                }
             }
         }
 
