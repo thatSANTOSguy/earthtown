@@ -374,16 +374,28 @@
                             
                             if (chatSidebar) {
                                 chatSidebar.addEventListener('click', function(e) {
-                                    const rect = chatSidebar.getBoundingClientRect();
-                                    const clickY = e.clientY - rect.top;
-                                    if (clickY <= 50) {
-                                        console.log('💬 Chat clicked');
-                                        chatSidebar.classList.toggle('expanded');
-                                        if (chatSidebar.classList.contains('expanded') && musicControl) {
+                                    // If collapsed (not .expanded), allow clicks anywhere
+                                    // If expanded, only clicks in top 50px (header) toggle
+                                    const isExpanded = chatSidebar.classList.contains('expanded');
+                                    
+                                    if (!isExpanded) {
+                                        // Collapsed - any click toggles
+                                        console.log('💬 Chat clicked (collapsed)');
+                                        chatSidebar.classList.add('expanded');
+                                        if (musicControl) {
                                             musicControl.classList.remove('expanded');
                                             musicControl.classList.add('hide-tab');
-                                        } else if (musicControl) {
-                                            musicControl.classList.remove('hide-tab');
+                                        }
+                                    } else {
+                                        // Expanded - only header clicks toggle
+                                        const rect = chatSidebar.getBoundingClientRect();
+                                        const clickY = e.clientY - rect.top;
+                                        if (clickY <= 50) {
+                                            console.log('💬 Chat header clicked (expanded)');
+                                            chatSidebar.classList.remove('expanded');
+                                            if (musicControl) {
+                                                musicControl.classList.remove('hide-tab');
+                                            }
                                         }
                                     }
                                 });
@@ -391,13 +403,24 @@
                             
                             if (musicControl) {
                                 musicControl.addEventListener('click', function(e) {
-                                    const rect = musicControl.getBoundingClientRect();
-                                    const clickY = e.clientY - rect.top;
-                                    if (clickY <= 50) {
-                                        console.log('🎵 Music clicked');
-                                        musicControl.classList.toggle('expanded');
-                                        if (musicControl.classList.contains('expanded') && chatSidebar) {
+                                    // If collapsed (not .expanded), allow clicks anywhere
+                                    // If expanded, only clicks in top 50px (header) toggle
+                                    const isExpanded = musicControl.classList.contains('expanded');
+                                    
+                                    if (!isExpanded) {
+                                        // Collapsed - any click toggles
+                                        console.log('🎵 Music clicked (collapsed)');
+                                        musicControl.classList.add('expanded');
+                                        if (chatSidebar) {
                                             chatSidebar.classList.remove('expanded');
+                                        }
+                                    } else {
+                                        // Expanded - only header clicks toggle
+                                        const rect = musicControl.getBoundingClientRect();
+                                        const clickY = e.clientY - rect.top;
+                                        if (clickY <= 50) {
+                                            console.log('🎵 Music header clicked (expanded)');
+                                            musicControl.classList.remove('expanded');
                                         }
                                     }
                                 });
@@ -1360,22 +1383,34 @@
         function configureRoomControls() {
             console.log('🔧 configureRoomControls for:', roomName, roomConfig);
             
-            const fileUploadBtn = document.querySelector('.upload-box');
-            const urlInputSection = document.querySelector('.url-input-section');
-            const modeToggleBtn = document.getElementById('modeToggleBtn');
-            
-            if (!roomConfig.uploadsAllowed) {
-                // Hide upload controls
-                if (fileUploadBtn) fileUploadBtn.style.display = 'none';
-                if (urlInputSection) urlInputSection.style.display = 'none';
-                console.log('✓ Uploads disabled for', roomName);
+            // Use setTimeout to ensure DOM elements exist
+            setTimeout(() => {
+                const fileUploadBtn = document.querySelector('.upload-box');
+                const urlInputSection = document.querySelector('.url-input-section');
+                const modeToggleBtn = document.getElementById('modeToggleBtn');
                 
-                // Also hide pod toggle (no pod without uploads)
-                if (modeToggleBtn) {
-                    modeToggleBtn.style.display = 'none';
-                    console.log('✓ Pod toggle hidden (no uploads allowed)');
+                if (!roomConfig.uploadsAllowed) {
+                    // Hide upload controls
+                    if (fileUploadBtn) {
+                        fileUploadBtn.style.display = 'none';
+                        console.log('✓ Upload button hidden');
+                    }
+                    if (urlInputSection) {
+                        urlInputSection.style.display = 'none';
+                        console.log('✓ URL input hidden');
+                    }
+                    
+                    // Also hide pod toggle (no pod without uploads)
+                    if (modeToggleBtn) {
+                        modeToggleBtn.style.display = 'none';
+                        console.log('✓ Pod toggle hidden (no uploads allowed)');
+                    } else {
+                        console.warn('⚠️ modeToggleBtn not found in DOM yet');
+                    }
                 }
-            }
+                
+                console.log('✓ Room controls configured for', roomName);
+            }, 100); // Small delay to ensure DOM is ready
         }
 
         // Show mode selection modal for studio
