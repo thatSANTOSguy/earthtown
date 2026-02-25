@@ -50,8 +50,7 @@ export const roomConfigs = {
         icon: '🎙️', 
         name: 'the studio',
         uploadsAllowed: false,
-        forceMode: null,
-        showModeModal: true // Show choice modal on entry
+        forceMode: null
     },
     gathering: { 
         icon: '🌍', 
