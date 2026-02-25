@@ -295,6 +295,17 @@
         // Import configuration
         import { firebaseConfig, roomPlaylists, roomConfigs } from './config.js';
         
+        // Import presence module
+        import { 
+            joinRoom as joinRoomPresence,
+            startPresenceHeartbeat,
+            stopPresenceHeartbeat,
+            listenToRoomPresence,
+            stopListeningToPresence,
+            updateUserPosition,
+            leaveRoom
+        } from './presence.js';
+        
         // Import Firebase
         import { initializeApp } from 'https://www.gstatic.com/firebasejs/10.7.1/firebase-app.js';
         import { getAuth, onAuthStateChanged, setPersistence, browserLocalPersistence } from 'https://www.gstatic.com/firebasejs/10.7.1/firebase-auth.js';
@@ -343,7 +354,22 @@
                 await loadUserData(user.uid);
                 console.log('User data loaded:', currentUserData);
                 console.log('Joining room:', roomName);
-                await joinRoom();
+                await joinRoomPresence(db, roomName, currentUser, currentUserData);
+                startPresenceHeartbeat(db, roomName, currentUser);
+                listenToRoomPresence(db, roomName, currentUser, currentUserData, {
+                    onUsersUpdate: (users) => {
+                        usersInRoom = users;
+                        console.log('About to call renderAvatars, usersInRoom:', usersInRoom);
+                        renderAvatars();
+                        updateOnlineCount();
+                    },
+                    onCurrentUserUpdate: (userData) => {
+                        if (!isDraggingGlobal) {
+                            currentUserData.x = userData.x;
+                            currentUserData.y = userData.y;
+                        }
+                    }
+                });
                 console.log('Room joined, setting up listeners');
                 setupEventListeners();
                 
@@ -470,19 +496,11 @@
             console.log('🚪 User leaving, cleaning up...');
             
             // Stop heartbeat
-            if (presenceInterval) {
-                clearInterval(presenceInterval);
-            }
+            stopPresenceHeartbeat();
             
             // Try to delete presence immediately (best effort)
             if (currentUser) {
-                try {
-                    const presenceDocRef = doc(db, 'rooms', roomName, 'presence', currentUser.uid);
-                    await deleteDoc(presenceDocRef);
-                    console.log('✓ Presence deleted');
-                } catch (error) {
-                    console.log('Presence cleanup failed (fallback will handle it)');
-                }
+                await leaveRoom(db, roomName, currentUser);
             }
         });
 
@@ -1165,17 +1183,7 @@
 
                     // Update position in Firebase when drag ends (if moved)
                     if (hasMoved) {
-                        try {
-                            await updateDoc(
-                                doc(db, 'rooms', roomName, 'presence', currentUser.uid),
-                                {
-                                    x: currentUserData.x,
-                                    y: currentUserData.y
-                                }
-                            );
-                        } catch (error) {
-                            console.error('Error updating position:', error);
-                        }
+                        await updateUserPosition(db, roomName, currentUser, currentUserData.x, currentUserData.y);
                     }
                 }
             });
@@ -1235,17 +1243,7 @@
 
                     // Update position in Firebase when drag ends (if moved)
                     if (hasMoved) {
-                        try {
-                            await updateDoc(
-                                doc(db, 'rooms', roomName, 'presence', currentUser.uid),
-                                {
-                                    x: currentUserData.x,
-                                    y: currentUserData.y
-                                }
-                            );
-                        } catch (error) {
-                            console.error('Error updating position:', error);
-                        }
+                        await updateUserPosition(db, roomName, currentUser, currentUserData.x, currentUserData.y);
                     }
                 }
             });
