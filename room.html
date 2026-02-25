@@ -1460,13 +1460,17 @@
                 document.body.appendChild(modal);
                 
                 window.selectListeningMode = function(mode) {
-                    listeningMode = mode;
                     if (mode === 'solo') {
-                        document.getElementById('modeIndicator').innerHTML = '🎧 solo listening';
+                        // Activate pod mode instead
+                        inPodMode = true;
+                        document.getElementById('modeIndicator').innerHTML = '🎧 private pod';
                         document.getElementById('modeIndicator').style.color = '#6a4c93';
+                    } else {
+                        // Stay in shared queue mode
+                        inPodMode = false;
                     }
                     document.body.removeChild(modal);
-                    console.log('✓ User selected:', mode);
+                    console.log('✓ User selected:', mode, '(inPodMode:', inPodMode, ')');
                 };
             }
         }
@@ -2135,7 +2139,7 @@
         // Update now playing display
         function updateNowPlaying(track) {
             if (!track) {
-                const currentQueue = listeningMode === 'room' ? roomQueue : soloQueue;
+                const currentQueue = inPodMode ? podQueue : roomQueue;
                 if (currentQueue.length === 0) return;
                 track = currentQueue[currentTrackIndex];
             }
@@ -2341,11 +2345,12 @@
             }
             
             // Add to appropriate queue
-            if (listeningMode === 'room') {
+            if (inPodMode) {
+                podQueue.push(track);
+                savePodToStorage();
+            } else {
                 roomQueue.push(track);
                 // TODO: Sync to Firebase
-            } else {
-                soloQueue.push(track);
             }
             
             addToQueueUI(track.title, track.artist, track.duration);
@@ -2359,13 +2364,13 @@
         // Enhanced queue UI
         function addToQueueUI(title, artist, time) {
             const queueList = document.getElementById('queueList');
-            const currentQueue = listeningMode === 'room' ? roomQueue : soloQueue;
+            const currentQueue = inPodMode ? podQueue : roomQueue;
             const trackIndex = currentQueue.length - 1;
             
             const item = document.createElement('div');
             item.className = 'queue-item';
             item.onclick = () => {
-                if (listeningMode === 'solo') {
+                if (inPodMode) {
                     playTrack(trackIndex);
                 } else {
                     alert('In room mode, track selection requires majority vote (coming soon)');
