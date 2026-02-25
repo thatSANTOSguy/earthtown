@@ -316,6 +316,27 @@
             createMessageElement
         } from './chat.js';
         
+        // Import music module
+        import {
+            initMusic,
+            playTrack as playTrackMusic,
+            togglePlayback as togglePlaybackMusic,
+            nextTrack as nextTrackMusic,
+            previousTrack as previousTrackMusic,
+            toggleQueueMode as toggleQueueModeMusic,
+            listenToRoomQueue,
+            stopListeningToQueue,
+            savePodToStorage as savePod,
+            loadPodFromStorage as loadPod,
+            setRoomQueue,
+            setPodQueue,
+            getCurrentQueue,
+            inPodMode,
+            roomQueue,
+            podQueue,
+            currentTrackIndex
+        } from './music.js';
+        
         // Import Firebase
         import { initializeApp } from 'https://www.gstatic.com/firebasejs/10.7.1/firebase-app.js';
         import { getAuth, onAuthStateChanged, setPersistence, browserLocalPersistence } from 'https://www.gstatic.com/firebasejs/10.7.1/firebase-auth.js';
@@ -381,6 +402,11 @@
                     }
                 });
                 console.log('Room joined, setting up listeners');
+                
+                // Initialize music module
+                const audioEl = document.getElementById('audioPlayer');
+                initMusic(audioEl);
+                console.log('✓ Music module initialized');
                 
                 // Listen to chat messages
                 listenToRoomMessages(db, storage, roomName, {
@@ -1723,61 +1749,17 @@
 
         // Play/Pause
         window.togglePlayback = function() {
-            const currentQueue = inPodMode ? podQueue : roomQueue;
-            
-            if (!audioPlayer || currentQueue.length === 0) {
-                alert('No tracks in queue. Upload or add a track first.');
-                return;
-            }
-
-            if (isPlaying) {
-                audioPlayer.pause();
-                isPlaying = false;
-                document.getElementById('playBtn').textContent = '▶';
-            } else {
-                if (!audioPlayer.src && currentQueue.length > 0) {
-                    playTrack(0);
-                } else {
-                    audioPlayer.play();
-                    isPlaying = true;
-                    document.getElementById('playBtn').textContent = '⏸';
-                }
-            }
+            togglePlaybackMusic(getCurrentQueue);
         };
-
-        // Play specific track
-        function playTrack(index) {
-            // Simple: pod queue or room queue
-            const currentQueue = inPodMode ? podQueue : roomQueue;
-            
-            if (index < 0 || index >= currentQueue.length) return;
-            
-            currentTrackIndex = index;
-            const track = currentQueue[index];
-            
-            // If track has no type, or type is 'file' or 'url', play it directly
-            if (!track.type || track.type === 'file' || track.type === 'url') {
-                audioPlayer.src = track.url;
-                audioPlayer.play().catch(error => {
-                    console.error('Playback error:', error);
-                    alert(`Could not play track: ${track.title}\n\nMake sure the file exists at: ${track.url}`);
-                });
-                isPlaying = true;
-                document.getElementById('playBtn').textContent = '⏸';
-                updateNowPlaying(track);
-            } else {
-                alert('This track type requires additional integration (YouTube/SoundCloud API)');
-            }
-        }
 
         // Next track
         window.nextTrack = function() {
-            playNextInQueue();
+            nextTrackMusic(getCurrentQueue);
         };
 
         // Previous track
         window.previousTrack = function() {
-            playPreviousInQueue();
+            previousTrackMusic(getCurrentQueue);
         };
 
         // Play next in queue
