@@ -973,9 +973,12 @@
                         hasMoved = true;
                     }
 
-                    const rect = roomSpace.getBoundingClientRect();
-                    currentUserData.x = Math.max(0, Math.min(avatarStartX + deltaX, rect.width - 150));
-                    currentUserData.y = Math.max(0, Math.min(avatarStartY + deltaY, rect.height - 190));
+                    // Use window dimensions for mobile drag bounds (not roomSpace rect)
+                    const maxX = window.innerWidth - 150;
+                    const maxY = window.innerHeight - 190;
+                    
+                    currentUserData.x = Math.max(0, Math.min(avatarStartX + deltaX, maxX));
+                    currentUserData.y = Math.max(0, Math.min(avatarStartY + deltaY, maxY));
 
                     const avatar = document.getElementById('avatar-' + currentUser.uid);
                     if (avatar) {
