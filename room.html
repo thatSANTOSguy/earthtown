@@ -350,7 +350,6 @@
                 // Initialize room-specific features
                 loadRoomPlaylist();
                 configureRoomControls();
-                showModeModal();
                 loadPodFromStorage();
                 renderPodQueue();
                 
@@ -1410,69 +1409,6 @@
                 
                 console.log('✓ Room controls configured for', roomName);
             }, 100); // Small delay to ensure DOM is ready
-        }
-
-        // Show mode selection modal for studio
-        function showModeModal() {
-            if (roomConfig.showModeModal) {
-                const modal = document.createElement('div');
-                modal.style.cssText = `
-                    position: fixed;
-                    top: 0; left: 0; right: 0; bottom: 0;
-                    background: rgba(0,0,0,0.9);
-                    display: flex;
-                    align-items: center;
-                    justify-content: center;
-                    z-index: 10000;
-                `;
-                modal.innerHTML = `
-                    <div style="background: #0a0a0a; border: 2px solid #f1faee; border-radius: 12px; padding: 40px; max-width: 500px; text-align: center;">
-                        <h2 style="font-family: 'VT323', monospace; font-size: 2.5rem; color: #f1faee; margin-bottom: 20px;">
-                            ${roomConfig.icon} ${roomConfig.name}
-                        </h2>
-                        <p style="font-family: 'Inter', sans-serif; font-size: 1.1rem; color: #ccc; margin-bottom: 30px;">
-                            Alive & Well listening party
-                        </p>
-                        <div style="display: flex; gap: 20px; justify-content: center;">
-                            <button onclick="selectListeningMode('room')" style="
-                                font-family: 'VT323', monospace;
-                                font-size: 1.5rem;
-                                padding: 15px 30px;
-                                background: rgba(124, 194, 155, 0.2);
-                                border: 2px solid #7fc29b;
-                                border-radius: 8px;
-                                color: #7fc29b;
-                                cursor: pointer;
-                            ">🌍 join live playback</button>
-                            <button onclick="selectListeningMode('solo')" style="
-                                font-family: 'VT323', monospace;
-                                font-size: 1.5rem;
-                                padding: 15px 30px;
-                                background: rgba(106, 76, 147, 0.2);
-                                border: 2px solid #6a4c93;
-                                border-radius: 8px;
-                                color: #6a4c93;
-                                cursor: pointer;
-                            ">🎧 listen alone</button>
-                        </div>
-                    </div>
-                `;
-                document.body.appendChild(modal);
-                
-                window.selectListeningMode = function(mode) {
-                    if (mode === 'solo') {
-                        // Activate pod mode instead
-                        inPodMode = true;
-                        document.getElementById('modeIndicator').innerHTML = '🎧 private pod';
-                        document.getElementById('modeIndicator').style.color = '#6a4c93';
-                    } else {
-                        // Stay in shared queue mode
-                        inPodMode = false;
-                    }
-                    document.body.removeChild(modal);
-                    console.log('✓ User selected:', mode, '(inPodMode:', inPodMode, ')');
-                };
-            }
         }
 
         // ============================================
