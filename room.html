@@ -292,22 +292,14 @@
     <script type="module">
         console.log('🚀 ROOM.HTML SCRIPT STARTING...');
         
+        // Import configuration
+        import { firebaseConfig, roomPlaylists, roomConfigs } from './config.js';
+        
         // Import Firebase
         import { initializeApp } from 'https://www.gstatic.com/firebasejs/10.7.1/firebase-app.js';
         import { getAuth, onAuthStateChanged, setPersistence, browserLocalPersistence } from 'https://www.gstatic.com/firebasejs/10.7.1/firebase-auth.js';
         import { getFirestore, doc, getDoc, setDoc, updateDoc, deleteDoc, collection, query, where, onSnapshot, addDoc, orderBy, limit, getDocs } from 'https://www.gstatic.com/firebasejs/10.7.1/firebase-firestore.js';
         import { getStorage, ref, getDownloadURL, uploadBytes, deleteObject } from 'https://www.gstatic.com/firebasejs/10.7.1/firebase-storage.js';
-
-        // Firebase configuration
-        const firebaseConfig = {
-            apiKey: "AIzaSyCXFlGeJodOUVn-3bYocPhFRtzs9DBHEFA",
-            authDomain: "earthtown-92993.firebaseapp.com",
-            projectId: "earthtown-92993",
-            storageBucket: "earthtown-92993.firebasestorage.app",
-            messagingSenderId: "830730193161",
-            appId: "1:830730193161:web:af18953dd80872b1396bd8",
-            measurementId: "G-KC30SQWHEC"
-        };
 
         // Initialize Firebase
         const app = initializeApp(firebaseConfig);
@@ -328,62 +320,6 @@
         // Get room name from URL
         const urlParams = new URLSearchParams(window.location.search);
         const roomName = urlParams.get('room') || 'sanctuary';
-        
-        // ============================================
-        // ROOM PLAYLISTS CONFIG
-        // ============================================
-        const roomPlaylists = {
-            sanctuary: [
-                // Meditation playlist - add track info when ready
-                // { title: "Track Title", artist: "Artist Name", url: "./track1.MP3" }
-            ],
-            studio: [
-                // Alive & Well - EP by CLOUD5 & santos bluː
-                { title: "Love or War", artist: "CLOUD5 & santos bluː", url: "./aw1.MP3" },
-                { title: "13 Bricks", artist: "CLOUD5 & santos bluː", url: "./aw2.MP3" },
-                { title: "Filet Mignon", artist: "CLOUD5 & santos bluː", url: "./aw3.MP3" },
-                { title: "we were gonna call it alive n well (interlude)", artist: "CLOUD5 & santos bluː", url: "./aw4.MP3" },
-                { title: "3", artist: "CLOUD5 & santos bluː", url: "./aw5.MP3" },
-                { title: "Fluid, Go Stupid !", artist: "CLOUD5 & santos bluː", url: "./aw6.MP3" }
-            ],
-            supernaturvl: [
-                // SUPERNATURVL EP - add your track titles here
-                { title: "Track 1", artist: "Your Artist Name", url: "./sn1.MP3" },
-                { title: "Track 2", artist: "Your Artist Name", url: "./sn2.MP3" },
-                { title: "Track 3", artist: "Your Artist Name", url: "./sn3.MP3" },
-                { title: "Track 4", artist: "Your Artist Name", url: "./sn4.MP3" }
-            ],
-            gathering: [] // Empty - users upload
-        };
-
-        // Room configurations
-        const roomConfigs = {
-            sanctuary: { 
-                icon: '🌙', 
-                name: 'the sanctuary',
-                uploadsAllowed: false,
-                forceMode: null // 'solo' or 'room' or null for choice
-            },
-            studio: { 
-                icon: '🎙️', 
-                name: 'the studio',
-                uploadsAllowed: false,
-                forceMode: null, // User chooses on entry
-                showModeModal: true // Show choice modal on entry
-            },
-            gathering: { 
-                icon: '🌍', 
-                name: 'the gathering',
-                uploadsAllowed: true,
-                forceMode: null // User can toggle
-            },
-            supernaturvl: { 
-                icon: '👁️', 
-                name: 'SUPERNATURVL',
-                uploadsAllowed: false,
-                forceMode: 'solo' // Always solo mode
-            }
-        };
         
         // Update room title and icon
         const roomConfig = roomConfigs[roomName] || roomConfigs.sanctuary;
