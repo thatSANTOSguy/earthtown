@@ -532,7 +532,16 @@
             try {
                 const userDoc = await getDoc(doc(db, 'users', uid));
                 if (userDoc.exists()) {
-                    currentUserData = { id: uid, ...userDoc.data(), x: 300, y: 250 };
+                    // Random spawn position with safe padding from edges
+                    const randomX = 100 + Math.random() * (window.innerWidth - 250);
+                    const randomY = 150 + Math.random() * (window.innerHeight - 300);
+                    
+                    currentUserData = { 
+                        id: uid, 
+                        ...userDoc.data(), 
+                        x: randomX, 
+                        y: randomY 
+                    };
                     
                     // Show wipe chat button for admins
                     if (currentUserData.isAdmin === true) {
