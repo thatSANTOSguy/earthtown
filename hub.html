@@ -73,6 +73,31 @@
             90%  { transform: translate(-3%, -2%); }
             100% { transform: translate(1%, -4%); }
         }
+
+        /* Phosphor vignette - green-tinted edge darkening like curved glass */
+        .vignette {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            pointer-events: none;
+            z-index: 99;
+            background: radial-gradient(
+                ellipse at 50% 50%,
+                transparent 40%,
+                rgba(8, 20, 12, 0.45) 70%,
+                rgba(4, 14, 8, 0.75) 100%
+            );
+        }
+
+        /* Chromatic aberration on list item hover */
+        .list-item:hover .item-name {
+            text-shadow:
+                -1.5px 0 rgba(255, 60, 60, 0.55),
+                1.5px 0 rgba(60, 180, 255, 0.55);
+            position: relative;
+        }
         
         /* Floating particles */
         .particles {
@@ -192,17 +217,17 @@
             gap: 0;
         }
 
-        /* List item - notion style: no box, no lines, clean text link with slide */
+        /* List item - notion style: no box, no lines, clean text link */
         .list-item {
             padding: 18px 0px;
             border: none;
             cursor: pointer;
             display: flex;
+            flex-direction: column;
             align-items: flex-start;
             gap: 0;
             position: relative;
             background: transparent;
-            transition: padding-left 0.18s cubic-bezier(0.4, 0, 0.2, 1);
         }
 
         .list-item:first-child,
@@ -211,15 +236,22 @@
             border-radius: 0;
         }
 
-        /* Notion-style slideover on hover */
-        .list-item:hover {
-            background: transparent;
-            border: none;
-            padding-left: 14px;
+        /* Heading row: icon + dash + name — this is what slides */
+        .item-heading-row {
+            display: flex;
+            align-items: flex-start;
+            gap: 0;
+            transition: transform 0.18s cubic-bezier(0.4, 0, 0.2, 1);
         }
 
-        .list-item:hover + .list-item {
-            border: none;
+        .list-item:hover .item-heading-row {
+            transform: translateX(14px);
+        }
+
+        /* Description stays completely still */
+        .item-description {
+            margin-left: 0;
+            transition: none;
         }
 
         /* Dash between icon and text */
@@ -288,7 +320,6 @@
         }
 
         .list-item.archives:hover {
-            padding-left: 14px;
             background: transparent;
         }
 
@@ -311,7 +342,7 @@
         }
 
         .list-item.gallery:hover {
-            padding-left: 14px;
+            background: transparent;
         }
 
         .list-item.gallery .item-name {
@@ -421,6 +452,9 @@
     <!-- Floating particles -->
     <div class="particles" id="particles"></div>
 
+    <!-- Phosphor vignette overlay -->
+    <div class="vignette"></div>
+
     <div class="header">
         <div class="logo">earthtown</div>
         <div class="user-info">
@@ -437,155 +471,145 @@
             <div class="section-label">Spaces</div>
             <div class="items-list">
                 <div class="list-item" onclick="enterRoom('sanctuary')">
-                    <svg class="item-icon" viewBox="0 0 16 16" fill="none" xmlns="http://www.w3.org/2000/svg">
-                        <path d="M8 3 L8 1 M8 3 C10 3 11 5 11 7 M8 3 C6 3 5 5 5 7" stroke="#a8d4e8" stroke-width="1.5"/>
-                        <ellipse cx="8" cy="7" rx="3" ry="2" fill="#a8d4e8" opacity="0.3"/>
-                        <path d="M5 7 C5 9 6 11 8 13 C10 11 11 9 11 7" stroke="#a8d4e8" stroke-width="1.2"/>
-                    </svg>
-                    <span class="item-dash">-</span>
-                    <div class="item-content">
+                    <div class="item-heading-row">
+                        <svg class="item-icon" viewBox="0 0 16 16" fill="none" xmlns="http://www.w3.org/2000/svg">
+                            <path d="M8 3 L8 1 M8 3 C10 3 11 5 11 7 M8 3 C6 3 5 5 5 7" stroke="#a8d4e8" stroke-width="1.5"/>
+                            <ellipse cx="8" cy="7" rx="3" ry="2" fill="#a8d4e8" opacity="0.3"/>
+                            <path d="M5 7 C5 9 6 11 8 13 C10 11 11 9 11 7" stroke="#a8d4e8" stroke-width="1.2"/>
+                        </svg>
+                        <span class="item-dash">-</span>
                         <div class="item-name">the sanctuary</div>
-                        <div class="item-description">meditation and ambient contemplation</div>
                     </div>
-                    <span class="item-arrow">→</span>
+                    <div class="item-description">meditation and ambient contemplation</div>
                 </div>
 
                 <div class="list-item" onclick="enterRoom('studio')">
-                    <svg class="item-icon" viewBox="0 0 16 16" fill="none" xmlns="http://www.w3.org/2000/svg">
-                        <rect x="3" y="2" width="10" height="12" rx="0.5" stroke="#f77f00" stroke-width="1.2" fill="#0a0a0a"/>
-                        <circle cx="8" cy="6" r="2" stroke="#f77f00" stroke-width="1.2" fill="none"/>
-                        <circle cx="8" cy="6" r="0.8" fill="#f77f00" opacity="0.6"/>
-                        <circle cx="8" cy="11" r="2.5" stroke="#f77f00" stroke-width="1.2" fill="none"/>
-                        <circle cx="8" cy="11" r="1.2" fill="#f77f00" opacity="0.6"/>
-                    </svg>
-                    <span class="item-dash">-</span>
-                    <div class="item-content">
+                    <div class="item-heading-row">
+                        <svg class="item-icon" viewBox="0 0 16 16" fill="none" xmlns="http://www.w3.org/2000/svg">
+                            <rect x="3" y="2" width="10" height="12" rx="0.5" stroke="#f77f00" stroke-width="1.2" fill="#0a0a0a"/>
+                            <circle cx="8" cy="6" r="2" stroke="#f77f00" stroke-width="1.2" fill="none"/>
+                            <circle cx="8" cy="6" r="0.8" fill="#f77f00" opacity="0.6"/>
+                            <circle cx="8" cy="11" r="2.5" stroke="#f77f00" stroke-width="1.2" fill="none"/>
+                            <circle cx="8" cy="11" r="1.2" fill="#f77f00" opacity="0.6"/>
+                        </svg>
+                        <span class="item-dash">-</span>
                         <div class="item-name">the studio</div>
-                        <div class="item-description">Alive & Well listening party</div>
                     </div>
-                    <span class="item-arrow">→</span>
+                    <div class="item-description">Alive &amp; Well listening party</div>
                 </div>
 
                 <div class="list-item" onclick="enterRoom('gathering')">
-                    <svg class="item-icon" viewBox="0 0 16 16" fill="none" xmlns="http://www.w3.org/2000/svg">
-                        <path d="M8 3 L11 8 L8 13 L5 8 Z" fill="#d62828" opacity="0.6"/>
-                        <path d="M8 5 L10 8 L8 11 L6 8 Z" fill="#d62828"/>
-                    </svg>
-                    <span class="item-dash">-</span>
-                    <div class="item-content">
+                    <div class="item-heading-row">
+                        <svg class="item-icon" viewBox="0 0 16 16" fill="none" xmlns="http://www.w3.org/2000/svg">
+                            <path d="M8 3 L11 8 L8 13 L5 8 Z" fill="#d62828" opacity="0.6"/>
+                            <path d="M8 5 L10 8 L8 11 L6 8 Z" fill="#d62828"/>
+                        </svg>
+                        <span class="item-dash">-</span>
                         <div class="item-name">the gathering</div>
-                        <div class="item-description">open playlist - share your sounds</div>
                     </div>
-                    <span class="item-arrow">→</span>
+                    <div class="item-description">open playlist - share your sounds</div>
                 </div>
 
                 <div class="list-item" onclick="enterRoom('supernaturvl')">
-                    <svg class="item-icon" viewBox="0 0 16 16" fill="none" xmlns="http://www.w3.org/2000/svg">
-                        <circle cx="8" cy="8" r="5" stroke="#6a4c93" stroke-width="1.5" fill="none"/>
-                        <circle cx="8" cy="8" r="2" fill="#6a4c93"/>
-                        <path d="M8 3 L8 1 M8 13 L8 15 M3 8 L1 8 M13 8 L15 8" stroke="#6a4c93" stroke-width="1.5"/>
-                    </svg>
-                    <span class="item-dash">-</span>
-                    <div class="item-content">
+                    <div class="item-heading-row">
+                        <svg class="item-icon" viewBox="0 0 16 16" fill="none" xmlns="http://www.w3.org/2000/svg">
+                            <circle cx="8" cy="8" r="5" stroke="#6a4c93" stroke-width="1.5" fill="none"/>
+                            <circle cx="8" cy="8" r="2" fill="#6a4c93"/>
+                            <path d="M8 3 L8 1 M8 13 L8 15 M3 8 L1 8 M13 8 L15 8" stroke="#6a4c93" stroke-width="1.5"/>
+                        </svg>
+                        <span class="item-dash">-</span>
                         <div class="item-name">SUPERNATURVL</div>
-                        <div class="item-description">exclusive debut EP - listen at your own pace</div>
                     </div>
-                    <span class="item-arrow">→</span>
+                    <div class="item-description">exclusive debut EP - listen at your own pace</div>
                 </div>
             </div>
         </div>
 
-        <!-- Archives -->
         <div class="section">
             <div class="section-label">Archives</div>
             <div class="items-list">
                 <div class="list-item archives" onclick="window.location.href='library.html'">
-                    <svg class="item-icon" viewBox="0 0 16 16" fill="none" xmlns="http://www.w3.org/2000/svg">
-                        <circle cx="8" cy="8" r="6" stroke="#f1faee" stroke-width="1.2" fill="none"/>
-                        <circle cx="8" cy="8" r="2" fill="#f1faee"/>
-                        <circle cx="8" cy="8" r="4" stroke="#f1faee" stroke-width="0.8" fill="none" opacity="0.4"/>
-                    </svg>
-                    <span class="item-dash">-</span>
-                    <div class="item-content">
+                    <div class="item-heading-row">
+                        <svg class="item-icon" viewBox="0 0 16 16" fill="none" xmlns="http://www.w3.org/2000/svg">
+                            <circle cx="8" cy="8" r="6" stroke="#f1faee" stroke-width="1.2" fill="none"/>
+                            <circle cx="8" cy="8" r="2" fill="#f1faee"/>
+                            <circle cx="8" cy="8" r="4" stroke="#f1faee" stroke-width="0.8" fill="none" opacity="0.4"/>
+                        </svg>
+                        <span class="item-dash">-</span>
                         <div class="item-name">music library</div>
-                        <div class="item-description">community collection</div>
                     </div>
-                    <span class="item-arrow">→</span>
+                    <div class="item-description">community collection</div>
                 </div>
 
                 <div class="list-item archives" onclick="window.location.href='cinema.html'">
-                    <svg class="item-icon" viewBox="0 0 16 16" fill="none" xmlns="http://www.w3.org/2000/svg">
-                        <rect x="2" y="4" width="12" height="8" stroke="#f1faee" stroke-width="1.2" fill="none"/>
-                        <path d="M6 7 L10 9 L6 11 Z" fill="#f1faee"/>
-                    </svg>
-                    <span class="item-dash">-</span>
-                    <div class="item-content">
+                    <div class="item-heading-row">
+                        <svg class="item-icon" viewBox="0 0 16 16" fill="none" xmlns="http://www.w3.org/2000/svg">
+                            <rect x="2" y="4" width="12" height="8" stroke="#f1faee" stroke-width="1.2" fill="none"/>
+                            <path d="M6 7 L10 9 L6 11 Z" fill="#f1faee"/>
+                        </svg>
+                        <span class="item-dash">-</span>
                         <div class="item-name">cinema</div>
-                        <div class="item-description">video archive</div>
                     </div>
-                    <span class="item-arrow">→</span>
+                    <div class="item-description">video archive</div>
                 </div>
 
                 <div class="list-item gallery" onclick="window.location.href='gallery.html'">
-                    <svg class="item-icon" viewBox="0 0 16 16" fill="none" xmlns="http://www.w3.org/2000/svg">
-                        <rect x="2" y="3" width="12" height="10" stroke="#f1faee" stroke-width="1.2" fill="none"/>
-                        <circle cx="6" cy="7" r="1.5" fill="#f1faee" opacity="0.6"/>
-                        <path d="M2 11 L6 8 L9 10 L14 6" stroke="#f1faee" stroke-width="1.2"/>
-                    </svg>
-                    <span class="item-dash">-</span>
-                    <div class="item-content">
+                    <div class="item-heading-row">
+                        <svg class="item-icon" viewBox="0 0 16 16" fill="none" xmlns="http://www.w3.org/2000/svg">
+                            <rect x="2" y="3" width="12" height="10" stroke="#f1faee" stroke-width="1.2" fill="none"/>
+                            <circle cx="6" cy="7" r="1.5" fill="#f1faee" opacity="0.6"/>
+                            <path d="M2 11 L6 8 L9 10 L14 6" stroke="#f1faee" stroke-width="1.2"/>
+                        </svg>
+                        <span class="item-dash">-</span>
                         <div class="item-name">art gallery</div>
-                        <div class="item-description">visual works</div>
                     </div>
-                    <span class="item-arrow">→</span>
+                    <div class="item-description">visual works</div>
                 </div>
             </div>
         </div>
 
-        <!-- Personal -->
         <div class="section">
             <div class="section-label">Personal</div>
             <div class="items-list">
                 <div class="list-item gallery highlight" onclick="window.location.href='my-gallery.html'">
-                    <svg class="item-icon" viewBox="0 0 16 16" fill="none" xmlns="http://www.w3.org/2000/svg">
-                        <path d="M8 2 L10 6 L14 6 L11 9 L12 13 L8 10 L4 13 L5 9 L2 6 L6 6 Z" fill="#f77f00" opacity="0.8"/>
-                    </svg>
-                    <span class="item-dash">-</span>
-                    <div class="item-content">
+                    <div class="item-heading-row">
+                        <svg class="item-icon" viewBox="0 0 16 16" fill="none" xmlns="http://www.w3.org/2000/svg">
+                            <path d="M8 2 L10 6 L14 6 L11 9 L12 13 L8 10 L4 13 L5 9 L2 6 L6 6 Z" fill="#f77f00" opacity="0.8"/>
+                        </svg>
+                        <span class="item-dash">-</span>
                         <div class="item-name">my works</div>
-                        <div class="item-description">your submissions</div>
                     </div>
-                    <span class="item-arrow">→</span>
+                    <div class="item-description">your submissions</div>
                 </div>
 
                 <div class="list-item gallery" onclick="window.location.href='pending-feed.html'">
-                    <svg class="item-icon" viewBox="0 0 16 16" fill="none" xmlns="http://www.w3.org/2000/svg">
-                        <circle cx="8" cy="8" r="6" stroke="#f1faee" stroke-width="1.2" fill="none"/>
-                        <path d="M8 8 L8 4 M8 8 L11 8" stroke="#f1faee" stroke-width="1.5"/>
-                    </svg>
-                    <span class="item-dash">-</span>
-                    <div class="item-content">
+                    <div class="item-heading-row">
+                        <svg class="item-icon" viewBox="0 0 16 16" fill="none" xmlns="http://www.w3.org/2000/svg">
+                            <circle cx="8" cy="8" r="6" stroke="#f1faee" stroke-width="1.2" fill="none"/>
+                            <path d="M8 8 L8 4 M8 8 L11 8" stroke="#f1faee" stroke-width="1.5"/>
+                        </svg>
+                        <span class="item-dash">-</span>
                         <div class="item-name">pending feed</div>
-                        <div class="item-description">under review</div>
                     </div>
-                    <span class="item-arrow">→</span>
+                    <div class="item-description">under review</div>
                 </div>
 
                 <div class="list-item gallery" onclick="window.location.href='character-creator.html'">
-                    <svg class="item-icon" viewBox="0 0 16 16" fill="none" xmlns="http://www.w3.org/2000/svg">
-                        <circle cx="8" cy="5" r="2" fill="#f1faee"/>
-                        <path d="M4 12 C4 9, 6 8, 8 8 C10 8, 12 9, 12 12" stroke="#f1faee" stroke-width="1.5" fill="none"/>
-                        <circle cx="8" cy="8" r="6" stroke="#f1faee" stroke-width="1" fill="none" opacity="0.3"/>
-                    </svg>
-                    <span class="item-dash">-</span>
-                    <div class="item-content">
+                    <div class="item-heading-row">
+                        <svg class="item-icon" viewBox="0 0 16 16" fill="none" xmlns="http://www.w3.org/2000/svg">
+                            <circle cx="8" cy="5" r="2" fill="#f1faee"/>
+                            <path d="M4 12 C4 9, 6 8, 8 8 C10 8, 12 9, 12 12" stroke="#f1faee" stroke-width="1.5" fill="none"/>
+                            <circle cx="8" cy="8" r="6" stroke="#f1faee" stroke-width="1" fill="none" opacity="0.3"/>
+                        </svg>
+                        <span class="item-dash">-</span>
                         <div class="item-name">character creator</div>
-                        <div class="item-description">avatar tool</div>
                     </div>
-                    <span class="item-arrow">→</span>
+                    <div class="item-description">avatar tool</div>
                 </div>
             </div>
         </div>
+    </div>
+
     </div>
 
     <script type="module">
