@@ -23,14 +23,15 @@
             position: relative;
         }
         
-        /* Background + vignette baked in — no fixed overlay, iOS safe */
+        /* Background + vignette — absolute so it covers full scroll height */
         body::after {
             content: '';
-            position: fixed;
+            position: absolute;
             top: 0;
             left: 0;
             width: 100%;
             height: 100%;
+            min-height: 100vh;
             background-image: 
                 radial-gradient(ellipse at 50% 50%, transparent 35%, rgba(4, 14, 8, 0.72) 100%),
                 linear-gradient(0deg, rgba(10, 10, 10, 0.72) 0%, rgba(10, 10, 10, 0.55) 100%),
@@ -38,7 +39,7 @@
                 radial-gradient(ellipse at 30% 40%, rgba(127, 194, 155, 0.1), transparent 60%),
                 radial-gradient(ellipse at 70% 60%, rgba(168, 212, 232, 0.08), transparent 50%);
             background-size: cover, cover, cover, auto, auto;
-            background-position: center, center, center, 0 0, 0 0;
+            background-position: center top, center top, center top, 0 0, 0 0;
             pointer-events: none;
             z-index: 0;
         }
