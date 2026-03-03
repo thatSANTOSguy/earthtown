@@ -160,7 +160,7 @@
         .main-content {
             max-width: 900px;
             margin: 0 auto;
-            padding: 140px 40px 120px;
+            padding: 180px 40px 120px;
             position: relative;
             z-index: 2;
         }
@@ -366,7 +366,7 @@
             }
             
             .main-content {
-                padding: 160px 16px 100px;
+                padding: 200px 16px 100px;
                 max-width: 100%;
             }
             
@@ -659,12 +659,12 @@
 
             // Drift — slow ambient sway
             driftTime += delta * 0.0003;
-            const driftX = Math.sin(driftTime * 0.7) * 5;
-            const driftY = Math.cos(driftTime * 0.5) * 3;
+            const driftX = Math.sin(driftTime * 0.7) * 9;
+            const driftY = Math.cos(driftTime * 0.5) * 6;
 
-            // Scroll zoom — barely perceptible, scale 1.0 → 1.06 over full page
+            // Scroll zoom — snappier lerp, scale 1.0 → 1.06 over full page
             const maxScroll = document.body.scrollHeight - window.innerHeight;
-            smoothScroll = lerp(smoothScroll, window.scrollY, 0.06);
+            smoothScroll = lerp(smoothScroll, window.scrollY, 0.14);
             const scrollProgress = maxScroll > 0 ? smoothScroll / maxScroll : 0;
             const scale = 1 + scrollProgress * 0.06;
 
