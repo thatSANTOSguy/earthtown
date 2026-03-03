@@ -168,40 +168,45 @@
             gap: 0;
         }
 
-        /* List item - satisfying to navigate */
+        /* List item - notion style: no box, no lines, clean text link with slide */
         .list-item {
-            padding: 28px 20px;
-            border: 1px solid rgba(241, 250, 238, 0.08);
-            border-bottom: none;
+            padding: 18px 0px;
+            border: none;
             cursor: pointer;
             display: flex;
             align-items: flex-start;
-            gap: 20px;
+            gap: 0;
             position: relative;
-            background: rgba(241, 250, 238, 0.02);
-            transition: none; /* Instant state change */
+            background: transparent;
+            transition: padding-left 0.18s cubic-bezier(0.4, 0, 0.2, 1);
         }
 
-        .list-item:first-child {
-            border-top-left-radius: 8px;
-            border-top-right-radius: 8px;
-        }
-
+        .list-item:first-child,
         .list-item:last-child {
-            border-bottom: 1px solid rgba(241, 250, 238, 0.08);
-            border-bottom-left-radius: 8px;
-            border-bottom-right-radius: 8px;
+            border: none;
+            border-radius: 0;
         }
 
-        /* Instant hover state */
+        /* Notion-style slideover on hover */
         .list-item:hover {
-            background: rgba(241, 250, 238, 0.08);
-            border-color: rgba(241, 250, 238, 0.2);
-            padding-left: 30px;
+            background: transparent;
+            border: none;
+            padding-left: 14px;
         }
 
         .list-item:hover + .list-item {
-            border-top-color: rgba(241, 250, 238, 0.2);
+            border: none;
+        }
+
+        /* Dash between icon and text */
+        .item-dash {
+            font-family: 'VT323', monospace;
+            font-size: 1.6rem;
+            color: rgba(241, 250, 238, 0.9);
+            margin: 0 10px;
+            flex-shrink: 0;
+            line-height: 1;
+            margin-top: 3px;
         }
 
         /* PC Icon - old school 16x16 style, 25% bigger */
@@ -209,7 +214,7 @@
             width: 22.5px;
             height: 22.5px;
             flex-shrink: 0;
-            margin-top: 2px;
+            margin-top: 5px;
             opacity: 0.7;
             image-rendering: pixelated;
             transition: none;
@@ -252,17 +257,15 @@
             color: rgba(241, 250, 238, 0.7);
         }
 
-        /* Archives items - MORE PROMINENT */
+        /* Archives items */
         .list-item.archives {
-            padding: 28px 20px;
-            background: rgba(241, 250, 238, 0.04);
-            border-color: rgba(241, 250, 238, 0.15);
+            padding: 18px 0px;
+            background: transparent;
         }
 
         .list-item.archives:hover {
-            padding-left: 30px;
-            background: rgba(241, 250, 238, 0.1);
-            border-color: rgba(241, 250, 238, 0.3);
+            padding-left: 14px;
+            background: transparent;
         }
 
         .list-item.archives .item-icon {
@@ -280,11 +283,11 @@
 
         /* Gallery/personal items - compact */
         .list-item.gallery {
-            padding: 20px 20px;
+            padding: 14px 0px;
         }
 
         .list-item.gallery:hover {
-            padding-left: 30px;
+            padding-left: 14px;
         }
 
         .list-item.gallery .item-name {
@@ -295,15 +298,13 @@
             font-size: 0.75rem;
         }
 
-        /* Highlight for my works */
+        /* Highlight for my works - just icon color accent, no box */
         .list-item.highlight {
-            background: rgba(247, 127, 0, 0.05);
-            border-color: rgba(247, 127, 0, 0.2);
+            background: transparent;
         }
 
         .list-item.highlight:hover {
-            background: rgba(247, 127, 0, 0.1);
-            border-color: rgba(247, 127, 0, 0.4);
+            background: transparent;
         }
 
         /* Responsive */
@@ -356,20 +357,20 @@
             
             /* Larger tap targets for mobile */
             .list-item {
-                padding: 24px 16px;
-                min-height: 80px;
+                padding: 20px 0px;
+                min-height: 70px;
             }
             
             .list-item:hover {
-                padding-left: 16px; /* No slide on mobile */
+                padding-left: 0px; /* No slide on mobile */
             }
             
             .list-item.archives {
-                padding: 24px 16px;
+                padding: 20px 0px;
             }
             
             .list-item.archives:hover {
-                padding-left: 16px;
+                padding-left: 0px;
             }
             
             .item-icon {
@@ -417,6 +418,7 @@
                         <ellipse cx="8" cy="7" rx="3" ry="2" fill="#a8d4e8" opacity="0.3"/>
                         <path d="M5 7 C5 9 6 11 8 13 C10 11 11 9 11 7" stroke="#a8d4e8" stroke-width="1.2"/>
                     </svg>
+                    <span class="item-dash">-</span>
                     <div class="item-content">
                         <div class="item-name">the sanctuary</div>
                         <div class="item-description">meditation and ambient contemplation</div>
@@ -432,6 +434,7 @@
                         <circle cx="8" cy="11" r="2.5" stroke="#f77f00" stroke-width="1.2" fill="none"/>
                         <circle cx="8" cy="11" r="1.2" fill="#f77f00" opacity="0.6"/>
                     </svg>
+                    <span class="item-dash">-</span>
                     <div class="item-content">
                         <div class="item-name">the studio</div>
                         <div class="item-description">Alive & Well listening party</div>
@@ -444,6 +447,7 @@
                         <path d="M8 3 L11 8 L8 13 L5 8 Z" fill="#d62828" opacity="0.6"/>
                         <path d="M8 5 L10 8 L8 11 L6 8 Z" fill="#d62828"/>
                     </svg>
+                    <span class="item-dash">-</span>
                     <div class="item-content">
                         <div class="item-name">the gathering</div>
                         <div class="item-description">open playlist - share your sounds</div>
@@ -457,6 +461,7 @@
                         <circle cx="8" cy="8" r="2" fill="#6a4c93"/>
                         <path d="M8 3 L8 1 M8 13 L8 15 M3 8 L1 8 M13 8 L15 8" stroke="#6a4c93" stroke-width="1.5"/>
                     </svg>
+                    <span class="item-dash">-</span>
                     <div class="item-content">
                         <div class="item-name">SUPERNATURVL</div>
                         <div class="item-description">exclusive debut EP - listen at your own pace</div>
@@ -476,6 +481,7 @@
                         <circle cx="8" cy="8" r="2" fill="#f1faee"/>
                         <circle cx="8" cy="8" r="4" stroke="#f1faee" stroke-width="0.8" fill="none" opacity="0.4"/>
                     </svg>
+                    <span class="item-dash">-</span>
                     <div class="item-content">
                         <div class="item-name">music library</div>
                         <div class="item-description">community collection</div>
@@ -488,6 +494,7 @@
                         <rect x="2" y="4" width="12" height="8" stroke="#f1faee" stroke-width="1.2" fill="none"/>
                         <path d="M6 7 L10 9 L6 11 Z" fill="#f1faee"/>
                     </svg>
+                    <span class="item-dash">-</span>
                     <div class="item-content">
                         <div class="item-name">cinema</div>
                         <div class="item-description">video archive</div>
@@ -501,6 +508,7 @@
                         <circle cx="6" cy="7" r="1.5" fill="#f1faee" opacity="0.6"/>
                         <path d="M2 11 L6 8 L9 10 L14 6" stroke="#f1faee" stroke-width="1.2"/>
                     </svg>
+                    <span class="item-dash">-</span>
                     <div class="item-content">
                         <div class="item-name">art gallery</div>
                         <div class="item-description">visual works</div>
@@ -518,6 +526,7 @@
                     <svg class="item-icon" viewBox="0 0 16 16" fill="none" xmlns="http://www.w3.org/2000/svg">
                         <path d="M8 2 L10 6 L14 6 L11 9 L12 13 L8 10 L4 13 L5 9 L2 6 L6 6 Z" fill="#f77f00" opacity="0.8"/>
                     </svg>
+                    <span class="item-dash">-</span>
                     <div class="item-content">
                         <div class="item-name">my works</div>
                         <div class="item-description">your submissions</div>
@@ -530,6 +539,7 @@
                         <circle cx="8" cy="8" r="6" stroke="#f1faee" stroke-width="1.2" fill="none"/>
                         <path d="M8 8 L8 4 M8 8 L11 8" stroke="#f1faee" stroke-width="1.5"/>
                     </svg>
+                    <span class="item-dash">-</span>
                     <div class="item-content">
                         <div class="item-name">pending feed</div>
                         <div class="item-description">under review</div>
@@ -543,6 +553,7 @@
                         <path d="M4 12 C4 9, 6 8, 8 8 C10 8, 12 9, 12 12" stroke="#f1faee" stroke-width="1.5" fill="none"/>
                         <circle cx="8" cy="8" r="6" stroke="#f1faee" stroke-width="1" fill="none" opacity="0.3"/>
                     </svg>
+                    <span class="item-dash">-</span>
                     <div class="item-content">
                         <div class="item-name">character creator</div>
                         <div class="item-description">avatar tool</div>
