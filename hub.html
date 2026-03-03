@@ -23,15 +23,26 @@
             position: relative;
         }
         
-        /* Background + vignette — absolute so it covers full scroll height */
-        body::after {
-            content: '';
-            position: absolute;
+        /* Canvas grain — seamless, no edges, blends with scene */
+        #grain-canvas {
+            position: fixed;
             top: 0;
             left: 0;
             width: 100%;
             height: 100%;
-            min-height: 100vh;
+            pointer-events: none;
+            z-index: 100;
+            mix-blend-mode: overlay;
+            opacity: 0.28;
+        }
+
+        /* Background image wrapper for parallax */
+        #bg-layer {
+            position: fixed;
+            top: -10%;
+            left: 0;
+            width: 100%;
+            height: 120%;
             background-image: 
                 radial-gradient(ellipse at 50% 50%, transparent 35%, rgba(4, 14, 8, 0.72) 100%),
                 linear-gradient(0deg, rgba(10, 10, 10, 0.72) 0%, rgba(10, 10, 10, 0.55) 100%),
@@ -39,40 +50,10 @@
                 radial-gradient(ellipse at 30% 40%, rgba(127, 194, 155, 0.1), transparent 60%),
                 radial-gradient(ellipse at 70% 60%, rgba(168, 212, 232, 0.08), transparent 50%);
             background-size: cover, cover, cover, auto, auto;
-            background-position: center top, center top, center top, 0 0, 0 0;
+            background-position: center center, center center, center center, 0 0, 0 0;
             pointer-events: none;
             z-index: 0;
-        }
-
-        /* Film grain overlay - sits over everything */
-        body::before {
-            content: '';
-            position: fixed;
-            top: -50%;
-            left: -50%;
-            width: 200%;
-            height: 200%;
-            pointer-events: none;
-            z-index: 100;
-            opacity: 0.038;
-            background-image: url("data:image/svg+xml,%3Csvg viewBox='0 0 512 512' xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='noise'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.85' numOctaves='4' stitchTiles='stitch'/%3E%3CfeColorMatrix type='saturate' values='0'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23noise)'/%3E%3C/svg%3E");
-            background-repeat: repeat;
-            background-size: 256px 256px;
-            animation: grain 0.8s steps(1) infinite;
-        }
-
-        @keyframes grain {
-            0%   { transform: translate(0, 0); }
-            10%  { transform: translate(-3%, -4%); }
-            20%  { transform: translate(3%, 2%); }
-            30%  { transform: translate(-2%, 5%); }
-            40%  { transform: translate(4%, -1%); }
-            50%  { transform: translate(-1%, 3%); }
-            60%  { transform: translate(3%, -3%); }
-            70%  { transform: translate(-4%, 1%); }
-            80%  { transform: translate(2%, 4%); }
-            90%  { transform: translate(-3%, -2%); }
-            100% { transform: translate(1%, -4%); }
+            will-change: transform;
         }
 
         /* Chromatic aberration on list item hover */
@@ -433,6 +414,12 @@
     </style>
 </head>
 <body>
+    <!-- Background layer for parallax -->
+    <div id="bg-layer"></div>
+
+    <!-- Canvas grain -->
+    <canvas id="grain-canvas"></canvas>
+
     <!-- Floating particles -->
     <div class="particles" id="particles"></div>
 
@@ -618,7 +605,78 @@
             console.error('Persistence error:', err);
         });
 
-        // Create floating particles
+        // ── Canvas grain ──────────────────────────────────────────
+        const grainCanvas = document.getElementById('grain-canvas');
+        const ctx = grainCanvas.getContext('2d');
+
+        function resizeGrain() {
+            grainCanvas.width = window.innerWidth;
+            grainCanvas.height = window.innerHeight;
+        }
+        resizeGrain();
+        window.addEventListener('resize', resizeGrain);
+
+        function drawGrain() {
+            const w = grainCanvas.width;
+            const h = grainCanvas.height;
+            const imageData = ctx.createImageData(w, h);
+            const data = imageData.data;
+            for (let i = 0; i < data.length; i += 4) {
+                const v = Math.random() * 255 | 0;
+                data[i]     = v;
+                data[i + 1] = v;
+                data[i + 2] = v;
+                data[i + 3] = 255;
+            }
+            ctx.putImageData(imageData, 0, 0);
+        }
+
+        // ── Background parallax + drift ───────────────────────────
+        const bgLayer = document.getElementById('bg-layer');
+
+        // iOS detection
+        const isIOS = /iPad|iPhone|iPod/.test(navigator.userAgent) && !window.MSStream;
+
+        let scrollY = 0;
+        let driftX = 0;
+        let driftY = 0;
+        let driftTime = 0;
+        let lastFrame = 0;
+        let frameCount = 0;
+
+        function lerp(a, b, t) { return a + (b - a) * t; }
+
+        // Smooth scroll value for parallax
+        let smoothScroll = 0;
+
+        function animate(timestamp) {
+            requestAnimationFrame(animate);
+
+            const delta = timestamp - lastFrame;
+            lastFrame = timestamp;
+            frameCount++;
+
+            // Grain redraws every 3 frames (~20fps) — cheaper, still feels alive
+            if (frameCount % 3 === 0) drawGrain();
+
+            // Drift — slow ambient sway, always running
+            driftTime += delta * 0.0003;
+            driftX = Math.sin(driftTime * 0.7) * 6;
+            driftY = Math.cos(driftTime * 0.5) * 4;
+
+            // Parallax
+            const targetScroll = window.scrollY;
+            smoothScroll = lerp(smoothScroll, targetScroll, isIOS ? 0.08 : 0.06);
+
+            // Very subtle parallax — 0.08x scroll speed
+            const parallaxY = smoothScroll * 0.08;
+
+            bgLayer.style.transform = `translate(${driftX}px, ${-parallaxY + driftY}px)`;
+        }
+
+        requestAnimationFrame(animate);
+
+        // ── Particles ─────────────────────────────────────────────
         function createParticles() {
             const container = document.getElementById('particles');
             for (let i = 0; i < 30; i++) {
@@ -632,7 +690,6 @@
             }
         }
 
-        // CSS animation for particles
         const style = document.createElement('style');
         style.textContent = `
             @keyframes float {
@@ -643,7 +700,6 @@
             }
         `;
         document.head.appendChild(style);
-
         createParticles();
 
         onAuthStateChanged(auth, async (user) => {
