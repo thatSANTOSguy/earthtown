@@ -23,7 +23,7 @@
             position: relative;
         }
         
-        /* Old school desktop background - zen nature with scanlines */
+        /* Background + vignette baked in — no fixed overlay, iOS safe */
         body::after {
             content: '';
             position: fixed;
@@ -32,13 +32,13 @@
             width: 100%;
             height: 100%;
             background-image: 
+                radial-gradient(ellipse at 50% 50%, transparent 35%, rgba(4, 14, 8, 0.72) 100%),
                 linear-gradient(0deg, rgba(10, 10, 10, 0.72) 0%, rgba(10, 10, 10, 0.55) 100%),
                 url('./bg-hub.JPG'),
                 radial-gradient(ellipse at 30% 40%, rgba(127, 194, 155, 0.1), transparent 60%),
-                radial-gradient(ellipse at 70% 60%, rgba(168, 212, 232, 0.08), transparent 50%),
-                radial-gradient(ellipse at 50% 80%, rgba(212, 165, 165, 0.06), transparent 40%);
-            background-size: cover, cover, auto, auto, auto;
-            background-position: center, center, 0 0, 0 0, 0 0;
+                radial-gradient(ellipse at 70% 60%, rgba(168, 212, 232, 0.08), transparent 50%);
+            background-size: cover, cover, cover, auto, auto;
+            background-position: center, center, center, 0 0, 0 0;
             pointer-events: none;
             z-index: 0;
         }
@@ -74,23 +74,6 @@
             100% { transform: translate(1%, -4%); }
         }
 
-        /* Phosphor vignette - green-tinted edge darkening like curved glass */
-        .vignette {
-            position: fixed;
-            top: 0;
-            left: 0;
-            width: 100%;
-            height: 100%;
-            pointer-events: none;
-            z-index: 99;
-            background: radial-gradient(
-                ellipse at 50% 50%,
-                transparent 40%,
-                rgba(8, 20, 12, 0.45) 70%,
-                rgba(4, 14, 8, 0.75) 100%
-            );
-        }
-
         /* Chromatic aberration on list item hover */
         .list-item:hover .item-name {
             text-shadow:
@@ -122,7 +105,7 @@
         /* Header - ORIGINAL STYLING */
         .header {
             position: relative;
-            z-index: 10;
+            z-index: 200;
             display: flex;
             justify-content: space-between;
             align-items: center;
@@ -451,9 +434,6 @@
 <body>
     <!-- Floating particles -->
     <div class="particles" id="particles"></div>
-
-    <!-- Phosphor vignette overlay -->
-    <div class="vignette"></div>
 
     <div class="header">
         <div class="logo">earthtown</div>
