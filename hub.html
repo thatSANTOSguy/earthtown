@@ -17,7 +17,7 @@
             font-family: 'Inter', sans-serif;
             background: #0a0a0a;
             color: #f1faee;
-            min-height: 100vh;
+            min-height: 100dvh;
             overflow-x: hidden;
             user-select: none;
             position: relative;
@@ -36,13 +36,13 @@
             opacity: 0.28;
         }
 
-        /* Background image wrapper for parallax */
+        /* Background layer — fixed, covers viewport, zooms on scroll */
         #bg-layer {
             position: fixed;
-            top: -10%;
+            top: 0;
             left: 0;
             width: 100%;
-            height: 120%;
+            height: 100%;
             background-image: 
                 radial-gradient(ellipse at 50% 50%, transparent 35%, rgba(4, 14, 8, 0.72) 100%),
                 linear-gradient(0deg, rgba(10, 10, 10, 0.72) 0%, rgba(10, 10, 10, 0.55) 100%),
@@ -54,6 +54,7 @@
             pointer-events: none;
             z-index: 0;
             will-change: transform;
+            transform-origin: center center;
         }
 
         /* Chromatic aberration on list item hover */
@@ -84,9 +85,12 @@
             border-radius: 50%;
         }
 
-        /* Header - ORIGINAL STYLING */
+        /* Header - fixed to top, never moves */
         .header {
-            position: relative;
+            position: fixed;
+            top: 0;
+            left: 0;
+            right: 0;
             z-index: 200;
             display: flex;
             justify-content: space-between;
@@ -152,11 +156,11 @@
             border-color: rgba(241, 250, 238, 0.4);
         }
 
-        /* Main content */
+        /* Main content — top padding clears the fixed header */
         .main-content {
             max-width: 900px;
             margin: 0 auto;
-            padding: 80px 40px 100px;
+            padding: 140px 40px 120px;
             position: relative;
             z-index: 2;
         }
@@ -362,7 +366,7 @@
             }
             
             .main-content {
-                padding: 40px 16px 80px;
+                padding: 160px 16px 100px;
                 max-width: 100%;
             }
             
@@ -631,23 +635,17 @@
             ctx.putImageData(imageData, 0, 0);
         }
 
-        // ── Background parallax + drift ───────────────────────────
+        // ── Background drift + scroll zoom ────────────────────────
         const bgLayer = document.getElementById('bg-layer');
 
-        // iOS detection
         const isIOS = /iPad|iPhone|iPod/.test(navigator.userAgent) && !window.MSStream;
 
-        let scrollY = 0;
-        let driftX = 0;
-        let driftY = 0;
         let driftTime = 0;
         let lastFrame = 0;
         let frameCount = 0;
+        let smoothScroll = 0;
 
         function lerp(a, b, t) { return a + (b - a) * t; }
-
-        // Smooth scroll value for parallax
-        let smoothScroll = 0;
 
         function animate(timestamp) {
             requestAnimationFrame(animate);
@@ -656,22 +654,21 @@
             lastFrame = timestamp;
             frameCount++;
 
-            // Grain redraws every 3 frames (~20fps) — cheaper, still feels alive
+            // Grain redraws every 3 frames (~20fps)
             if (frameCount % 3 === 0) drawGrain();
 
-            // Drift — slow ambient sway, always running
+            // Drift — slow ambient sway
             driftTime += delta * 0.0003;
-            driftX = Math.sin(driftTime * 0.7) * 6;
-            driftY = Math.cos(driftTime * 0.5) * 4;
+            const driftX = Math.sin(driftTime * 0.7) * 5;
+            const driftY = Math.cos(driftTime * 0.5) * 3;
 
-            // Parallax
-            const targetScroll = window.scrollY;
-            smoothScroll = lerp(smoothScroll, targetScroll, isIOS ? 0.08 : 0.06);
+            // Scroll zoom — barely perceptible, scale 1.0 → 1.06 over full page
+            const maxScroll = document.body.scrollHeight - window.innerHeight;
+            smoothScroll = lerp(smoothScroll, window.scrollY, 0.06);
+            const scrollProgress = maxScroll > 0 ? smoothScroll / maxScroll : 0;
+            const scale = 1 + scrollProgress * 0.06;
 
-            // Very subtle parallax — 0.08x scroll speed
-            const parallaxY = smoothScroll * 0.08;
-
-            bgLayer.style.transform = `translate(${driftX}px, ${-parallaxY + driftY}px)`;
+            bgLayer.style.transform = `translate(${driftX}px, ${driftY}px) scale(${scale})`;
         }
 
         requestAnimationFrame(animate);
