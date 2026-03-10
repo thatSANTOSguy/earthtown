@@ -382,6 +382,22 @@
                 });
                 console.log('Room joined, setting up listeners');
                 
+                // Calculate and set header height for mobile chat
+                const setHeaderHeight = () => {
+                    const header = document.querySelector('.room-header');
+                    if (header) {
+                        const headerHeight = header.offsetHeight;
+                        document.documentElement.style.setProperty('--header-height', `${headerHeight}px`);
+                        console.log('📏 Header height set:', headerHeight + 'px');
+                    }
+                };
+                
+                // Set immediately
+                setHeaderHeight();
+                
+                // Re-calculate on window resize (in case orientation changes)
+                window.addEventListener('resize', setHeaderHeight);
+                
                 // Listen to chat messages
                 listenToRoomMessages(db, storage, roomName, {
                     onMessagesUpdate: (messages, storage) => {
