@@ -1094,9 +1094,8 @@ background: linear-gradient(90deg, #f77f00, #d62828, #6a4c93);
     }
     
     .chat-sidebar.expanded {
-        height: calc(100vh - 80px);
-        max-height: calc(100vh - 80px);
-        top: 80px;
+        height: calc(100vh - 105px);
+        max-height: calc(100vh - 105px);
         backdrop-filter: blur(10px);
     }
     
