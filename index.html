@@ -178,6 +178,9 @@
         <div class="cta-buttons">
             <a href="signup.html" class="btn btn-primary" id="signupBtn">create character</a>
             <a href="login.html" class="btn btn-secondary" id="enterBtn">enter</a>
+            <button onclick="enterAsGuest()" class="btn btn-secondary" style="border-color: rgba(127, 194, 155, 0.4); background: rgba(127, 194, 155, 0.05);">
+                👁️ enter as guest
+            </button>
             <a href="character-creator.html" class="btn btn-secondary" style="border-color: rgba(247, 127, 0, 0.4); background: rgba(247, 127, 0, 0.05);">
                 ✨ character creator
             </a>
@@ -217,6 +220,12 @@
                 enterBtn.textContent = 'enter';
             }
         });
+
+        // Guest mode function
+        window.enterAsGuest = function() {
+            sessionStorage.setItem('guestMode', 'true');
+            window.location.href = 'hub.html';
+        };
     </script>
 </body>
 </html>

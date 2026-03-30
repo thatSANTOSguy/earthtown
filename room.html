@@ -358,6 +358,72 @@
         // Check authentication and initialize
         onAuthStateChanged(auth, async (user) => {
             console.log('🔐 Auth state changed, user:', user ? user.uid : 'NO USER');
+            
+            // Check for guest mode
+            const isGuest = sessionStorage.getItem('guestMode') === 'true';
+            
+            if (isGuest) {
+                console.log('👁️ Guest mode active - observer only');
+                
+                // Set up room as guest (no auth needed)
+                currentUser = null;
+                currentUserData = { username: 'Guest', isGuest: true };
+                
+                // Hide user header info
+                document.querySelector('.user-info').style.display = 'none';
+                
+                // Disable chat input for guests
+                const chatInput = document.getElementById('chatInput');
+                const sendBtn = document.getElementById('sendBtn');
+                if (chatInput && sendBtn) {
+                    chatInput.disabled = true;
+                    chatInput.placeholder = 'Create an account to chat...';
+                    sendBtn.disabled = true;
+                    sendBtn.style.opacity = '0.3';
+                }
+                
+                // Hide wipe chat button for guests
+                const wipeBtn = document.getElementById('wipeChatBtn');
+                if (wipeBtn) wipeBtn.style.display = 'none';
+                
+                // Hide upload/queue controls for guests
+                const uploadBtn = document.getElementById('uploadBtn');
+                const podToggleBtn = document.getElementById('podToggleBtn');
+                if (uploadBtn) uploadBtn.style.display = 'none';
+                if (podToggleBtn) podToggleBtn.style.display = 'none';
+                
+                // Set header height
+                const setHeaderHeight = () => {
+                    const header = document.querySelector('.room-header');
+                    if (header) {
+                        const headerHeight = header.offsetHeight;
+                        document.documentElement.style.setProperty('--header-height', `${headerHeight}px`);
+                        console.log('📏 Header height set:', headerHeight + 'px');
+                    }
+                };
+                setHeaderHeight();
+                window.addEventListener('resize', setHeaderHeight);
+                
+                // Listen to chat messages (read-only)
+                listenToRoomMessages(db, storage, roomName, {
+                    onMessagesUpdate: (messages, storage) => {
+                        const container = document.getElementById('chatMessages');
+                        container.innerHTML = '';
+                        messages.forEach(msg => {
+                            const messageEl = createMessageElement(msg, null, currentUserData, storage, getArchetypeColor);
+                            container.appendChild(messageEl);
+                        });
+                        container.scrollTop = container.scrollHeight;
+                    }
+                });
+                
+                // Initialize music player (read-only)
+                initMusicPlayer();
+                setupMobileToggles();
+                
+                return; // Skip normal auth flow
+            }
+            
             if (user) {
                 currentUser = user;
                 console.log('Loading user data for:', user.uid);
