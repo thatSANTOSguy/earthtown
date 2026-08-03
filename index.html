@@ -2,230 +2,2086 @@
 <html lang="en">
 <head>
     <meta charset="UTF-8">
+    <!-- No maximum-scale / user-scalable=no: blocking pinch-zoom locks out anyone
+         who needs to magnify, and at this type's size that's a real cost. -->
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>earthtown</title>
+    <title>santos bluː</title>
+    <link rel="preconnect" href="https://use.typekit.net">
+    <link rel="stylesheet" href="https://use.typekit.net/mbc3fgm.css">
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link href="https://fonts.googleapis.com/css2?family=Syne+Mono&family=Syne:wght@400;500;700;800&display=swap" rel="stylesheet">
     <style>
-        @import url('https://fonts.googleapis.com/css2?family=VT323&family=Inter:wght@300;400;500;600&display=swap');
+        /* ── TOKENS ──
+           Type: both faces were already being downloaded and neither was used —
+           the whole site ran on Courier New. Accents are borrowed from earthtown
+           so the two properties read as one house, and each one means something
+           rather than decorating: blue is anything you can touch, purple is the
+           private half of the site, citrine is catalogue data, garnet is failure. */
+        :root {
+            --mono: 'Syne Mono', 'Courier New', monospace;
+            --sans: 'Syne', sans-serif;
 
-        * {
-            margin: 0;
-            padding: 0;
-            box-sizing: border-box;
+            --blu:      #8fb8f7;  /* interactive — hover, focus, active, confirmed */
+            --blu-deep: #3f6497;
+            --purple:   #8f76bd;  /* the /// notes and the archive gate */
+            --citrine:  #e9b44c;  /* catalogue metadata on the records */
+            --garnet:   #b8564a;  /* errors only */
+
+            /* Ink steps. The old values bottomed out at 0.22 alpha on 5.5px type,
+               which was simply invisible; these are the floor everything sits on. */
+            --ink:       rgba(255,255,255,0.92);
+            --ink-dim:   rgba(255,255,255,0.78);
+            --ink-muted: rgba(255,255,255,0.62);
+            --ink-faint: rgba(255,255,255,0.44);
         }
 
-        body {
-            font-family: 'Inter', sans-serif;
-            background: #0a0a0a;
-            color: #f1faee;
-            min-height: 100vh;
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            overflow: hidden;
+        /* ── RESET ── */
+        *, *::before, *::after { margin:0; padding:0; box-sizing:border-box; }
+        html, body {
+            width:100%; height:100%;
+            overflow:hidden;
+            background:#0a0a0c;
+            font-family:var(--sans);
         }
 
-        .container {
-            text-align: center;
-            max-width: 800px;
-            padding: 40px 20px;
+        /* Nothing had a focus style before, so the whole site was unusable by
+           keyboard. Blue, matching every other interactive signal. */
+        :focus-visible {
+            outline: 1px solid var(--blu);
+            outline-offset: 3px;
+            border-radius: 1px;
+        }
+        ::selection { background: var(--blu-deep); color: #fff; }
+
+        @media (prefers-reduced-motion: reduce) {
+            *, *::before, *::after {
+                animation-duration: 0.01ms !important;
+                transition-duration: 0.01ms !important;
+            }
         }
 
-        .logo-image {
-            width: 180px;
+        /* ── BACKGROUND ── */
+        #waterCanvas {
+            position:fixed; inset:0;
+            width:100%; height:100%;
+            z-index:0;
+        }
+        #grainCanvas {
+            position:fixed; inset:0;
+            width:100%; height:100%;
+            z-index:1;
+            pointer-events:none;
+            opacity:0.045;
+            mix-blend-mode:screen;
+        }
+
+        /* ── INTRO ── */
+        #intro {
+            position:fixed; inset:0;
+            z-index:500;
+            display:flex; align-items:center; justify-content:center;
+            cursor:pointer;
+        }
+        #intro.done { display:none; }
+
+        .sigil {
+            font-family:var(--mono);
+            font-size:clamp(80px, 24vw, 150px);
+            color:rgba(255,255,255,0.82);
+            line-height:1;
+            opacity:0;
+            transform:scale(0.95);
+            animation:sigilIn 1.8s cubic-bezier(.16,1,.3,1) forwards 0.3s;
+            transition:opacity 1s ease, transform 2.5s cubic-bezier(.16,1,.3,1);
+            will-change:transform,opacity;
+            user-select:none;
+        }
+        .sigil.breathe {
+            animation:sigilIn 1.8s cubic-bezier(.16,1,.3,1) forwards 0.3s,
+                      sigilBreathe 4s ease-in-out infinite 2.1s;
+        }
+        .sigil.exit {
+            opacity:0;
+            transform:scale(1.4);
+        }
+        @keyframes sigilIn {
+            from { opacity:0; transform:scale(0.95); }
+            to   { opacity:0.82; transform:scale(1); }
+        }
+        @keyframes sigilBreathe {
+            0%,100% { transform:scale(1); opacity:0.82; }
+            50%     { transform:scale(1.05); opacity:0.95; }
+        }
+
+        .tap-hint {
+            position:absolute;
+            bottom:clamp(32px,6vh,56px);
+            left:50%; transform:translateX(-50%);
+            font-family:var(--mono);
+            font-size:10px; letter-spacing:0.35em; text-transform:uppercase;
+            color:rgba(255,255,255,0.64);
+            opacity:0;
+            animation:fadeIn 1s ease forwards 1s;
+            white-space:nowrap;
+        }
+        .tap-hint.hide {
+            animation:none;
+            opacity:0;
+        }
+        @keyframes fadeIn { to { opacity:1; } }
+
+        /* ── SITE CONTENT ── */
+        #siteContent {
+            position:fixed; inset:0;
+            z-index:10;
+            opacity:0;
+            pointer-events:none;
+            transition:opacity 1s ease;
+        }
+        #siteContent.revealed {
+            opacity:1;
+            pointer-events:all;
+        }
+
+        /* Name */
+        .logo {
+            position:fixed; top:clamp(28px,4.5vh,40px); left:50%; transform:translateX(-50%);
+            z-index:20;
+            font-size:13px; font-weight:600; letter-spacing:0.14em;
+            font-family:'Syne', sans-serif;
+            color:rgba(255,255,255,0.68);
+            text-transform:lowercase;
+            white-space:nowrap;
+        }
+
+        /* Current release — quiet prompt */
+        .stream-prompt {
+            position:fixed;
+            bottom:clamp(124px,19vh,168px);
+            left:50%; transform:translateX(-50%);
+            z-index:20;
+            display:flex; flex-direction:column; align-items:center; gap:16px;
+            opacity:0;
+            transition:opacity 0.8s ease 0.4s;
+        }
+        #siteContent.revealed .stream-prompt { opacity:1; }
+
+        .home-sigil {
+            width:72px; height:auto;
+            display:block;
+            opacity:0.50;
+            pointer-events:none;
+            user-select:none;
+        }
+        .home-play-btn {
+            background:none; border:none; cursor:pointer;
+            padding:0; display:flex; align-items:center; justify-content:center;
+            opacity:0.72; transition:opacity 0.25s, transform 0.2s;
+            flex-shrink:0;
+        }
+        .home-play-btn:hover { opacity:1; transform:scale(1.1); }
+        .home-play-btn svg { width:16px; height:16px; display:block; }
+
+
+        .stream-btn {
+            font-family:var(--mono);
+            font-size:10px; letter-spacing:0.28em; text-transform:lowercase;
+            color:rgba(255,255,255,0.72);
+            background:none; border:none; cursor:pointer;
+            padding:0;
+            transition:color 0.25s ease;
+            white-space:nowrap;
+        }
+        .stream-btn:hover, .stream-btn:focus-visible { color:var(--blu); }
+
+        /* ── BOTTOM NAV ── */
+        .site-nav {
+            position:fixed;
+            bottom:clamp(38px,6.5vh,58px);
+            left:50%; transform:translateX(-50%);
+            z-index:20;
+            display:flex; align-items:center;
+            gap:clamp(28px,8vw,56px);
+            opacity:0;
+            transition:opacity 0.8s ease;
+        }
+        .site-nav.visible { opacity:1; }
+
+        .nav-btn {
+            font-family:var(--mono);
+            font-size:11px; letter-spacing:0.28em; text-transform:lowercase;
+            color:rgba(255,255,255,0.68);
+            background:none; border:none; cursor:pointer;
+            padding:8px 0;
+            transition:color 0.25s ease;
+        }
+        .nav-btn:hover, .nav-btn:focus-visible { color:var(--blu); }
+        #navNotes { color:rgba(143,118,189,0.70); }
+        #navNotes:hover, #navNotes:focus-visible { color:var(--purple); }
+
+
+        /* ── ARCHIVE MODAL ── */
+        .archive-modal {
+            position:fixed; inset:0;
+            background:rgba(6,7,10,0.78);
+            backdrop-filter:blur(26px); -webkit-backdrop-filter:blur(26px);
+            display:none; z-index:2000; overflow:hidden;
+        }
+        .archive-modal.active { display:block; }
+
+        .archive-close {
+            position:fixed; top:28px; right:28px;
+            width:28px; height:28px;
+            cursor:pointer; z-index:2010;
+            opacity:0.35; transition:opacity 0.3s;
+        }
+        .archive-close:hover { opacity:1; }
+        .archive-close::before,
+        .archive-close::after {
+            content:''; position:absolute;
+            width:100%; height:2px; background:#fff; top:50%; left:0;
+        }
+        .archive-close::before { transform:rotate(45deg); }
+        .archive-close::after  { transform:rotate(-45deg); }
+
+        .archive-container {
+            width:100%; height:100%;
+            display:flex; align-items:center;
+            padding:0 60px;
+            overflow-x:auto; overflow-y:hidden;
+            scroll-snap-type:x mandatory;
+            scrollbar-width:none;
+        }
+        .archive-container::-webkit-scrollbar { display:none; }
+
+        .archive-scroll {
+            display:flex; gap:32px;
+            padding:40px; min-width:min-content;
+        }
+
+        .archive-piece {
+            flex-shrink:0; scroll-snap-align:center;
+            perspective:1000px;
+        }
+        .archive-card {
+            width:340px; height:440px;
+            transform-style:preserve-3d;
+            transition:transform 0.6s; cursor:pointer;
+        }
+        .archive-card.flipped { transform:rotateY(180deg); }
+        .archive-card-face {
+            position:absolute; inset:0;
+            backface-visibility:hidden;
+            border:1px solid rgba(255,255,255,0.12);
+            background:rgba(18,18,24,0.6); overflow:hidden;
+        }
+        .archive-card-back { transform:rotateY(180deg); }
+        .archive-image { width:100%; height:100%; object-fit:cover; filter:contrast(1.05) brightness(0.95); }
+        .archive-glitch {
+            position:absolute; inset:0;
+            background:repeating-linear-gradient(0deg,transparent,transparent 3px,rgba(255,0,100,0.03) 3px,rgba(255,0,100,0.03) 6px);
+            pointer-events:none; mix-blend-mode:screen;
+            animation:scanline 8s linear infinite;
+        }
+        @keyframes scanline { 0%{transform:translateY(0)} 100%{transform:translateY(100%)} }
+
+        /* Notes card */
+        .archive-notes {
+            width:340px; height:440px;
+            flex-shrink:0; scroll-snap-align:center;
+            border:1px solid rgba(255,255,255,0.12);
+            background:rgba(10,12,18,0.90);
+            padding:28px; display:flex; flex-direction:column;
+        }
+        .notes-title {
+            font-family:var(--mono);
+            font-size:13px; letter-spacing:1px;
+            color:var(--purple);
+            margin-bottom:14px; text-transform:lowercase;
+        }
+        .notes-textarea {
+            flex:1; background:transparent; border:none;
+            color:rgba(255,255,255,0.80);
+            font-family:var(--mono);
+            font-size:13px; line-height:1.7;
+            resize:none; outline:none;
+        }
+        .notes-textarea::placeholder { color:rgba(255,255,255,0.40); font-style:italic; }
+        .notes-saved {
+            font-family:var(--mono);
+            font-size:11px; color:var(--blu);
+            margin-top:8px; opacity:0; transition:opacity 0.3s;
+        }
+        .notes-saved.show { opacity:1; }
+
+        /* Glitch unlock */
+        .glitch-text {
+            position:absolute;
+            font-family:var(--mono);
+            font-size:13px; color:rgba(255,255,255,0.72);
+            letter-spacing:1px; user-select:none;
+            opacity:0.9; transition:opacity 0.5s;
+        }
+        .glitch-text.fade-out { opacity:0; }
+        .glitch-text.clickable { cursor:pointer; pointer-events:all; }
+        .glitch-text.clickable:hover { color:var(--purple); }
+        .glitch-text.clicked { animation:glitchPulse 0.3s; }
+        @keyframes glitchPulse {
+            0%,100%{transform:translate(0,0)} 25%{transform:translate(-2px,1px)}
+            50%{transform:translate(1px,-2px)} 75%{transform:translate(-1px,-1px)}
+        }
+
+        @media (max-width: 500px) {
+            .archive-card, .archive-notes { width:280px; height:380px; }
+            .archive-container { padding:0 30px; }
+        }
+
+        .music-modal {
+            position:fixed; inset:0;
+            z-index:3000; display:none; overflow:hidden;
+            user-select:none; -webkit-user-select:none;
+            background:rgba(6,7,10,0.72);
+            backdrop-filter:blur(22px); -webkit-backdrop-filter:blur(22px);
+        }
+        .music-modal.active { display:block; }
+
+        .music-close {
+            position:fixed; top:24px; right:24px;
+            width:28px; height:28px; cursor:pointer; z-index:3010;
+            opacity:0.35; transition:opacity 0.25s;
+        }
+        .music-close:hover { opacity:1; }
+        .music-close::before, .music-close::after {
+            content:''; position:absolute;
+            width:100%; height:1px; background:#fff; top:50%; left:0;
+        }
+        .music-close::before { transform:rotate(45deg); }
+        .music-close::after  { transform:rotate(-45deg); }
+
+        /* ── STACK SCENE ── */
+        .stack-scene {
+            position:absolute; inset:0;
+            display:flex; align-items:center; justify-content:center;
+        }
+
+        .stack-counter {
+            position:fixed; bottom:clamp(28px,5vh,44px); left:50%;
+            transform:translateX(-50%);
+            font-family:var(--mono);
+            font-size:10px; letter-spacing:0.30em; text-transform:uppercase;
+            color:rgba(255,255,255,0.64);
+            z-index:3010; pointer-events:none; white-space:nowrap;
+        }
+
+        .flip-hint {
+            position:fixed; bottom:clamp(50px,8vh,66px); left:50%;
+            transform:translateX(-50%);
+            font-family:var(--mono);
+            font-size:9px; letter-spacing:0.28em; text-transform:uppercase;
+            color:rgba(255,255,255,0.52);
+            z-index:3010; pointer-events:none; white-space:nowrap;
+            transition:opacity 0.5s;
+        }
+
+        /* ── RECORD CARD ── */
+        /* Cards sit in a stack — each offset down and back */
+        .record-card {
+            position:absolute;
+            width: min(86vw, 400px);
+            /* Fixed height so every card is identical — uniform stack */
+            height: min(86vh, 580px);
+            cursor:grab;
+            user-select:none;
+            will-change:transform, opacity;
+            box-shadow:0 8px 40px rgba(0,0,0,0.55);
+            border-radius:2px;
+            overflow:hidden;
+        }
+        .record-card:active { cursor:grabbing; }
+
+        /* Single face — fixed height matching card */
+        .record-face {
+            background:#0a0a0f;
+            border:1px solid rgba(255,255,255,0.18);
+            display:flex; flex-direction:column;
+            height:100%;
+            overflow:hidden;
+        }
+
+        /* ── HEADER STRIP ── */
+        .rec-header {
+            display:grid; grid-template-columns:1fr auto 1fr;
+            align-items:center; padding:0 14px; height:38px; flex-shrink:0;
+            border-bottom:1px solid rgba(255,255,255,0.18);
+        }
+        .rec-side {
+            font-family:var(--mono);
+            font-size:8.5px; letter-spacing:0.38em; text-transform:uppercase;
+            color:rgba(233,180,76,0.72);
+        }
+        .rec-side-r { text-align:right; }
+        .rec-cat-label {
+            font-family:var(--mono);
+            font-size:8.5px; letter-spacing:0.20em;
+            color:rgba(255,255,255,0.52); text-align:center;
+        }
+
+        /* ── VINYL DISC AREA ── */
+        .rec-body {
+            position:relative;
+            display:flex; align-items:center; justify-content:center;
+            padding:12px 0 8px;
+            flex:1; /* fills remaining space — disc scales with card */
+            min-height:0;
+        }
+        .vinyl-disc {
+            position:relative;
+            width: min(52vw, 210px);
+            height: min(52vw, 210px);
+            border-radius:50%; flex-shrink:0;
+            background:radial-gradient(circle,
+                rgba(22,22,30,1) 0%, rgba(11,11,18,1) 50%, rgba(7,7,12,1) 100%);
+            border:1px solid rgba(255,255,255,0.18);
+        }
+        .vinyl-disc::before {
+            content:''; position:absolute; inset:4px; border-radius:50%;
+            background:repeating-radial-gradient(
+                circle at 50% 50%,
+                transparent 0px, transparent 4px,
+                rgba(255,255,255,0.13) 4px, rgba(255,255,255,0.13) 4.5px
+            );
+        }
+        .vinyl-label {
+            position:absolute; top:50%; left:50%;
+            transform:translate(-50%,-50%);
+            width:50%; height:50%; border-radius:50%;
+            background:rgba(6,6,10,1);
+            border:1px solid rgba(255,255,255,0.32);
+            overflow:hidden;
+            display:flex; align-items:center; justify-content:center;
+        }
+        .vinyl-label img {
+            width:100%; height:100%; object-fit:cover;
+            display:block; border-radius:50%;
+        }
+        .tape-reel {
+            width:100%; height:100%;
+            display:flex; align-items:center; justify-content:center; position:relative;
+        }
+        .tape-reel::before {
+            content:''; position:absolute;
+            width:55%; height:55%; border-radius:50%;
+            border:1px solid rgba(255,255,255,0.26);
+        }
+        .tape-reel::after {
+            content:''; position:absolute;
+            width:20%; height:20%; border-radius:50%;
+            background:rgba(255,255,255,0.20);
+        }
+        .spindle {
+            position:absolute; top:50%; left:50%;
+            transform:translate(-50%,-50%);
+            width:5px; height:5px; border-radius:50%;
+            background:rgba(255,255,255,0.32); z-index:2;
+        }
+        .rec-data {
+            position:absolute; left:14px; top:0; bottom:0;
+            display:flex; flex-direction:column; justify-content:center; gap:6px;
+        }
+        .rec-data-item {
+            font-family:var(--mono);
+            font-size:8px; letter-spacing:0.18em; text-transform:uppercase;
+            color:var(--ink-faint);
+            writing-mode:vertical-lr; transform:rotate(180deg);
+        }
+        .matrix-text {
+            position:absolute; bottom:6px; left:50%; transform:translateX(-50%);
+            font-family:var(--mono);
+            font-size:8px; letter-spacing:0.14em; text-transform:uppercase;
+            color:rgba(233,180,76,0.42); white-space:nowrap;
+        }
+
+        /* ── TITLE STRIP ── */
+        .rec-footer {
+            border-top:1px solid rgba(255,255,255,0.18);
+            padding:10px 14px; flex-shrink:0;
+            display:grid; grid-template-columns:1fr auto; align-items:center; gap:10px;
+        }
+        .rec-title {
+            font-size:clamp(14px,3.8vw,18px); font-weight:500;
+            color:rgba(255,255,255,0.90); letter-spacing:-0.01em; line-height:1.15;
+        }
+        .rec-sub {
+            font-family:var(--mono);
+            font-size:8.5px; letter-spacing:0.16em; text-transform:uppercase;
+            color:rgba(255,255,255,0.70); margin-top:3px;
+        }
+        .rec-format {
+            font-family:var(--mono);
+            font-size:8.5px; letter-spacing:0.16em; text-transform:uppercase;
+            color:rgba(255,255,255,0.58); text-align:right; line-height:1.7;
+        }
+
+        /* ── ABOUT SECTION — abbreviated + expandable ── */
+        .rec-about {
+            border-top:1px solid rgba(255,255,255,0.18);
+            padding:10px 14px; flex-shrink:0;
+        }
+        .rec-about-header {
+            display:flex; align-items:center; justify-content:space-between;
+            cursor:pointer; margin-bottom:6px;
+        }
+        .rec-about-label {
+            font-family:var(--mono);
+            font-size:8.5px; letter-spacing:0.32em; text-transform:uppercase;
+            color:rgba(255,255,255,0.62);
+        }
+        .rec-about-toggle {
+            font-family:var(--mono);
+            font-size:8.5px; letter-spacing:0.20em; text-transform:uppercase;
+            color:rgba(255,255,255,0.58); transition:color 0.2s;
+        }
+        .rec-about-header:hover .rec-about-toggle { color:var(--blu); }
+
+        /* Abbreviated — always visible, 2 lines */
+        .rec-about-short {
+            font-size:11.5px; line-height:1.75;
+            color:rgba(255,255,255,0.70);
+            max-height:3.5em;
+            overflow:hidden;
+            position:relative;
+        }
+        .rec-about-short::after {
+            content:"\2026";
+            position:absolute; bottom:0; right:0;
+            background:rgba(9,9,14,0.97);
+            padding-left:4px;
+            color:rgba(255,255,255,0.72);
+        }
+        /* Full text — hidden until expanded */
+        .rec-about-full {
+            font-size:11.5px; line-height:1.80;
+            color:rgba(255,255,255,0.72);
+            max-height:0; overflow:hidden;
+            transition:max-height 0.4s cubic-bezier(0.16,1,0.3,1);
+            margin-top:0;
+        }
+        .rec-about.expanded .rec-about-short { display:none; }
+        .rec-about.expanded .rec-about-full  {
+            max-height:400px; margin-top:0;
+            overflow-y:auto;
+            scrollbar-width:thin;
+            scrollbar-color:rgba(255,255,255,0.20) transparent;
+        }
+        .rec-about.expanded .rec-about-full::-webkit-scrollbar { width:3px; }
+        .rec-about.expanded .rec-about-full::-webkit-scrollbar-thumb {
+            background:rgba(255,255,255,0.20); border-radius:2px;
+        }
+
+        /* ── STREAM LINKS ── */
+        .rec-streams {
+            border-top:1px solid rgba(255,255,255,0.16);
+            padding:4px 14px 12px; flex-shrink:0;
+        }
+        .rec-streams-label {
+            font-family:var(--mono);
+            font-size:8.5px; letter-spacing:0.32em; text-transform:uppercase;
+            color:rgba(255,255,255,0.62); padding:8px 0 6px; display:block;
+        }
+        .rec-stream-link {
+            display:flex; align-items:center; justify-content:space-between;
+            padding:8px 0;
+            border-bottom:1px solid rgba(255,255,255,0.18);
+            text-decoration:none; transition:opacity 0.2s;
+        }
+        .rec-stream-link:last-child { border-bottom:none; }
+        .rec-stream-link:hover .rec-stream-name,
+        .rec-stream-link:hover .rec-stream-arrow { color:var(--blu); }
+        .rec-stream-name {
+            font-family:var(--mono);
+            font-size:10px; letter-spacing:0.18em; text-transform:uppercase;
+            color:rgba(255,255,255,0.80);
+        }
+        .rec-stream-arrow { font-size:11px; color:rgba(255,255,255,0.62); }
+        /* ── STREAMING MODAL ── */
+        .streaming-modal {
+            position:fixed; inset:0;
+            background:rgba(6,7,10,0.62);
+            backdrop-filter:blur(18px); -webkit-backdrop-filter:blur(18px);
+            display:none; align-items:center; justify-content:center;
+            z-index:4000;
+        }
+        .streaming-modal.active { display:flex; }
+        .streaming-content {
+            background:rgba(9,9,14,0.98);
+            border:1px solid rgba(255,255,255,0.22);
+            padding:28px; width:min(88vw,320px);
+        }
+        .streaming-title {
+            font-family:var(--mono);
+            font-size:10px; letter-spacing:0.35em; text-transform:uppercase;
+            color:rgba(255,255,255,0.74);
+            margin-bottom:20px;
+        }
+        .streaming-options { display:flex; flex-direction:column; gap:0; }
+        .streaming-option {
+            background:none; border:none;
+            border-bottom:1px solid rgba(255,255,255,0.18);
+            color:rgba(255,255,255,0.78);
+            font-family:var(--mono);
+            font-size:11px; letter-spacing:0.20em; text-transform:uppercase;
+            padding:13px 0; cursor:pointer; text-align:left;
+            transition:color 0.2s;
+        }
+        .streaming-option:last-child { border-bottom:none; }
+        .streaming-option:hover { color:var(--blu); }
+
+        /* ── CONNECT MODAL ── */
+        .connect-modal {
+            position:fixed; inset:0;
+            z-index:3000; display:none;
+            align-items:center; justify-content:center;
+            background:rgba(6,7,10,0.72);
+            backdrop-filter:blur(22px); -webkit-backdrop-filter:blur(22px);
+        }
+        .connect-modal.active { display:flex; }
+        .connect-inner { width:min(88vw, 340px); display:flex; flex-direction:column; }
+        .connect-header { border-bottom:1px solid rgba(255,255,255,0.16); padding-bottom:16px; margin-bottom:28px; }
+        .connect-label { font-family:var(--mono); font-size:10px; letter-spacing:0.40em; text-transform:uppercase; color:rgba(255,255,255,0.74); }
+        .connect-form { display:flex; flex-direction:column; gap:16px; margin-bottom:28px; }
+        .connect-form input { background:none; border:none; border-bottom:1px solid rgba(255,255,255,0.26); color:rgba(255,255,255,0.75); font-family:var(--mono); font-size:12px; letter-spacing:0.12em; padding:8px 0; outline:none; transition:border-color 0.2s; }
+        .connect-form input::placeholder { color:rgba(255,255,255,0.54); }
+        .connect-form input:focus { border-bottom-color:var(--blu); }
+        .connect-form button { background:none; border:1px solid rgba(255,255,255,0.48); color:rgba(255,255,255,0.78); font-family:var(--mono); font-size:10px; letter-spacing:0.35em; text-transform:uppercase; padding:11px 0; cursor:pointer; transition:border-color 0.2s, color 0.2s; margin-top:4px; }
+        .connect-form button:hover { border-color:var(--blu); color:var(--blu); }
+        .connect-divider { height:1px; background:rgba(255,255,255,0.16); margin-bottom:24px; }
+        .connect-links { display:flex; flex-direction:column; }
+        .connect-link { font-family:var(--mono); font-size:11px; letter-spacing:0.22em; text-transform:uppercase; color:rgba(255,255,255,0.78); text-decoration:none; padding:12px 0; border-bottom:1px solid rgba(255,255,255,0.16); transition:color 0.2s; display:flex; align-items:center; justify-content:space-between; }
+        .connect-link:last-child { border-bottom:none; }
+        .connect-link::after { content:'↗'; color:rgba(255,255,255,0.58); font-size:11px; }
+        .connect-link:hover { color:var(--blu); }
+        .connect-link:hover::after { color:var(--blu); }
+
+                /* ── SINGLE CARD LAYOUT ── */
+        .record-card.is-single .rec-body {
+            display:flex;
+            flex-direction:row;
+            align-items:center;
+            justify-content:flex-start;
+            padding:0 14px;
+            gap:18px;
+            flex:1;
+            min-height:0;
+        }
+        .record-card.is-single .vinyl-disc {
+            width: min(28vw, 110px);
+            height: min(28vw, 110px);
+            flex-shrink:0;
+            min-width: min(28vw, 110px);
+        }
+        .record-card.is-single .rec-data { display:none; }
+        .record-card.is-single .matrix-text { display:none; }
+        .single-info {
+            display:flex; flex-direction:column; gap:4px;
+            flex:1; min-width:0;
+            padding-left:14px; padding-right:14px;
+        }
+        .single-title {
+            font-size:clamp(18px,5vw,24px); font-weight:500;
+            color:rgba(255,255,255,0.90); letter-spacing:-0.02em;
+            line-height:1.15;
+        }
+        .single-sub {
+            font-family:var(--mono);
+            font-size:9px; letter-spacing:0.18em; text-transform:uppercase;
+            color:rgba(255,255,255,0.60); margin-top:2px;
+        }
+        .single-meta {
+            font-family:var(--mono);
+            font-size:8.5px; letter-spacing:0.18em; text-transform:uppercase;
+            color:rgba(255,255,255,0.45); margin-top:1px;
+        }
+
+
+        .archive-sigil-wrap {
+            position:fixed; inset:0;
+            display:flex; align-items:center; justify-content:center;
+            z-index:2005;
+        }
+        .archive-sigil {
+            cursor:pointer;
+            user-select:none;
+        }
+        .archive-sigil img {
+            width: clamp(80px, 20vw, 150px);
             height: auto;
-            margin-bottom: 40px;
-            filter: sepia(0.2) saturate(1.2) hue-rotate(5deg) brightness(0.95) drop-shadow(0 0 20px rgba(45, 106, 79, 0.3));
-            animation: float-gentle 6s infinite ease-in-out;
+            display:block;
+            opacity:0;
+            transition:opacity 0.6s ease, transform 1.8s cubic-bezier(.16,1,.3,1);
+            cursor:pointer;
+            animation:none;
         }
-
-        @keyframes float-gentle {
-            0%, 100% { transform: translateY(0); }
-            50% { transform: translateY(-15px); }
+        .archive-sigil.visible img {
+            opacity:0.82;
+            animation:sigilArchiveBreathe 4s ease-in-out infinite;
         }
-
-        .logo-text {
-            font-family: 'VT323', monospace;
-            font-size: 5rem;
-            color: #f1faee;
-            margin-bottom: 15px;
-            letter-spacing: 4px;
-            position: relative;
+        .archive-sigil.exit img {
+            opacity:0;
+            transform:scale(2.2);
+            transition:opacity 0.7s ease, transform 1.8s cubic-bezier(.16,1,.3,1);
         }
-
-        /* Subtle gradient accent line below logo */
-        .logo-text::after {
-            content: '';
-            position: absolute;
-            bottom: -10px;
-            left: 50%;
-            transform: translateX(-50%);
-            width: 60%;
-            height: 2px;
-            background: linear-gradient(90deg, transparent, #f77f00, #d62828, #6a4c93, transparent);
-            opacity: 0.6;
-        }
-
-        .tagline {
-            font-size: 1.1rem;
-            color: #999;
-            margin-bottom: 60px;
-            font-weight: 300;
-            letter-spacing: 0.5px;
-        }
-
-        .cta-buttons {
-            display: flex;
-            gap: 20px;
-            justify-content: center;
-            flex-wrap: wrap;
-        }
-
-        .btn {
-            font-family: 'VT323', monospace;
-            font-size: 1.8rem;
-            padding: 18px 50px;
-            border-radius: 8px;
-            cursor: pointer;
-            transition: all 0.3s ease;
-            text-decoration: none;
-            display: inline-block;
-            letter-spacing: 2px;
-            position: relative;
-        }
-
-        .btn-primary {
-            background: #f1faee;
-            border: none;
-            color: #0a0a0a;
-            overflow: hidden;
-        }
-
-        /* Subtle gradient underline on primary button */
-        .btn-primary::after {
-            content: '';
-            position: absolute;
-            bottom: 0;
-            left: 0;
-            width: 100%;
-            height: 3px;
-            background: linear-gradient(90deg, #f77f00, #d62828, #6a4c93);
-        }
-
-        .btn-primary:hover {
-            transform: translateY(-3px);
-            box-shadow: 0 8px 24px rgba(241, 250, 238, 0.2);
-        }
-
-        .btn-secondary {
-            background: transparent;
-            border: 2px solid rgba(241, 250, 238, 0.3);
-            color: #f1faee;
-        }
-
-        .btn-secondary:hover {
-            background: rgba(241, 250, 238, 0.05);
-            border-color: #f1faee;
-        }
-
-        .preview-hint {
-            margin-top: 80px;
-            font-size: 0.85rem;
-            color: #555;
-            font-style: italic;
-        }
-
-        @media (max-width: 768px) {
-            .container {
-                padding: 30px 16px;
-            }
-            
-            .logo-image {
-                width: 140px;
-                margin-bottom: 30px;
-            }
-            
-            .logo-text {
-                font-size: 3rem;
-            }
-            
-            .tagline {
-                font-size: 0.9rem;
-                margin-bottom: 30px;
-            }
-
-            .cta-buttons {
-                flex-direction: column;
-                align-items: stretch;
-                gap: 12px;
-            }
-
-            .btn {
-                width: 100%;
-                max-width: 100%;
-                font-size: 1.1rem;
-                padding: 14px 32px;
-                min-height: 48px;
-            }
+        @keyframes sigilArchiveBreathe {
+            0%,100% { transform:scale(1); opacity:0.75; }
+            50%      { transform:scale(1.06); opacity:0.95; }
         }
     </style>
 </head>
 <body>
-    <div class="container">
-        <img src="earthtown-logo.png" alt="earthtown" class="logo-image">
-        <h1 class="logo-text">earthtown</h1>
-        <p class="tagline">a digital sanctuary for conscious creatives</p>
-        
-        <div class="cta-buttons">
-            <a href="signup.html" class="btn btn-primary" id="signupBtn">create character</a>
-            <a href="login.html" class="btn btn-secondary" id="enterBtn">enter</a>
-            <button onclick="enterAsGuest()" class="btn btn-secondary" style="border-color: rgba(127, 194, 155, 0.4); background: rgba(127, 194, 155, 0.05);">
-                👁️ enter as guest
-            </button>
-            <a href="character-creator.html" class="btn btn-secondary" style="border-color: rgba(247, 127, 0, 0.4); background: rgba(247, 127, 0, 0.05);">
-                ✨ character creator
-            </a>
+
+<!-- Background -->
+<canvas id="waterCanvas"></canvas>
+<canvas id="grainCanvas"></canvas>
+
+<!-- Intro -->
+<div id="intro">
+    <div class="sigil" id="sigil">ː</div>
+    <div class="tap-hint">tap to enter</div>
+</div>
+
+<!-- Site -->
+<div id="siteContent">
+    <div class="logo">santos bluː</div>
+
+    <div class="stream-prompt">
+        <img src="your-sigil.png" class="home-sigil" alt="">
+        <button class="home-play-btn" id="homePlayBtn" aria-label="play snippet">
+            <svg class="play-icon" viewBox="0 0 24 24" width="16" height="16"><polygon points="5,3 21,12 5,21" fill="rgba(255,255,255,0.75)"/></svg>
+            <svg class="pause-icon" viewBox="0 0 24 24" width="16" height="16" style="display:none"><rect x="4" y="3" width="5" height="18" fill="rgba(255,255,255,0.75)"/><rect x="15" y="3" width="5" height="18" fill="rgba(255,255,255,0.75)"/></svg>
+        </button>
+        <button class="stream-btn" id="streamBtn">stream · alive &amp; well</button>
+    </div>
+    <audio id="audioPlayer" src="anw-snippet.mp3"></audio>
+</div>
+
+<!-- Nav -->
+<nav class="site-nav" id="siteNav">
+    <button class="nav-btn" id="navMusic">music</button>
+    <button class="nav-btn" id="navArchive">archive</button>
+    <button class="nav-btn" id="navNotes">///</button>
+    <button class="nav-btn" id="navConnect">connect</button>
+</nav>
+
+
+<!-- Streaming modal -->
+<div class="streaming-modal" id="streamingModal">
+    <div class="streaming-content">
+        <div class="streaming-title">choose your platform</div>
+        <div class="streaming-options">
+            <button class="streaming-option" data-svc="spotify">Spotify</button>
+            <button class="streaming-option" data-svc="apple">Apple Music</button>
+            <button class="streaming-option" data-svc="tidal">Tidal</button>
+            <button class="streaming-option" data-svc="pandora">Pandora</button>
         </div>
     </div>
+</div>
 
-    <!-- Firebase to check auth state -->
-    <script type="module">
-        import { initializeApp } from 'https://www.gstatic.com/firebasejs/10.7.1/firebase-app.js';
-        import { getAuth, onAuthStateChanged } from 'https://www.gstatic.com/firebasejs/10.7.1/firebase-auth.js';
+<!-- Connect modal -->
+<div class="connect-modal" id="connectModal">
+    <div class="archive-close" id="connectClose"></div>
+    <div class="connect-inner">
+        <div class="connect-header">
+            <span class="connect-label">tune in</span>
+        </div>
+        <form class="connect-form" id="connectForm">
+            <input type="text"  id="connectName"  placeholder="your name"  autocomplete="off" required>
+            <input type="email" id="connectEmail" placeholder="your email" autocomplete="off" required>
+            <button type="submit" id="connectSubmit">subscribe</button>
+        </form>
+        <div class="connect-divider"></div>
+        <div class="connect-links">
+            <a href="https://instagram.com/santosblu._" target="_blank" rel="noopener" class="connect-link">Instagram</a>
+            <a href="https://x.com/santosblu_"          target="_blank" rel="noopener" class="connect-link">X</a>
+            <a href="https://tiktok.com/@santosblu_"    target="_blank" rel="noopener" class="connect-link">TikTok</a>
+        </div>
+    </div>
+</div>
+<div class="archive-modal" id="archiveModal">
+    <div class="archive-close" id="archiveClose"></div>
+    <div class="archive-container" id="archiveContainer"></div>
+</div>
 
-        const firebaseConfig = {
-            apiKey: "AIzaSyCXFlGeJodOUVn-3bYocPhFRtzs9DBHEFA",
-            authDomain: "earthtown-92993.firebaseapp.com",
-            projectId: "earthtown-92993",
-            storageBucket: "earthtown-92993.firebasestorage.app",
-            messagingSenderId: "830730193161",
-            appId: "1:830730193161:web:af18953dd80872b1396bd8"
+<!-- Music modal -->
+<div class="music-modal" id="musicModal">
+    <div class="music-close" id="musicClose"></div>
+    <div class="stack-scene" id="stackScene"></div>
+    <div class="stack-counter" id="stackCounter"></div>
+</div>
+
+<script defer src="https://cdn.jsdelivr.net/npm/@emailjs/browser@4/dist/email.min.js"></script>
+
+<!-- WebGL water shader -->
+<script>
+(function () {
+    var canvas = document.getElementById('waterCanvas');
+    var gl = canvas.getContext('webgl') || canvas.getContext('experimental-webgl');
+    if (!gl) return;
+
+    function resize() {
+        canvas.width  = window.innerWidth;
+        canvas.height = window.innerHeight;
+        gl.viewport(0, 0, canvas.width, canvas.height);
+    }
+    window.addEventListener('resize', resize, { passive:true });
+    resize();
+
+    var vsSource = 'attribute vec2 a_position; void main(){gl_Position=vec4(a_position,0.,1.);}';
+
+    var fsSource = `
+            precision highp float;
+
+            uniform vec2  u_resolution;
+            uniform float u_time;
+            uniform float u_cycle; // 0=deep night, 1=peak pre-dawn
+            // Clouds run on the time-of-day clock, not the wall clock, so they
+            // streak when time rushes. The water stays on u_time — racing the
+            // ripples just aliases them into noise.
+            uniform float u_cloudTime;
+
+            // ── Simplex noise ──
+            vec3 mod289v3(vec3 x){ return x-floor(x*(1./289.))*289.; }
+            vec2 mod289v2(vec2 x){ return x-floor(x*(1./289.))*289.; }
+            vec3 permute(vec3 x){ return mod289v3(((x*34.)+1.)*x); }
+            float snoise(vec2 v){
+                const vec4 C=vec4(.211324865405187,.366025403784439,-.577350269189626,.024390243902439);
+                vec2 i=floor(v+dot(v,C.yy));
+                vec2 x0=v-i+dot(i,C.xx);
+                vec2 i1=(x0.x>x0.y)?vec2(1.,0.):vec2(0.,1.);
+                vec4 x12=x0.xyxy+C.xxzz; x12.xy-=i1;
+                i=mod289v2(i);
+                vec3 p=permute(permute(i.y+vec3(0.,i1.y,1.))+i.x+vec3(0.,i1.x,1.));
+                vec3 m=max(.5-vec3(dot(x0,x0),dot(x12.xy,x12.xy),dot(x12.zw,x12.zw)),0.);
+                m=m*m; m=m*m;
+                vec3 x=2.*fract(p*C.www)-1.;
+                vec3 h=abs(x)-.5; vec3 ox=floor(x+.5); vec3 a0=x-ox;
+                m*=1.79284291400159-.85373472095314*(a0*a0+h*h);
+                vec3 g; g.x=a0.x*x0.x+h.x*x0.y; g.yz=a0.yz*x12.xz+h.yz*x12.yw;
+                return 130.*dot(m,g);
+            }
+
+            // ── fbm: layered noise for organic feel ──
+            float fbm(vec2 p) {
+                float v = 0.0, a = 0.5;
+                for (int i = 0; i < 4; i++) {
+                    v += a * snoise(p);
+                    p  = p * 2.1 + vec2(1.7, 9.2);
+                    a *= 0.5;
+                }
+                return v;
+            }
+
+            // ── Sky colour ──
+            vec3 skyColour(float y, float cycle) {
+                float t = clamp(y, 0.0, 1.0);
+
+                // Night: very dark but not pure black — slight warmth
+                vec3 nZenith = vec3(0.022, 0.022, 0.026);
+                vec3 nUpper  = vec3(0.024, 0.024, 0.028);
+                vec3 nMid    = vec3(0.026, 0.026, 0.030);
+                vec3 nLow    = vec3(0.024, 0.024, 0.028);
+
+                // Dawn peak: blood orange / deep crimson — Lightroom orange hue -37
+                // Zenith stays dark charcoal
+                vec3 dZenith = vec3(0.065, 0.008, 0.012); // deep blood red at top
+                vec3 dUpper  = vec3(0.120, 0.006, 0.012); // dark crimson upper
+                vec3 dMid    = vec3(0.220, 0.005, 0.022); // blood red mid
+                vec3 dLow    = vec3(0.340, 0.005, 0.022); // deep red-orange near horizon
+
+                vec3 zenith = mix(nZenith, dZenith, cycle);
+                vec3 upper  = mix(nUpper,  dUpper,  cycle);
+                vec3 mid    = mix(nMid,    dMid,    cycle);
+                vec3 low    = mix(nLow,    dLow,    cycle);
+
+                vec3 col;
+                if (t < 0.20)      col = mix(low,  mid,   t/0.20);
+                else if (t < 0.50) col = mix(mid,  upper, (t-0.20)/0.30);
+                else               col = mix(upper,zenith,(t-0.50)/0.50);
+                return col;
+            }
+
+            void main() {
+                vec2 uv = gl_FragCoord.xy / u_resolution;
+
+                const float HORIZ = 0.70; // horizon: 70% up screen
+                float cycle = u_cycle;
+
+                // ── SUN POSITION ──
+                // At cycle=0: sun is below horizon (hidden)
+                // At cycle=1: sun is just peeking above horizon (~half visible)
+                float sunY = HORIZ - 0.035 + cycle * 0.048;
+                // sunY < HORIZ when cycle is small → below horizon → clipped by water
+                vec2 sunPos = vec2(0.50, sunY);
+
+                // ── SKY ──
+                vec3 skyCol = vec3(0.0);
+                if (uv.y >= HORIZ) {
+                    // remap y so horizon=0, top=1
+                    float skyT = (uv.y - HORIZ) / (1.0 - HORIZ);
+                    skyCol = skyColour(skyT, cycle);
+
+                    // Atmospheric glow around sun position in sky
+                    float sDist  = length(uv - sunPos);
+                    float sGlow  = exp(-sDist * sDist / (0.06 + 0.10*cycle)) * 0.7 * cycle;
+                    vec3  gColor = mix(vec3(0.45,0.04,0.01), vec3(0.820,0.020,0.120), cycle);
+                    skyCol += gColor * sGlow;
+
+                    // Sun disc — only draw if sunPos.y is within sky region
+                    float sunR = 0.020 + 0.005 * cycle;
+                    float disc = 1.0 - smoothstep(sunR - 0.003, sunR + 0.005, sDist);
+                    vec3  sCol = mix(vec3(0.98, 0.08, 0.01), vec3(1.000,0.140,0.040), cycle);
+                    // Corona
+                    float corona = exp(-sDist*sDist/(0.003+0.004*cycle)) * 0.9;
+                    skyCol += sCol * corona * cycle;
+                    skyCol  = mix(skyCol, sCol * (1.1 + 0.3*cycle), disc * cycle);
+                }
+
+                // ── CLOUDS ──
+                if (uv.y >= HORIZ) {
+                    float skyT = (uv.y - HORIZ) / (1.0 - HORIZ);
+
+                    // Stretch UVs horizontally — clouds are wide not tall
+                    // x * 0.8 = wider, y * 4.0 = compressed vertically = flat cloud banks
+                    vec2 cUv1 = vec2(uv.x * 0.8 + u_cloudTime * 0.002,  skyT * 4.0 + 0.3);
+                    vec2 cUv2 = vec2(uv.x * 0.6 - u_cloudTime * 0.0018, skyT * 3.5 + 1.8);
+                    vec2 cUv3 = vec2(uv.x * 1.0 + u_cloudTime * 0.0014, skyT * 4.5 + 3.1);
+
+                    // Single fbm per layer — no multiplication which causes bird shapes
+                    float c1 = fbm(cUv1);
+                    float c2 = fbm(cUv2);
+                    float c3 = fbm(cUv3);
+
+                    // Moderate threshold range — enough coverage, not too hard
+                    float mass1 = smoothstep(0.15, 0.30, c1);
+                    float mass2 = smoothstep(0.18, 0.32, c2);
+                    float mass3 = smoothstep(0.20, 0.34, c3);
+
+                    // Height bands — keep clouds in lower portion of sky
+                    float band1 = smoothstep(0.02, 0.12, skyT) * smoothstep(0.65, 0.20, skyT);
+                    float band2 = smoothstep(0.05, 0.18, skyT) * smoothstep(0.70, 0.25, skyT);
+                    float band3 = smoothstep(0.03, 0.14, skyT) * smoothstep(0.55, 0.18, skyT);
+
+                    mass1 *= band1;
+                    mass2 *= band2;
+                    mass3 *= band3;
+
+                    // Cloud colour — dark silhouette
+                    vec3 cloudCol = mix(
+                        vec3(0.006, 0.006, 0.008),
+                        vec3(0.055, 0.003, 0.009),
+                        cycle
+                    );
+
+                    skyCol = mix(skyCol, cloudCol,        mass1 * 0.88);
+                    skyCol = mix(skyCol, cloudCol * 0.95, mass2 * 0.82);
+                    skyCol = mix(skyCol, cloudCol * 0.90, mass3 * 0.75);
+                }
+
+                // ── WATER ──
+                // Fast, small, horizontal ripples with organic interference
+                // High y-frequency = tight horizontal bands
+                // Multiple speeds so bands don't all move together
+
+                float t1 = u_time * 0.55;   // faster
+                float t2 = u_time * 0.38;
+                float t3 = u_time * 0.72;
+                float t4 = u_time * 0.29;
+
+                // Very high y-frequency creates tight horizontal ripple bands
+                // Low x-frequency keeps them mostly horizontal
+                // Different phases per layer break the uniformity
+                float r1 = snoise(vec2(uv.x * 1.8 + t1 * 0.15,  uv.y * 85.0 - t1));
+                float r2 = snoise(vec2(uv.x * 2.4 - t2 * 0.22,  uv.y * 62.0 + t2 * 0.8));
+                float r3 = snoise(vec2(uv.x * 1.2 + t3 * 0.08,  uv.y * 110.0 - t3 * 1.1));
+                float r4 = snoise(vec2(uv.x * 3.1 - t4 * 0.18,  uv.y * 48.0 + t4 * 0.6));
+
+                // Small-scale chop on top — gives texture and organic feel
+                float chop1 = snoise(vec2(uv.x * 8.0  + t1 * 0.4, uv.y * 160.0 - t2 * 0.9));
+                float chop2 = snoise(vec2(uv.x * 12.0 - t3 * 0.3, uv.y * 200.0 + t1 * 0.5));
+
+                // Primary distortion — mostly vertical (displaces reflection up/down)
+                // giving the horizontal shimmer bands
+                float waveX = r1 * 0.006 + r2 * 0.004 + chop1 * 0.002;
+                float waveY = r1 * 0.018 + r3 * 0.012 + r4 * 0.008 + chop2 * 0.003;
+
+                // Perspective compression — near horizon very calm, deeper = more distortion
+                float distFromHoriz = clamp((HORIZ - uv.y) / HORIZ, 0.0, 1.0);
+                float perspective   = pow(distFromHoriz, 0.6); // softer than linear
+                waveX *= (0.15 + 0.85 * perspective);
+                waveY *= (0.15 + 0.85 * perspective);
+
+                // Reflected UV — mirror through horizon
+                vec2 reflUv = vec2(uv.x + waveX, HORIZ + (HORIZ - uv.y) + waveY);
+                reflUv.y = clamp(reflUv.y, HORIZ, 1.0);
+
+                // Sample sky colour at reflected position
+                float rSkyT   = (reflUv.y - HORIZ) / (1.0 - HORIZ);
+                vec3  reflCol = skyColour(rSkyT, cycle);
+
+                // Cloud reflection — simplified mass reflection in water
+                float rcd1 = fbm(vec2(reflUv.x * 1.4 + u_cloudTime * 0.003, rSkyT * 2.2 + 0.4));
+                float rcd2 = fbm(vec2(reflUv.x * 2.1 - u_cloudTime * 0.0025, rSkyT * 1.6 + 1.1));
+                float rcl  = smoothstep(0.22, 0.52, rcd1) * smoothstep(0.18, 0.48, rcd2);
+                rcl *= smoothstep(0.08, 0.22, rSkyT) * smoothstep(1.0, 0.55, rSkyT);
+                vec3 rcloudLit = mix(vec3(0.006,0.006,0.008), vec3(0.380,0.010,0.053), cycle);
+                reflCol = mix(reflCol, rcloudLit, rcl * cycle * 0.55);
+
+                // Sun reflection — stretched vertical column broken by ripples
+                vec2  sunRefl    = vec2(sunPos.x, HORIZ - (sunPos.y - HORIZ));
+                vec2  rUvShifted = vec2(uv.x + waveX * 2.5, uv.y + waveY * 1.8);
+                vec2  toRefl     = rUvShifted - sunRefl;
+                vec2  stretched  = vec2(toRefl.x * 9.0, toRefl.y * 0.8);
+                float rGlow      = exp(-dot(stretched, stretched) / (0.035 + 0.08*cycle))
+                                   * 0.9 * cycle;
+                vec3  gColor2    = mix(vec3(0.38,0.04,0.01), vec3(0.780,0.020,0.110), cycle);
+                reflCol += gColor2 * rGlow;
+
+                // Fine specular glints — scattered, non-repeating
+                float spec1 = snoise(vec2(uv.x * 28.0 + t1*0.8, uv.y * 18.0 - t2*0.6));
+                float spec2 = snoise(vec2(uv.x * 42.0 - t3*0.5, uv.y * 24.0 + t4*0.4));
+                float spec3 = snoise(vec2(uv.x * 16.0 + t2*0.3, uv.y * 35.0 - t1*0.3));
+                float spec  = max(0.0, spec1 - 0.72)
+                            * max(0.0, spec2 - 0.65)
+                            * max(0.0, spec3 - 0.50) * 6.0;
+                vec3  specCol = mix(vec3(0.04,0.02,0.01), vec3(0.320,0.020,0.035), cycle);
+                reflCol += specCol * spec * (0.15 + 0.25 * cycle);
+
+                // ── UNIFIED SLATE BASE ──
+                // Sky and water share the same dark slate-teal foundation.
+                // Sun light is what creates warmth — the base stays slate always.
+                // Dark areas in both sky and water = same colour.
+                vec3 slateBase = vec3(0.018, 0.022, 0.030); // deeper blue-neutral, no green
+                vec3 navyDeep  = vec3(0.014, 0.016, 0.022); // dark blue-neutral for troughs
+
+                // Wave trough mask — darker pockets between wave crests
+                float troughN = snoise(vec2(uv.x * 4.0 + t1*0.12, uv.y * 22.0 - t2*0.4))
+                              * 0.5 + 0.5;
+                float trough  = smoothstep(0.35, 0.65, troughN) * cycle * cycle;
+                // Base stays dark — only shifts hue slightly toward cool slate at peak
+                vec3  darkBase  = mix(navyDeep, slateBase, cycle * 0.6);
+                vec3  waterBase = mix(darkBase, navyDeep, trough * 0.4);
+
+                // Reflection builds with sun — invisible at night
+                float reflStrength = cycle * (0.45 + 0.30 * cycle);
+                reflCol = mix(waterBase, reflCol, reflStrength);
+
+                // Depth fade — goes toward the same dark base, no blue cast
+                float depthFade = smoothstep(0.0, HORIZ * 0.75, uv.y);
+                reflCol = mix(navyDeep, reflCol, depthFade);
+
+                // ── BLEND at horizon ──
+                float blend = smoothstep(HORIZ - 0.010, HORIZ + 0.010, uv.y);
+                vec3  col   = mix(reflCol, skyCol, blend);
+
+                // Horizon line glow
+                float hLine = exp(-abs(uv.y - HORIZ) * 110.0) * cycle * 0.45;
+                col += mix(vec3(0.05,0.02,0.02), vec3(0.720,0.030,0.052), cycle) * hLine;
+
+                // ── ATMOSPHERIC HAZE ──
+                // Warm fog layer just above and below horizon — diffuses light through air
+                float hazeY    = abs(uv.y - HORIZ);
+                float hazeBand = exp(-hazeY * hazeY * 35.0) * cycle * 0.18;
+                vec3  hazeCol  = mix(vec3(0.20, 0.05, 0.01), vec3(0.520,0.020,0.065), cycle);
+                col += hazeCol * hazeBand;
+
+                // Slight warm atmospheric tint in lower sky near horizon
+                float atmoBand = exp(-pow(uv.y - HORIZ - 0.04, 2.0) * 28.0) * cycle * 0.10;
+                col += vec3(0.18, 0.06, 0.01) * atmoBand;
+
+                // ── CHROMATIC ABERRATION — subtle, horizon edges only ──
+                // 1-2px colour channel separation, most visible at screen edges
+                float chromaStr = 0.0018 * cycle;
+                vec2  chromaOff = (uv - 0.5) * chromaStr;
+                // Sample red channel slightly outward, blue slightly inward
+                // Approximated by shifting the final colour channels
+                float rShift = length(chromaOff) * 0.8;
+                float bShift = length(chromaOff) * 0.6;
+                // Apply as a subtle tint shift based on position
+                col.r += rShift * cycle * 0.04;
+                col.b -= bShift * cycle * 0.025;
+
+                // ── PHOTOGRAPHIC VIGNETTE ──
+                // Oval rather than circular — wider than tall, warm centre
+                vec2  vigUv  = (uv - 0.5) * vec2(1.0, 1.35);
+                float vign   = 1.0 - dot(vigUv, vigUv) * 0.75;
+                // Warm centre tint — barely perceptible
+                float warmCentre = exp(-dot(vigUv, vigUv) * 3.5) * 0.04 * cycle;
+                col += vec3(0.08, 0.03, 0.01) * warmCentre;
+                col  *= max(0.0, vign);
+
+                gl_FragColor = vec4(col, 1.0);
+            }
+    `;
+
+    function compile(type, src) {
+        var s = gl.createShader(type);
+        gl.shaderSource(s, src); gl.compileShader(s);
+        if (!gl.getShaderParameter(s, gl.COMPILE_STATUS)) { console.error(gl.getShaderInfoLog(s)); return null; }
+        return s;
+    }
+    var prog = gl.createProgram();
+    gl.attachShader(prog, compile(gl.VERTEX_SHADER,   vsSource));
+    gl.attachShader(prog, compile(gl.FRAGMENT_SHADER, fsSource));
+    gl.linkProgram(prog);
+    gl.useProgram(prog);
+
+    var buf = gl.createBuffer();
+    gl.bindBuffer(gl.ARRAY_BUFFER, buf);
+    gl.bufferData(gl.ARRAY_BUFFER, new Float32Array([-1,-1,1,-1,-1,1,-1,1,1,-1,1,1]), gl.STATIC_DRAW);
+    var pos = gl.getAttribLocation(prog, 'a_position');
+    gl.enableVertexAttribArray(pos);
+    gl.vertexAttribPointer(pos, 2, gl.FLOAT, false, 0, 0);
+
+    var uRes   = gl.getUniformLocation(prog, 'u_resolution');
+    var uTime  = gl.getUniformLocation(prog, 'u_time');
+    var uCycle = gl.getUniformLocation(prog, 'u_cycle');
+    var uCloudTime = gl.getUniformLocation(prog, 'u_cloudTime');
+
+    var CYCLE = 1080.0; // 18 minutes
+    var start = performance.now();
+    var externalTime = null;
+
+    function setShaderTime(t) { externalTime = t; }
+
+    window.addEventListener('message', function(e) {
+        if (e.origin !== 'https://studio212.xyz') return;
+        if (e.data && e.data.type === 'scrub') setShaderTime(e.data.time);
+    });
+
+    // One arc, taken at speed and then let go of: the page opens just off the
+    // peak, the light drains away into full night, and the last stretch creeps
+    // back up to the sun barely showing itself. It is a single forward traverse
+    // of the ambient curve — down its falling limb, through the trough, a little
+    // way up the next rise — so none of it is a separate animation, and past the
+    // arrival it simply keeps drifting, still climbing toward dawn.
+    var reduced = window.matchMedia('(prefers-reduced-motion: reduce)').matches;
+    var SETTLE  = reduced ? 0 : 4.5; // how long the arc takes
+    var DECEL   = 2;                 // ease-out power — how hard the ending creeps
+    var FLOOR   = 0.22;              // trough: embers on the horizon, never void
+    var OPEN_AT = 0.92;              // where it starts — just off the peak
+    var REST_AT = 0.43;              // where it lands — sun just about showing
+
+    // Ambient: the original 18-minute breath, lifted off the floor so its low end
+    // is a night that still reads as a place rather than an unpainted canvas.
+    function ambient(t) {
+        var phase = (t % CYCLE) / CYCLE;
+        var tri   = phase < 0.5 ? phase * 2 : 1 - (phase - 0.5) * 2;
+        var eased = tri < 0.5 ? 4*tri*tri*tri : 1 - Math.pow(-2*tri+2, 3)/2;
+        return FLOOR + (1 - FLOOR) * eased;
+    }
+
+    // Inverts the easing and the floor: the point on the curve whose value is v,
+    // on whichever limb is asked for. Lets OPEN_AT and REST_AT be retuned freely.
+    function ambientAt(v, rising) {
+        var e   = (v - FLOOR) / (1 - FLOOR);
+        var tri = e < 0.5 ? Math.cbrt(e / 4) : 1 - Math.pow(2 * (1 - e), 1/3) / 2;
+        return (rising ? tri / 2 : 1 - tri / 2) * CYCLE;
+    }
+
+    // Down the falling limb into the trough, then up the next cycle's rise.
+    var FROM = ambientAt(OPEN_AT, false);
+    var TO   = ambientAt(REST_AT, true) + CYCLE;
+
+    // Position on the time-of-day clock: sweeps FROM → TO, easing out so the last
+    // stretch is a crawl, then simply advances in real time from where it landed.
+    function clockAt(t) {
+        if (t >= SETTLE) return TO + (t - SETTLE);
+        var u = t / SETTLE;
+        return FROM + (TO - FROM) * (1 - Math.pow(1 - u, DECEL));
+    }
+
+    function getCycle(t) { return ambient(clockAt(t)); }
+
+    (function render() {
+        var scrubbing = externalTime !== null;
+        var t = scrubbing ? externalTime : (performance.now() - start) / 1000;
+        gl.uniform2f(uRes, canvas.width, canvas.height);
+        // u_time stays on the real clock — it drives the water, and racing the
+        // ripples would just alias them. Only the sky is put on the fast clock.
+        gl.uniform1f(uTime, t);
+        // A scrub wants the raw curve across its own timeline, not the arrival.
+        gl.uniform1f(uCycle,     scrubbing ? ambient(t) : getCycle(t));
+        gl.uniform1f(uCloudTime, scrubbing ? t          : clockAt(t));
+        gl.drawArrays(gl.TRIANGLES, 0, 6);
+        requestAnimationFrame(render);
+    })();
+})();
+</script>
+
+<!-- Grain -->
+<script>
+(function () {
+    var cv  = document.getElementById('grainCanvas');
+    var ctx = cv.getContext('2d');
+    var DPR = Math.min(window.devicePixelRatio || 1, 2);
+    var W, H, imgData, buf32;
+
+    function resize() {
+        W = cv.width  = Math.round(window.innerWidth  * DPR);
+        H = cv.height = Math.round(window.innerHeight * DPR);
+        cv.style.width  = window.innerWidth  + 'px';
+        cv.style.height = window.innerHeight + 'px';
+        imgData = ctx.createImageData(W, H);
+        buf32   = new Uint32Array(imgData.data.buffer);
+    }
+    resize();
+    window.addEventListener('resize', resize, { passive:true });
+
+    var frame = 0;
+    (function tick() {
+        requestAnimationFrame(tick);
+        if (++frame % 2 !== 0) return;
+        for (var i = 0, l = buf32.length; i < l; i++) {
+            var v = Math.random() * 255 | 0;
+            buf32[i] = (255 << 24) | (v << 16) | (v << 8) | Math.min(255, v + 4);
+        }
+        ctx.putImageData(imgData, 0, 0);
+    })();
+})();
+</script>
+
+<!-- Intro animation -->
+<script>
+(function () {
+    var intro   = document.getElementById('intro');
+    var sigil   = document.getElementById('sigil');
+    var content = document.getElementById('siteContent');
+    var nav     = document.getElementById('siteNav');
+    var done    = false;
+
+    // Start breathing after appear animation
+    setTimeout(function () { sigil.classList.add('breathe'); }, 2100);
+
+    var tapHint = document.querySelector('.tap-hint');
+
+    function enter(instant) {
+        if (done) return;
+        done = true;
+        // Kill hint animation immediately via class
+        if (tapHint) tapHint.classList.add('hide');
+        sigil.classList.add('exit');
+        var delay = instant ? 0 : 600;
+        setTimeout(function () { content.classList.add('revealed'); }, delay);
+        setTimeout(function () { nav.classList.add('visible'); }, delay + 200);
+        setTimeout(function () { intro.classList.add('done'); }, delay + 900);
+    }
+
+    intro.addEventListener('click', function () { enter(true); });
+    // Held just past the sky's arrival (SETTLE, 4.5s) so the reveal doesn't cut
+    // the arc off mid-flight. Tapping earlier is fine — it settles underneath you.
+    setTimeout(function () { enter(false); }, 4900);
+})();
+</script>
+
+<!-- Interactions -->
+<script>
+document.addEventListener('DOMContentLoaded', function () {
+
+    // ── Direct streaming (home screen button) ──
+    var streamingModal = document.getElementById('streamingModal');
+    var epLinks = {
+        tidal:   'https://listen.tidal.com/album/490814320',
+        apple:   'https://geo.music.apple.com/us/album/_/1870312531?mt=1&app=music&ls=1&at=1000lHKX&ct=odesli_http&itscg=30200&itsct=odsl_m',
+        spotify: 'https://open.spotify.com/album/442M5bQwAlpfiAG0vCFwYz',
+        pandora: 'https://www.pandora.com/AL:59941654'
+    };
+
+    function openStreaming() {
+        streamingModal.classList.add('active');
+        document.querySelectorAll('.streaming-option').forEach(function (btn) {
+            btn.onclick = function () {
+                var url = epLinks[btn.dataset.svc];
+                if (url) window.open(url, '_blank');
+                streamingModal.classList.remove('active');
+            };
+        });
+    }
+
+    streamingModal.addEventListener('click', function (e) {
+        if (e.target === streamingModal) streamingModal.classList.remove('active');
+    });
+
+    // ── Home audio player ──
+    var homePlayBtn = document.getElementById('homePlayBtn');
+    var playIcon    = homePlayBtn.querySelector('.play-icon');
+    var pauseIcon   = homePlayBtn.querySelector('.pause-icon');
+    var audio       = document.getElementById('audioPlayer');
+    audio.loop      = true;
+
+    homePlayBtn.addEventListener('click', function () {
+        if (audio.paused) {
+            audio.play().then(function () {
+                playIcon.style.display  = 'none';
+                pauseIcon.style.display = '';
+            }).catch(function (err) {
+                console.log('Play error:', err);
+            });
+        } else {
+            audio.pause();
+            playIcon.style.display  = '';
+            pauseIcon.style.display = 'none';
+        }
+    });
+
+
+    var musicModal  = document.getElementById('musicModal');
+    var stackScene  = document.getElementById('stackScene');
+    var musicClose  = document.getElementById('musicClose');
+    var stackCounter= document.getElementById('stackCounter');
+
+    var catalogue = [
+        {
+            title:   'Alive & Well',
+            sub:     'with CLOUD5',
+            type:    'EP',
+            year:    '2026',
+            cat:     'SBL-003',
+            side:    'A',
+            art:     'cover-art-a&w.jpg',
+            about:   'I made this album with my friends while driving around Miami. We didn\'t know when the next linkup would be, but we knew we had 3 weeks to cook up some unforgettable magic.||We wanted to be outside, make the most of our experience, but we NEEDED to keep creating. All day, every day. So naturally, we brought the studio with us. Laptop, mic, keyboard, aux. And with that, we poured our joy, sweat, and tears into this music, everywhere we went.',
+            seeds:   ['https://open.spotify.com/album/442M5bQwAlpfiAG0vCFwYz', 'https://music.apple.com/gb/album/alive-well-ep/1870312531', 'https://tidal.com/album/490814320/u'],
+            links:   [
+                { name:'Spotify',     url:'https://open.spotify.com/album/442M5bQwAlpfiAG0vCFwYz' },
+                { name:'Apple Music', url:'https://music.apple.com/gb/album/alive-well-ep/1870312531' },
+                { name:'Tidal',       url:'https://tidal.com/album/490814320/u' },
+                { name:'Pandora',     url:'https://www.pandora.com/AL:59941654' }
+            ]
+        },
+        {
+            title:   "Camera'ShyBaby",
+            sub:     'with CLOUD5',
+            type:    'Single',
+            year:    '2025',
+            cat:     'SBL-002',
+            side:    'B',
+            art:     'camera-shybaby.jpg',
+            about:   'A single.',
+            seeds:   ['https://open.spotify.com/album/7yH0K2oPVOzluT0Hg59cjq', 'https://music.apple.com/gb/album/camerashybaby-single/1807267133', 'https://tidal.com/album/428773401/u'],
+            links:   [
+                { name:'Spotify',     url:'https://open.spotify.com/album/7yH0K2oPVOzluT0Hg59cjq' },
+                { name:'Apple Music', url:'https://music.apple.com/gb/album/camerashybaby-single/1807267133' },
+                { name:'Tidal',       url:'https://tidal.com/album/428773401/u' }
+            ]
+        },
+        {
+            title:   'LAVA VS ICE',
+            sub:     'with CLOUD5',
+            type:    'Single',
+            year:    '2025',
+            cat:     'SBL-001',
+            side:    'B',
+            art:     'lava-vs-ice.jpg',
+            about:   'A single.',
+            seeds:   ['https://open.spotify.com/album/7mq7fdURcZEVaYHQMdeyI1', 'https://music.apple.com/gb/album/lava-vs-ice-single/1806221333', 'https://tidal.com/album/427802920/u'],
+            links:   [
+                { name:'Spotify',     url:'https://open.spotify.com/album/7mq7fdURcZEVaYHQMdeyI1' },
+                { name:'Apple Music', url:'https://music.apple.com/gb/album/lava-vs-ice-single/1806221333' },
+                { name:'Tidal',       url:'https://tidal.com/album/427802920/u' }
+            ]
+        },
+        {
+            title:   'Special Place',
+            sub:     'with CLOUD5',
+            type:    'Single',
+            year:    '2025',
+            cat:     'SBL-000',
+            side:    'B',
+            art:     'special-place.jpg',
+            about:   'A single.',
+            seeds:   ['https://open.spotify.com/album/0IF8M3y2duIY0LSygHu20y', 'https://music.apple.com/gb/album/special-place-single/1790060311', 'https://tidal.com/album/410870684/u'],
+            links:   [
+                { name:'Spotify',     url:'https://open.spotify.com/album/0IF8M3y2duIY0LSygHu20y' },
+                { name:'Apple Music', url:'https://music.apple.com/gb/album/special-place-single/1790060311' },
+                { name:'Tidal',       url:'https://tidal.com/album/410870684/u' }
+            ]
+        }
+    ];
+
+    // Warm the covers immediately. This is why `music` used to pop: the modal
+    // builds its cards on open, so the very first paint was waiting on a fetch
+    // and a decode. Doing both up front makes the open instant, and failures are
+    // swallowed on purpose — this is an optimisation, never a blocker.
+    (function preloadArt() {
+        catalogue.forEach(function (rel) {
+            if (!rel.art) return;
+            var img = new Image();
+            img.src = rel.art;
+            if (img.decode) img.decode().catch(function () {});
+        });
+    })();
+
+    // Platform display names and keys from Odesli response
+    var PLATFORMS = [
+        { key:'spotify',      name:'Spotify' },
+        { key:'appleMusic',   name:'Apple Music' },
+        { key:'tidal',        name:'Tidal' },
+        { key:'pandora',      name:'Pandora' },
+        { key:'youtube',      name:'YouTube Music' },
+        { key:'deezer',       name:'Deezer' },
+        { key:'amazonMusic',  name:'Amazon Music' },
+        { key:'soundcloud',   name:'SoundCloud' }
+    ];
+
+    // Fetch streaming links from Odesli — all 3 seeds in parallel, merge, deduplicate
+    function fetchLinks() {
+        catalogue.forEach(function(rel, i) {
+            var requests = rel.seeds.map(function(url) {
+                return fetch('https://api.song.link/v1-alpha.1/links?url=' + encodeURIComponent(url) + '&userCountry=GB')
+                    .then(function(r) { return r.json(); })
+                    .catch(function() { return null; });
+            });
+
+            Promise.all(requests).then(function(results) {
+                // Start with existing fallback links as seed for seen tracker
+                var seen = {};
+                var links = [];
+                // Pre-seed seen with fallback platforms so we don't duplicate
+                catalogue[i].links.forEach(function(l) {
+                    PLATFORMS.forEach(function(p) {
+                        if (p.name === l.name) seen[p.key] = true;
+                    });
+                });
+                // Merge all Odesli results
+                results.forEach(function(data) {
+                    if (!data || !data.linksByPlatform) return;
+                    PLATFORMS.forEach(function(p) {
+                        if (!seen[p.key] && data.linksByPlatform[p.key]) {
+                            seen[p.key] = true;
+                            links.push({ name:p.name, url:data.linksByPlatform[p.key].url });
+                        }
+                    });
+                });
+                // Rebuild full list: Odesli results override fallbacks for known platforms
+                var merged = {};
+                results.forEach(function(data) {
+                    if (!data || !data.linksByPlatform) return;
+                    PLATFORMS.forEach(function(p) {
+                        if (!merged[p.key] && data.linksByPlatform[p.key]) {
+                            merged[p.key] = { name:p.name, url:data.linksByPlatform[p.key].url };
+                        }
+                    });
+                });
+                var finalLinks = PLATFORMS
+                    .filter(function(p) { return merged[p.key]; })
+                    .map(function(p) { return merged[p.key]; });
+                if (finalLinks.length) catalogue[i].links = finalLinks;
+            });
+        });
+    }
+    fetchLinks();
+
+    // ── Stack state ──
+    var stack    = [];
+    var flipping = false;
+    var TOTAL    = catalogue.length;
+    var SWIPE_THRESHOLD = 45;
+
+    function imgError(img) {
+        var p = img.parentNode;
+        if (p) { var d = document.createElement('div'); d.className = 'tape-reel'; p.replaceChild(d, img); }
+    }
+
+    function formatAbout(text) {
+        return text.split('||').map(function(p) {
+            return '<p style="margin-bottom:0.9em">' + p.trim() + '</p>';
+        }).join('');
+    }
+
+    function makeLinksHTML(links) {
+        if (!links || !links.length) {
+            return '<div style="font-family:var(--mono);font-size:10px;letter-spacing:0.22em;color:rgba(255,255,255,0.25);padding:12px 0;">loading...</div>';
+        }
+        return links.map(function(l) {
+            return '<a class="rec-stream-link" href="' + l.url + '" target="_blank" rel="noopener" onclick="event.stopPropagation()">' +
+                '<span class="rec-stream-name">' + l.name + '</span>' +
+                '<span class="rec-stream-arrow">↗</span>' +
+                '</a>';
+        }).join('');
+    }
+
+    function makeCard(rel, idx) {
+        var isSingle = rel.type === 'Single';
+        var card = document.createElement('div');
+        card.className = 'record-card' + (isSingle ? ' is-single' : '');
+        card.dataset.idx = idx;
+
+        var artHTML = rel.art
+            ? '<img src="' + rel.art + '" alt="" decoding="sync" onerror="imgError(this)">'
+            : '<div class="tape-reel"></div>';
+
+        var discHTML =
+            '<div class="vinyl-disc">' +
+                '<div class="vinyl-label">' + artHTML + '</div>' +
+                '<div class="spindle"></div>' +
+                (isSingle ? '' : '<div class="matrix-text">' + rel.cat + ' ✦ santos blu\u02d0</div>') +
+            '</div>';
+
+        var bodyHTML = isSingle
+            ? ('<div class="rec-body">' +
+                  discHTML +
+                  '<div class="single-info">' +
+                      '<div class="single-title">' + rel.title + '</div>' +
+                      '<div class="single-sub">' + rel.sub + '</div>' +
+                      '<div class="single-meta">' + rel.cat + ' · ' + rel.year + '</div>' +
+                  '</div>' +
+              '</div>')
+            : ('<div class="rec-body">' +
+                  '<div class="rec-data">' +
+                      '<span class="rec-data-item">' + rel.type + '</span>' +
+                      '<span class="rec-data-item">' + rel.year + '</span>' +
+                  '</div>' +
+                  discHTML +
+              '</div>');
+
+        var aboutHTML = (rel.about && rel.about !== 'A single.')
+            ? ('<div class="rec-about" id="about-' + idx + '">' +
+                  '<div class="rec-about-header">' +
+                      '<span class="rec-about-label">about</span>' +
+                      '<span class="rec-about-toggle">+ more</span>' +
+                  '</div>' +
+                  '<div class="rec-about-short">' + formatAbout(rel.about) + '</div>' +
+                  '<div class="rec-about-full">'  + formatAbout(rel.about) + '</div>' +
+              '</div>')
+            : '';
+
+        var footerHTML = isSingle ? ''
+            : ('<div class="rec-footer">' +
+                  '<div>' +
+                      '<div class="rec-title">' + rel.title + '</div>' +
+                      '<div class="rec-sub">' + rel.sub + '</div>' +
+                  '</div>' +
+                  '<div class="rec-format">' + rel.type + '<br>' + rel.year + '</div>' +
+              '</div>');
+
+        var face = document.createElement('div');
+        face.className = 'record-face';
+        face.innerHTML =
+            '<div class="rec-header">' +
+                '<span class="rec-side">' + rel.side + ' \u00b7 ' + rel.cat + '</span>' +
+                '<span class="rec-cat-label">santos blu\u02d0</span>' +
+                '<span class="rec-side rec-side-r">' + rel.year + '</span>' +
+            '</div>' +
+            bodyHTML +
+            footerHTML +
+            aboutHTML +
+            '<div class="rec-streams">' +
+                '<span class="rec-streams-label">stream</span>' +
+                makeLinksHTML(rel.links) +
+            '</div>';
+
+        if (aboutHTML) {
+            var aboutEl = face.querySelector('.rec-about');
+            var toggle  = face.querySelector('.rec-about-toggle');
+            face.querySelector('.rec-about-header').addEventListener('click', function(e) {
+                e.stopPropagation();
+                var expanded = aboutEl.classList.toggle('expanded');
+                toggle.textContent = expanded ? '− less' : '+ more';
+            });
+        }
+
+        card.appendChild(face);
+        return card;
+    }
+
+    // Lay cards out as a visible stack
+    // Each card offset down and slightly scaled — makes depth clear
+    function positionStack() {
+        stack.forEach(function(card, i) {
+            var scale   = 1 - i * 0.04;
+            var yOff    = i * 22;          // pronounced peek
+            card.style.zIndex        = String(TOTAL - i);
+            card.style.opacity       = '1';
+            card.style.filter        = 'none';
+            card.style.pointerEvents = i === 0 ? 'all' : 'none';
+            card.style.boxShadow     = '0 ' + (8 + i*4) + 'px ' + (30 + i*8) + 'px rgba(0,0,0,0.6)';
+            card.style.transition    = 'none';
+            card.style.transform     = 'translateY(' + yOff + 'px) scale(' + scale + ')';
+        });
+    }
+
+    function updateCounter() {
+        var idx = parseInt(stack[0].dataset.idx, 10);
+        stackCounter.textContent = (idx + 1) + ' / ' + TOTAL + ' · ' + catalogue[idx].cat;
+    }
+
+    // Animate top card sliding off to the side
+    function flipToNext() {
+        if (flipping) return;
+        var topIdx = parseInt(stack[0].dataset.idx, 10);
+        if (topIdx >= TOTAL - 1) {
+            // Boundary — nudge and return
+            var card = stack[0];
+            card.style.transition = 'transform 0.18s ease';
+            card.style.transform  = 'translateY(0px) scale(1) translateX(-18px)';
+            setTimeout(function () {
+                card.style.transition = 'transform 0.35s cubic-bezier(.16,1,.3,1)';
+                card.style.transform  = 'translateY(0px) scale(1)';
+            }, 180);
+            return;
+        }
+        flipping = true;
+
+        var leaving = stack[0];
+        // Slide off left
+        leaving.style.transition = 'transform 0.38s cubic-bezier(0.4,0,1,1), opacity 0.32s ease';
+        leaving.style.transform  = 'translateY(0px) scale(1) translateX(-110%)';
+        leaving.style.opacity    = '0';
+
+        // Remaining cards rise
+        for (var i = 1; i < stack.length; i++) {
+            (function(card, depth) {
+                setTimeout(function () {
+                    var nd = depth - 1;
+                    card.style.transition = 'transform 0.38s cubic-bezier(0.16,1,0.3,1), opacity 0.28s ease';
+                    card.style.transform  = 'translateY(' + (nd * 22) + 'px) scale(' + (1 - nd * 0.04) + ')';
+                    card.style.opacity    = '1';
+                    card.style.pointerEvents = nd === 0 ? 'all' : 'none';
+                }, depth * 25);
+            })(stack[i], i);
+        }
+
+        setTimeout(function () {
+            stack.shift();
+            stack.push(leaving);
+            leaving.style.transition = 'none';
+            var bot = stack.length - 1;
+            leaving.style.transform  = 'translateY(' + (bot * 22) + 'px) scale(' + (1 - bot * 0.04) + ')';
+            leaving.style.opacity    = '1';
+            leaving.style.zIndex     = '1';
+            positionStack();
+            updateCounter();
+            flipping = false;
+        }, 420);
+    }
+
+        function flipToPrev() {
+        if (flipping) return;
+        var topIdx = parseInt(stack[0].dataset.idx, 10);
+        if (topIdx <= 0) {
+            // Boundary nudge
+            var card = stack[0];
+            card.style.transition = 'transform 0.18s ease';
+            card.style.transform  = 'translateY(0px) scale(1) translateX(18px)';
+            setTimeout(function () {
+                card.style.transition = 'transform 0.35s cubic-bezier(.16,1,.3,1)';
+                card.style.transform  = 'translateY(0px) scale(1)';
+            }, 180);
+            return;
+        }
+        flipping = true;
+
+        // Bring last card in from left
+        var coming = stack.pop();
+        coming.style.transition = 'none';
+        coming.style.transform  = 'translateY(0px) scale(1) translateX(-110%)';
+        coming.style.opacity    = '0';
+        coming.style.zIndex     = String(TOTAL);
+        coming.style.pointerEvents = 'none';
+        stack.unshift(coming);
+
+        // Push existing cards down into stack
+        for (var i = 1; i < stack.length; i++) {
+            (function(card, depth) {
+                card.style.transition = 'transform 0.35s cubic-bezier(0.4,0,0.6,1)';
+                card.style.transform  = 'translateY(' + (depth * 22) + 'px) scale(' + (1 - depth * 0.04) + ')';
+                card.style.pointerEvents = 'none';
+            })(stack[i], i);
+        }
+
+        requestAnimationFrame(function () {
+            coming.style.transition = 'transform 0.40s cubic-bezier(0.16,1,0.3,1), opacity 0.30s ease';
+            coming.style.transform  = 'translateY(0px) scale(1)';
+            coming.style.opacity    = '1';
+            coming.style.pointerEvents = 'all';
+        });
+
+        setTimeout(function () {
+            positionStack();
+            updateCounter();
+            flipping = false;
+        }, 440);
+    }
+
+        function buildStack() {
+        stackScene.innerHTML = '';
+        stack = [];
+        for (var i = TOTAL - 1; i >= 0; i--) {
+            var card = makeCard(catalogue[i], i);
+            stackScene.appendChild(card);
+            stack.unshift(card);
+        }
+        positionStack();
+        updateCounter();
+        stack.forEach(attachSwipe);
+    }
+
+    function attachSwipe(card) {
+        var startX = 0, startY = 0, dragging = false, moved = false;
+
+        function start(x, y) {
+            if (card !== stack[0]) return;
+            startX = x; startY = y; dragging = true; moved = false;
+        }
+        function move(x, y) {
+            if (!dragging || card !== stack[0]) return;
+            if (Math.abs(x - startX) > 6 || Math.abs(y - startY) > 6) moved = true;
+            if (!moved) return;
+            var dx = x - startX;
+            var dy = y - startY;
+            card.style.transition = 'none';
+            card.style.transform  = 'translateY(' + (dy * 0.15) + 'px) translateX(' + (dx * 0.08) + 'px) scale(1) rotate(' + (dx * 0.012) + 'deg)';
+        }
+        function end(x, y) {
+            if (!dragging || card !== stack[0]) return;
+            dragging = false;
+            var dx = x - startX;
+            var dy = y - startY;
+
+            if (!moved) return; // taps handled elsewhere
+
+            // Vertical swipe up = next, down = prev
+            if (dy < -SWIPE_THRESHOLD && Math.abs(dy) > Math.abs(dx)) { flipToNext(); return; }
+            if (dy >  SWIPE_THRESHOLD && Math.abs(dy) > Math.abs(dx)) { flipToPrev(); return; }
+            // Horizontal swipe left = next, right = prev
+            if (dx < -SWIPE_THRESHOLD && Math.abs(dx) >= Math.abs(dy)) { flipToNext(); return; }
+            if (dx >  SWIPE_THRESHOLD && Math.abs(dx) >= Math.abs(dy)) { flipToPrev(); return; }
+
+            // Snap back
+            card.style.transition = 'transform 0.35s cubic-bezier(0.16,1,0.3,1)';
+            card.style.transform  = 'translateY(0px) scale(1)';
+        }
+
+        card.addEventListener('touchstart', function(e) { start(e.touches[0].clientX, e.touches[0].clientY); }, {passive:true});
+        card.addEventListener('touchmove',  function(e) { move(e.touches[0].clientX, e.touches[0].clientY); },  {passive:true});
+        card.addEventListener('touchend',   function(e) { end(e.changedTouches[0].clientX, e.changedTouches[0].clientY); });
+        card.addEventListener('mousedown',  function(e) { start(e.clientX, e.clientY); });
+        window.addEventListener('mousemove', function(e) { if(dragging && card===stack[0]) move(e.clientX, e.clientY); });
+        window.addEventListener('mouseup',   function(e) { if(dragging && card===stack[0]) end(e.clientX, e.clientY); });
+    }
+
+        function openMusic() {
+        musicModal.classList.add('active');
+        document.body.style.overflow = 'hidden';
+        document.getElementById('siteNav').style.opacity = '0';
+        document.getElementById('siteNav').style.pointerEvents = 'none';
+        buildStack();
+    }
+
+    function closeMusic() {
+        musicModal.classList.remove('active');
+        document.body.style.overflow = '';
+        document.getElementById('siteNav').style.opacity = '';
+        document.getElementById('siteNav').style.pointerEvents = '';
+    }
+
+    document.getElementById('navMusic').addEventListener('click', openMusic);
+
+    // ── Archive ──
+    var archiveModal     = document.getElementById('archiveModal');
+    var archiveContainer = document.getElementById('archiveContainer');
+    var archiveClose     = document.getElementById('archiveClose');
+
+    var archivePieces = [
+        { front:'archive-1.jpg', back:null,                 flippable:false },
+        { front:'archive-2.jpg', back:'archive-2-back.jpg', flippable:true  },
+        { front:'archive-3.jpg', back:null,                 flippable:false },
+        { front:'archive-4.jpg', back:'archive-4-back.jpg', flippable:true  },
+        { front:'archive-5.jpg', back:null,                 flippable:false },
+        { front:'archive-6.jpg', back:null,                 flippable:false },
+        { front:'archive-7.jpg', back:'archive-7-back.jpg', flippable:true  },
+        { front:'archive-8.jpg', back:null,                 flippable:false },
+        { type:'notes' }
+    ];
+
+    var glitchSets  = [['/','\\',' _','|'],['*','+','=','<','>']];
+    var glitchTexts = ['◊ unlock_memory ◊','>> grant_access <<'];
+    var noiseEls    = [];
+    var clickCount  = 0;
+    var unlocked    = false;
+
+    function randPos() {
+        return {
+            left: 80 + Math.random() * (window.innerWidth  - 160),
+            top:  80 + Math.random() * (window.innerHeight - 160)
         };
+    }
 
-        const app = initializeApp(firebaseConfig);
-        const auth = getAuth(app);
+    function makeGlitch(txt, clickable) {
+        var el = document.createElement('div');
+        el.className = 'glitch-text' + (clickable ? ' clickable' : '');
+        el.textContent = txt;
+        var p = randPos();
+        el.style.left = p.left + 'px';
+        el.style.top  = p.top  + 'px';
+        if (clickable) {
+            el.addEventListener('click', function () {
+                el.classList.add('clicked');
+                noiseEls.forEach(function (n) { n.classList.add('fade-out'); });
+                setTimeout(function () {
+                    noiseEls.forEach(function (n) { n.remove(); });
+                    noiseEls = makeNoise(glitchSets[clickCount] || glitchSets[0]);
+                    var u = document.getElementById('unlockArea');
+                    if (u) noiseEls.forEach(function (n) { u.appendChild(n); });
+                }, 500);
+                setTimeout(function () {
+                    if (clickCount < 1) {
+                        clickCount++;
+                        el.remove();
+                        var ng = makeGlitch(glitchTexts[1], true);
+                        var u = document.getElementById('unlockArea');
+                        if (u) u.appendChild(ng);
+                    } else {
+                        el.style.opacity = '0';
+                        noiseEls.forEach(function (n) { n.classList.add('fade-out'); });
+                        setTimeout(function () {
+                            el.remove();
+                            noiseEls.forEach(function (n) { n.remove(); });
+                            noiseEls = [];
+                            revealArchive();
+                        }, 500);
+                    }
+                }, 300);
+            });
+        }
+        return el;
+    }
 
-        // Check if user is already logged in
-        onAuthStateChanged(auth, (user) => {
-            const enterBtn = document.getElementById('enterBtn');
-            const signupBtn = document.getElementById('signupBtn');
-            
-            if (user) {
-                // User is logged in - go straight to hub
-                enterBtn.href = 'hub.html';
-                enterBtn.textContent = 'enter hub';
-                signupBtn.style.display = 'none'; // Hide signup if already logged in
+    function makeNoise(chars) {
+        var arr = [], n = Math.floor(Math.random() * 6) + 4;
+        for (var i = 0; i < n; i++) arr.push(makeGlitch(chars[Math.floor(Math.random() * chars.length)], false));
+        return arr;
+    }
+
+    function revealArchive() {
+        var u = document.getElementById('unlockArea');
+        if (u) {
+            u.style.opacity = '0';
+            setTimeout(function () { u.remove(); buildArchive(); unlocked = true; }, 500);
+        }
+    }
+
+    function buildArchive() {
+        archiveContainer.innerHTML = '<div class="archive-scroll" id="archiveScroll"></div>';
+        var scroll = document.getElementById('archiveScroll');
+        archivePieces.forEach(function (piece, idx) {
+            if (piece.type === 'notes') {
+                var el = document.createElement('div');
+                el.className = 'archive-notes';
+                el.innerHTML = '<div class="notes-title">/// notes</div>' +
+                    '<textarea class="notes-textarea" id="archiveNotes" placeholder="type here..."></textarea>' +
+                    '<div class="notes-saved" id="notesSaved">saved</div>';
+                scroll.appendChild(el);
+                setTimeout(function () {
+                    var ta = document.getElementById('archiveNotes');
+                    var si = document.getElementById('notesSaved');
+                    if (!ta) return;
+                    var saved = localStorage.getItem('archive_notes');
+                    if (saved) ta.value = saved;
+                    var t;
+                    ta.addEventListener('input', function () {
+                        clearTimeout(t);
+                        t = setTimeout(function () {
+                            localStorage.setItem('archive_notes', ta.value);
+                            si.classList.add('show');
+                            setTimeout(function () { si.classList.remove('show'); }, 1500);
+                        }, 500);
+                    });
+                }, 100);
             } else {
-                // Not logged in - go to login page
-                enterBtn.href = 'login.html';
-                enterBtn.textContent = 'enter';
+                var pe = document.createElement('div');
+                pe.className = 'archive-piece' + (piece.flippable ? ' flippable' : '');
+                var back = piece.back
+                    ? '<div class="archive-card-face archive-card-back"><img src="' + piece.back + '" class="archive-image" loading="lazy"><div class="archive-glitch"></div></div>'
+                    : '';
+                pe.innerHTML = '<div class="archive-card"><div class="archive-card-face"><img src="' + piece.front + '" class="archive-image" loading="lazy"><div class="archive-glitch"></div></div>' + back + '</div>';
+                if (piece.flippable) {
+                    var card = pe.querySelector('.archive-card');
+                    pe.addEventListener('click', function () { card.classList.toggle('flipped'); });
+                }
+                scroll.appendChild(pe);
+            }
+        });
+    }
+
+    function showSigilUnlock(onUnlock) {
+        var modal = document.getElementById('archiveModal');
+        var existing = document.getElementById('archiveSigilWrap');
+        if (existing) existing.remove();
+
+        var wrap = document.createElement('div');
+        wrap.id = 'archiveSigilWrap';
+        wrap.style.cssText = 'position:fixed;inset:0;display:flex;flex-direction:column;align-items:center;justify-content:center;z-index:2005;gap:32px;';
+
+        var input = document.createElement('input');
+        input.type = 'password';
+        input.autocomplete = 'off';
+        input.autocorrect = 'off';
+        input.autocapitalize = 'off';
+        input.spellcheck = false;
+        input.style.cssText = [
+            'background:none',
+            'border:none',
+            'border-bottom:1px solid rgba(143,118,189,0.38)',
+            'color:rgba(255,255,255,0.75)',
+            'font-family:var(--mono)',
+            'font-size:13px',
+            'letter-spacing:0.35em',
+            'text-align:center',
+            'width:220px',
+            'padding:8px 0',
+            'outline:none',
+            'caret-color:rgba(255,255,255,0.5)',
+            '-webkit-text-security:disc'
+        ].join(';');
+        input.placeholder = '· · · · · · · · · · · ·';
+        input.style.setProperty('--placeholder-color', 'rgba(255,255,255,0.15)');
+
+        var hint = document.createElement('div');
+        hint.style.cssText = 'font-family:var(--mono);font-size:9px;letter-spacing:0.35em;text-transform:uppercase;color:var(--garnet);opacity:0;transition:opacity 0.3s;';
+        hint.textContent = 'incorrect';
+
+        var shakeTimeout;
+        input.addEventListener('keydown', function(e) {
+            if (e.key !== 'Enter') return;
+            var val = input.value.toLowerCase().replace(/\s/g, '');
+            if (val === 'twoeyesisnext') {
+                // Correct — fade out and open
+                wrap.style.transition = 'opacity 0.5s ease';
+                wrap.style.opacity = '0';
+                setTimeout(function() {
+                    wrap.remove();
+                    buildArchive();
+                    unlocked = true;
+                    if (onUnlock) onUnlock();
+                }, 500);
+            } else {
+                // Wrong — shake and clear
+                hint.style.opacity = '1';
+                input.style.animation = 'none';
+                input.value = '';
+                clearTimeout(shakeTimeout);
+                input.style.borderBottomColor = 'var(--garnet)';
+                shakeTimeout = setTimeout(function() {
+                    hint.style.opacity = '0';
+                    input.style.borderBottomColor = 'rgba(143,118,189,0.38)';
+                }, 1200);
             }
         });
 
-        // Guest mode function
-        window.enterAsGuest = function() {
-            sessionStorage.setItem('guestMode', 'true');
-            window.location.href = 'hub.html';
-        };
-    </script>
+        wrap.appendChild(input);
+        wrap.appendChild(hint);
+        modal.appendChild(wrap);
+
+        setTimeout(function() { input.focus(); }, 100);
+    }
+
+
+    function openArchive(goToNotes) {
+        archiveModal.classList.add('active');
+        document.body.style.overflow = 'hidden';
+
+        if (goToNotes && !unlocked) {
+            // First time via /// — show sigil unlock, then scroll to notes after
+            showSigilUnlock(function () {
+                setTimeout(function () {
+                    var container = document.getElementById('archiveContainer');
+                    if (container) {
+                        container.style.scrollSnapType = 'none';
+                        container.scrollLeft = 999999;
+                        setTimeout(function () { container.style.scrollSnapType = ''; }, 100);
+                    }
+                }, 150);
+            });
+        } else if (goToNotes && unlocked) {
+            if (!document.getElementById('archiveScroll')) buildArchive();
+            setTimeout(function () {
+                var container = document.getElementById('archiveContainer');
+                if (container) {
+                    container.style.scrollSnapType = 'none';
+                    container.scrollLeft = 999999;
+                    setTimeout(function () { container.style.scrollSnapType = ''; }, 100);
+                }
+            }, 150);
+        } else if (unlocked) {
+            if (!document.getElementById('archiveScroll')) buildArchive();
+        } else {
+            showSigilUnlock(null);
+        }
+    }
+
+    function closeArchive() {
+        archiveModal.classList.remove('active');
+        document.body.style.overflow = '';
+    }
+
+    // ── Connect modal ──
+    var connectModal = document.getElementById('connectModal');
+    var connectClose = document.getElementById('connectClose');
+    var connectForm  = document.getElementById('connectForm');
+
+    function openConnect() {
+        connectModal.classList.add('active');
+        document.body.style.overflow = 'hidden';
+        document.getElementById('siteNav').style.opacity = '0';
+        document.getElementById('siteNav').style.pointerEvents = 'none';
+    }
+    function closeConnect() {
+        connectModal.classList.remove('active');
+        document.body.style.overflow = '';
+        document.getElementById('siteNav').style.opacity = '';
+        document.getElementById('siteNav').style.pointerEvents = '';
+    }
+
+    document.getElementById('navConnect').addEventListener('click', openConnect);
+    connectClose.addEventListener('click', closeConnect);
+    connectModal.addEventListener('click', function(e) { if (e.target === connectModal) closeConnect(); });
+
+    connectForm.addEventListener('submit', function(e) {
+        e.preventDefault();
+        var btn   = document.getElementById('connectSubmit');
+        var orig  = btn.textContent;
+        var name  = document.getElementById('connectName').value;
+        var email = document.getElementById('connectEmail').value;
+        btn.disabled = true; btn.textContent = 'sending...';
+        if (typeof emailjs !== 'undefined') {
+            emailjs.send('service_pr6bs0j', 'template_oe15cej', { customer_name:name, user_email:email, to_email:email })
+                .then(function() {
+                    btn.textContent = 'subscribed';
+                    connectForm.reset();
+                    setTimeout(function() { btn.textContent = orig; btn.disabled = false; }, 2500);
+                })
+                .catch(function() {
+                    btn.textContent = 'error — try again';
+                    setTimeout(function() { btn.textContent = orig; btn.disabled = false; }, 2000);
+                });
+        } else {
+            btn.textContent = 'error — try again';
+            setTimeout(function() { btn.textContent = orig; btn.disabled = false; }, 2000);
+        }
+    });
+    document.getElementById('navNotes').addEventListener('click',   function () { openArchive(true);  });
+    document.getElementById('navArchive').addEventListener('click', function () { openArchive(false); });
+    archiveClose.addEventListener('click', closeArchive);
+    archiveModal.addEventListener('click', function (e) { if (e.target === archiveModal) closeArchive(); });
+    document.addEventListener('keydown', function (e) { if (e.key === 'Escape') { closeArchive(); closeMusic(); closeConnect(); } });
+    // streamBtn goes directly to streaming options for current release
+    document.getElementById('streamBtn').addEventListener('click', function () {
+        openStreaming();
+    });
+    musicClose.addEventListener('click', closeMusic);
+    musicModal.addEventListener('click', function (e) {
+        if (e.target === musicModal) closeMusic();
+    });
+});
+</script>
+
 </body>
 </html>
